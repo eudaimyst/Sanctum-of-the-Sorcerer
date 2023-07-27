@@ -2,7 +2,18 @@
 	"folders":
 	[
 		{
-			"path": "."
+			"path": ".",
+			"folder_exclude_patterns":
+			[
+				"AndroidResources",
+				"Images.xcassets",
+				"LaunchScreen.storyboardc",
+			],
+			"file_exclude_patterns":
+			[
+				".gitattributes",
+				"Icon.png",
+			],
 		}
-	]
+	],
 }
