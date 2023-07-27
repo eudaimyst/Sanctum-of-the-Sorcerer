@@ -8,14 +8,10 @@
 
 	--common modules
 	local util = require("lib.global.utilities")
+	local cam = require("lib.camera")
 
 	-- Define module
 	local M = {}
-
-	function M.setModules()
-		--print("!!!!!!!!setting modules for map!!!!!")
-		ui, cam, char, enemies, items, map, spells = M.ui, M.cam, M.char, M.enemies, M.items, M.map, M.spells 
-	end
 
 	local debugGroup = {} --stores display group
 
@@ -91,7 +87,7 @@
 		height = height or 50
 		posX = posX or display.contentWidth - width - 20
 		posY = posY or display.contentHeight - height - 20 - ((height + 20) * M.debugTextStoreCounter)
-		label = label or "debug"..tostring(M.debugTextStoreCounter)
+		label = label or ("debug"..tostring(M.debugTextStoreCounter))
 		value = value or "value"
 
 		local debugText = { labelRect = nil, valueRect = nil, bg = nil, group = nil}
@@ -139,7 +135,7 @@
 	M.fpsDisplay = {}
 
 	function M.createFps()
-		M.fpsDisplay = createDebugText( "fps", "init", 0, 600, width, height )
+		M.fpsDisplay = createDebugText( "fps", "init", 0, 600, 100, 50 )
 	end
 	function M.updateFps(fps)
 		if (M.fpsDisplay) then

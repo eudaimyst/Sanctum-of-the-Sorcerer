@@ -15,13 +15,13 @@
 	--create scene
 	local scene = composer.newScene()
 
-	local group = newGroup( )
+	local group = display.newGroup( )
 
-	function firstFrame()
+	local function firstFrame()
 
 	end
 
-	function onFrame()
+	local function onFrame()
 
 	end
 

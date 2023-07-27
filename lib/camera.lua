@@ -22,7 +22,7 @@
 
 	M.moveTarget = {} --used to store current target so know move speed when moving camera
 
-	function updateCoords(  ) --called when moving camera to update coord values
+	local function updateCoords(  ) --called when moving camera to update coord values
 
 		M.coords.x1 = M.pos.x - M.halfExtents.x
 		M.coords.x2 = M.pos.x + M.halfExtents.x
@@ -45,31 +45,6 @@
 
 	function M.moveCamera() --target to get move speed and direction to move
 
-
-		for i = M.smoothDeltaFrames, 1, -1 do
-			M.smoothDeltas[i - 1] = M.smoothDeltas[i]
-		end
-
-		if (char.character.isMoving) then
-			local multipler = util.frameDeltaTime * char.moveSpeed
-			M.smoothDeltas[M.smoothDeltaFrames].x = char.character.moveDirection.x * multipler
-			M.smoothDeltas[M.smoothDeltaFrames].y = char.character.moveDirection.y * multipler
-		else
-			M.smoothDeltas[M.smoothDeltaFrames] = { x = 0, y = 0 }
-		end
-		
-		local smoothDeltaTotal = {x = 0, y = 0}
-		
-		for i = 0, M.smoothDeltaFrames do
-			smoothDeltaTotal.x = smoothDeltaTotal.x + M.smoothDeltas[i].x
-			smoothDeltaTotal.y = smoothDeltaTotal.y + M.smoothDeltas[i].y
-		end
-		debug.updateText("smoothFrames", #M.smoothDeltas)
-		M.moveDelta.x = smoothDeltaTotal.x / (M.smoothDeltaFrames + 1)
-		M.moveDelta.y = smoothDeltaTotal.y / (M.smoothDeltaFrames + 1)
-		M.pos.x = M.pos.x + M.moveDelta.x
-		M.pos.y = M.pos.y + M.moveDelta.y
-		
 		updateCoords()
 
 	end
@@ -78,13 +53,12 @@
 
 		M.moveDelta.x, M.moveDelta.y = pos.x - M.pos.x, pos.y - M.pos.y
 		M.pos.x, M.pos.y = pos.x, pos.y --add half to passed position to center camera
-		
-		updateCoords()
 
+		updateCoords()
 	end
 
 	function M.onFrame(  )
-		
+
 		M.moveCamera()
 
 	    debug.updateText("camCoords", math.round(M.coords.x1)..", "..math.round(M.coords.y1))

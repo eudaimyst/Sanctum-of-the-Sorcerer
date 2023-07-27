@@ -76,7 +76,7 @@
 	local fileCounter = 1
 	for file in lfs.dir( system.pathForFile(system.ResourceDirectory).."/content/particles/" ) do
 		--print("Found file: ".. file)
-		particleFile = {}
+		local particleFile = {}
 		particleFile.name = file
 		particleFile.value = "content/particles/"..file
 		if (file ~= "." and file ~= "..") then
@@ -103,6 +103,7 @@
 			end
 			for k, v in pairs(particleColorParams) do
 				if ( ( string.find(k, "startColor") or string.find(k, "finishColor") ) and not string.find(k, "Alpha") and not string.find(k, "Variance") ) then
+---@diagnostic disable-next-line: undefined-field
 					params[k] = math.round(math.random() * 100)/100
 				elseif (string.find(k, "startColorAlpha")) then
 					params[k] = 1
@@ -323,6 +324,7 @@
 				--print(saveData)
 			    local filePath = jsonParamsPath.."/"..self.params.name..".json"
 			    local file = nil
+				local errorString
 			    if ( filePath ) then
 			        file, errorString = io.open( filePath, "w" )
 			    end

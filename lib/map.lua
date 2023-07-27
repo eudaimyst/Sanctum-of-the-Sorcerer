@@ -32,13 +32,13 @@
 
 	function map:createMapTiles(tileData) --called by editor/map, creates all tile objects for maps
 
-		local width, height, tileSize, tileset, fileName = self.params.width, self.params.height, self.params.tileSize, self.params.tileset
+		local width, height, tileSize, tileset, fileName = self.params.width, self.params.height, self.params.tileSize, self.params.tileset, "level"
 
-		function createTile(x, y, i) --new tile constructor
+		local function createTile(x, y, i) --new tile constructor
 			--print("creating tile with ID:"..i)
 			local tile = {}
 			tile.id, tile.x, tile.y = i, x, y
-			tile.worldX, tile.worldY = x * tileSize, y * tileSize
+			tile.worldX, tile.worldY = x*tileSize, y*tileSize
 
 			local image
 			--print(i..": "..json.prettify(tileData[i]))

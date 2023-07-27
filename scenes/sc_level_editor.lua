@@ -21,7 +21,7 @@
 	local scene = composer.newScene()
 	local sceneGroup
 
-	function firstFrame()
+	local function firstFrame()
 
 		local function loadMap()
 			print("load map pressed")
@@ -52,7 +52,7 @@
 		key.init()
 	end
 
-	function onFrame()
+	local function onFrame()
 
 	end
 

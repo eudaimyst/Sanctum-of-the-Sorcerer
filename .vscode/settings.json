@@ -1,0 +1,16 @@
+{
+    "Lua.diagnostics.globals": [
+        "display",
+        "system",
+        "Runtime",
+        "timer",
+        "transition",
+        "native",
+        "graphics",
+        "application"
+    ],
+    "Lua.diagnostics.disable": [
+        "deprecated",
+        "undefined-field"
+    ]
+}

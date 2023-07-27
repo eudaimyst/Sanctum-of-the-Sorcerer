@@ -15,11 +15,12 @@
 	--------------------------------------------
 
 	-- forward declarations and other locals
-	local buttonSpacing = 20
+
+	local buttonSpacing = 68
+	local buttonOffsetY = 60
+	
 	local titleImage = "content/menu_title.png"
-
 	local sceneGroup
-
 	local halfScreenX, halfScreenY = display.actualContentWidth / 2, display.actualContentHeight / 2
 
 	local function onPlay()
@@ -66,9 +67,6 @@
 		buttonGroup = display.newGroup()
 		sceneGroup:insert( buttonGroup )
 
-		buttonSpacing = 68
-		buttonOffsetY = 60
-
 		local normalFramePath = "content/ui/button_frame_normal/" --set path for files
 		local pressedFramePath = "content/ui/button_frame_pressed/"
 		--set paths for button frame images
@@ -98,9 +96,7 @@
 
 		local buttonGroupMask = graphics.newMask( "content/menu_button_mask.png" )
 		buttonGroup:setMask( buttonGroupMask )
-
 		buttonGroup.maskX, buttonGroup.maskY = halfScreenX, halfScreenY
-
 		buttonGroup.maskScaleX = display.actualContentWidth/128 / 3
 		buttonGroup.maskScaleY = display.actualContentHeight/128
 
@@ -115,7 +111,6 @@
 
 			button.normalFrame = {}
 			button.pressedFrame = {} --create button and define pressed and normal frames
-
 			button.offsets = {} --holds frameoffsets for created button 
 
 			for k, baseOffset in pairs(frameImageOffsets) do 
@@ -144,26 +139,19 @@
 
 			----button background
 			button.bg = display.newImageRect( button, "content/ui/parchment.png" , 512 , 512 ) --make the button background
-			buttonMask = graphics.newMask( "content/ui/button_mask_wide.png" ) --add a mask
+			local buttonMask = graphics.newMask( "content/ui/button_mask_wide.png" ) --add a mask
 			button.bg:setMask(buttonMask)
 			button.bg.maskScaleX = 1 / 281 * (data.width - frameImageSize.length - frameImageSize.corner) --set scale to the data width divided by the button base size
 			button.bg.maskScaleY = 1 / 63 * (data.height)
-
-
 			----button overlays
 			local overlayX, overlayY = data.width - frameImageSize.corner * 4, data.height - frameImageSize.corner --image size of overlays normalised to the button size
-
 			button.overlayNormal = display.newImageRect( button, normalFramePath.."overlay_horizontal.png", overlayX, overlayY) --overlay button with image size
 			button.overlayPressed = display.newImageRect( button, pressedFramePath.."overlay_horizontal.png", overlayX, overlayY) --overlay button with image size
-
 			----button text
-
 			local options = { parent = button, text = data.label, x = 0, y = 1, font = "fonts/KlarissaContour.ttf", fontSize = 24 }
 			button.text = display.newEmbossedText( options )
 			button.text:setFillColor( .17 )
-
 			button.text:setEmbossColor( { shadow = { r=179/255, g=49/255, b=39/255 }, highlight = { r=1, g=190/255, b=76/255 } } )
-
 			----button frame
 			for k, path in pairs( imagePaths.normalFrame ) do
 				button.normalFrame[k] = display.newImageRect( button, path, button.offsets[k].w , button.offsets[k].h ) --add button using paths and offsets of k
@@ -387,35 +375,35 @@
 				for j = 1, #data.emitters do
 					local file, errorString = io.open(  system.pathForFile(system.ResourceDirectory).."/content/particles/params/"..data.emitters[j]..".json", "r" ) -- Open the file handle
 				    --print(errorString)
-				    local p = json.decode( file:read( "*a" ) )
-				    io.close( file ) -- Close the file handle
-					local scaleFactor = data.w/350
-					if (string.find(data.emitters[j], "smallparticles") or string.find(data.emitters[j], "glow")) then
-						if (string.find(data.emitters[j], "glow")) then
-							p.startParticleSize = p.startParticleSize*scaleFactor
-							p.finishParticleSize = p.finishParticleSize*scaleFactor
+					if file then
+						local p = json.decode( file:read( "*a" ) )
+						io.close( file ) -- Close the file handle
+						local scaleFactor = data.w/350
+						if (string.find(data.emitters[j], "smallparticles") or string.find(data.emitters[j], "glow")) then
+							if (string.find(data.emitters[j], "glow")) then
+								p.startParticleSize = p.startParticleSize*scaleFactor
+								p.finishParticleSize = p.finishParticleSize*scaleFactor
+							end
+							if (string.find(data.emitters[j], "smallparticles")) then
+								p.startParticleSize = p.startParticleSize*(data.w/215)
+								p.finishParticleSize = p.finishParticleSize*(data.h/215)
+							end
+							p.speed = p.speed * scaleFactor
+							p.gravityy = p.gravityy * scaleFactor * .8
+							p.sourcePositionVariancex = data.w/2.8
+							p.sourcePositionVariancey = data.h/4
+							p.maxParticles = p.maxParticles * scaleFactor
 						end
-						if (string.find(data.emitters[j], "smallparticles")) then
-							p.startParticleSize = p.startParticleSize*(data.w/215)
-							p.finishParticleSize = p.finishParticleSize*(data.h/215)
-						end
-						p.speed = p.speed * scaleFactor
-						p.gravityy = p.gravityy * scaleFactor * .8
-						p.sourcePositionVariancex = data.w/2.8
-						p.sourcePositionVariancey = data.h/4
-						p.maxParticles = p.maxParticles * scaleFactor
-					end
 
-					local emitter = display.newEmitter( p )
-					background:insert(emitter)
-					emitters[i] = emitter
-					emitter.scaleX, emitter.scaleY = 3, 3
-					emitter.x, emitter.y = data.x + data.w/2, data.y + data.h*3/5
+						local emitter = display.newEmitter( p )
+						background:insert(emitter)
+						emitters[i] = emitter
+						emitter.scaleX, emitter.scaleY = 3, 3
+						emitter.x, emitter.y = data.x + data.w/2, data.y + data.h*3/5
+					end
 				end
 			end
 		end
-
-
 
 		background.anchorChildren = true
 		sceneGroup:insert( background )
