@@ -12,5 +12,6 @@
     "Lua.diagnostics.disable": [
         "deprecated",
         "undefined-field"
-    ]
+    ],
+    "Lua.workspace.checkThirdParty": false
 }

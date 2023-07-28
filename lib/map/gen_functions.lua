@@ -239,26 +239,26 @@
 			local data = self.wallData
 			self.potentialDoorTiles = { up = {}, down = {}, left = {}, right = {} } --hold the wall tiles where door can be drawn
 			for direction, neighbours in pairs(self.neighbours) do
+				local potentials = self.potentialDoorTiles[direction]
+				local edgeWall = false --sets to true if neighbour is map
 				for _, neighbour in pairs(neighbours) do
-					local potentials = self.potentialDoorTiles[direction]
-					if (neighbour ~= "map") then --dont draw walls on map edges
-						print("room with id: "..room.id.." has "..#self.wallTiles[direction].." wall tiles on "..direction.." side")
-						for i = 1, #self.wallTiles[direction] - edgeInset*2 do
-							local tile = self.wallTiles[direction][i + edgeInset]
-							if (tile.typeName == "wall") then
-								--print("adding tile "..tile.id.." to potential door tiles")
-								potentials[i] = tile
-							end
-						end
-					end
-					if #potentials > 0 then
-						setColor(potentials, "grey")
+					if (neighbour == "map") then --dont draw walls on map edges
+						edgeWall = true
 					end
 				end
-			end
-			for _, wallSide in pairs(self.wallTiles) do
-				setColor(wallSide, "white")
-				setType(wallSide, "wall")
+				print("room with id: "..room.id.." has "..#self.wallTiles[direction].." wall tiles on "..direction.." side")
+				if (not edgeWall) then
+					for i = 1, #self.wallTiles[direction] - edgeInset*2 do
+						local tile = self.wallTiles[direction][i + edgeInset]
+						if (tile.typeName == "wall") then
+							--print("adding tile "..tile.id.." to potential door tiles")
+							potentials[i] = tile
+						end
+					end
+				end
+				if #potentials > 0 then
+					setColor(potentials, "grey")
+				end
 			end
 		end
 
@@ -268,20 +268,22 @@
 			self.doorAvailWallTiles = { up = {}, down = {}, left = {}, right = {} } --hold the wall tiles where door can be drawn
 
 			for direction, neighbours in pairs(self.neighbours) do
-				for _, neighbour in ipairs(neighbours) do
+				for i = 1, #neighbours do
+				local neighbour = neighbours[i]
 					if (neighbour ~= "map") then --dont draw doors when rooms on map edges
-						local nPotentials = {} --will store potential 
+
 						local oppositeDir = eData[direction].opposite
 						local potentials = self.potentialDoorTiles[direction]
-						nPotentials = neighbour.potentialDoorTiles[oppositeDir]
-						--local sWallTiles = self.wallTiles[direction] --readability
-						--local nWallTiles = neighbour.wallTiles[oppositeDir]
-						local dim
-
+						local nPotentials = neighbour.potentialDoorTiles[oppositeDir]
+						local availTiles = self.doorAvailWallTiles[direction]
+						availTiles[i] = {} --creates an empty table to store tiles
+						
+						local dim --dimension of tile x or y for readability
 						if (direction == "up" or direction == "down") then dim = "x" --to get x and y values from tiles
 						else dim = "y" end
-
-						if (#nPotentials < 0) then --neighbour has potential wall tiles
+						print("room has "..#potentials.." potential door tiles on side "..direction)
+						print("neighbour has "..#nPotentials.." potential door tiles on side "..oppositeDir)
+						if (#nPotentials > 0) then --neighbour has potential wall tiles
 							local pos = potentials[1][dim] --bounds of wall tiles
 							local pos2 = potentials[#potentials][dim]
 							local nPos = nPotentials[1][dim] --bounds of neighbour wall tiles
@@ -289,16 +291,18 @@
 							local startPos = math.max(pos, nPos) --bounds of avail door space
 							local endPos = math.min(pos2, nPos2)
 							local len = endPos - startPos + 1 --length of avail space
+							print("overlapping length: "..len)
 							if (len >= pointsExpand.params.doorWidthMin) then
-								for i = 1, len do --for each tile in potential door space
-									--print(#potentials.." potentials in room "..room.id)
-									--print(i + startPos - pos.."/"..#potentials)
-									--print("setting wall tiles: "..direction..", ".. i .." as available")
-									self.doorAvailWallTiles[direction][i] = potentials[i + startPos - pos] --store the tiles
+								for j = 1, len do --for each tile in potential door space
+									print(#potentials.." potentials in room "..room.id)
+									print(i + startPos - pos.."/"..#potentials)
+									print("setting wall tiles for neighbour #"..i..", "..direction..", ".. j + startPos - pos .." as available")
+									availTiles[i][j] = potentials[j + startPos - pos] --store the tiles
 								end
-								if (self.doorAvailWallTiles[direction]) then
-									if #self.doorAvailWallTiles[direction] > 0 then
-										setColor(self.doorAvailWallTiles[direction], "black")
+								if (availTiles) then
+									print(#availTiles[i])
+									if #availTiles[i] > 0 then
+										setColor(availTiles[i], "black")
 									end
 								end
 							end
@@ -329,7 +333,11 @@
 
 			local doorWidth = 4 --needs to be set to a param
 			local doorTiles = { up = {}, down = {}, left = {}, right = {} } --hold the doorway tiles
-
+			--[[
+			print("neighbours")
+			for k, v in pairs(self.neighbours) do
+				print(k, v)
+			end]]
 			for direction, neighbours in pairs(self.neighbours) do
 				for _, neighbour in pairs(neighbours) do
 					if (neighbour ~= "map") then --dont draw hallways to map edges
@@ -341,8 +349,10 @@
 							print("do not draw hallway as already connected")
 						else
 							--print(json.prettify(self.connectedRooms))
-							local availTiles = self.doorAvailWallTiles[direction]
-							local nAvailTiles = neighbour.doorAvailWallTiles[oppositeDir] --set this from either the walls avail tiles or its wall tiles
+							
+							local availTiles = self.doorAvailWallTiles[direction][1] --avail tiles in rooms direction
+							local nAvailTiles = neighbour.doorAvailWallTiles[oppositeDir][1] --avail tiles in neighbourse opp direction
+
 							local x1, x2, y1, y2
 							if (#availTiles > 0) then
 								local skipConnection = false --to catch edge cases where hallway should not be drawn
@@ -392,6 +402,7 @@
 											local tile = pointsExpand.tileStore.tileColumns[i][j]
 											doorTiles[direction][#doorTiles[direction]+1] = tile
 											self.connectedRooms[direction] = neighbour --so we can check if neighbour already has hallway
+											--set hallway wall tiles
 											if (direction == "up" or direction == "down") then
 												if (i == x1) then doorWallTiles[#doorWallTiles+1] = tile end
 												if (i == x2) then doorWallTiles[#doorWallTiles+1] = tile end
