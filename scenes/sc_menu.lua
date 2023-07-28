@@ -255,7 +255,7 @@
 	local mouse = { x = 0, y = 0, old = { x = 0, y = 0 } }
 	-- Called when a mouse event has been received.
 	local function onMouseEvent( event )
-		mouse.old.x, mouse.old.y= mouse.x, mouse.y
+		mouse.old.x, mouse.old.y = mouse.x, mouse.y
 		mouse.x, mouse.y = event.x, event.y
 
 		if event.isPrimaryButtonDown then
