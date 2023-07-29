@@ -5,6 +5,7 @@
 	-----------------------------------------------------------------------------------------
 
 	--common modules
+	local json = require("json")
 
 	-- Define module
 	local genFuncs = {run = false}
@@ -147,11 +148,15 @@
 				self.roomStore[i]:draw() --unhide this to visualise the expansion of the rooms, costly redraws all rooms each frame
 			end
 		elseif (self.frame == 5) then
+			for i = 1, #self.roomStore do
+				self.roomStore[i]:setNeighbours() --set the neighbours of each room
+			end
+		elseif (self.frame == 6) then
 			--make room walls
 			for i = 1, #self.roomStore do
 				self.roomStore[i]:makeExteriorWalls()
 			end
-		elseif (self.frame == 6) then
+		elseif (self.frame == 7) then
 			--get all the available space where doors can go
 			--run on all rooms before actually making the doors so tables are set
 			for i = 1, #self.roomStore do
@@ -164,7 +169,7 @@
 			for i = 1, #self.roomStore do
 				self.roomStore[i]:makeDoors()
 			end
-		elseif (self.frame == 7) then
+		elseif (self.frame == 8) then
 			--self:setFinalMapColours()
 		else
 			Runtime:removeEventListener( "enterFrame", self.onFrameRef )
@@ -266,7 +271,14 @@
 			local eData = self.expansionData
 			local data = self.wallData
 			self.doorAvailWallTiles = { up = {}, down = {}, left = {}, right = {} } --hold the wall tiles where door can be drawn
-
+			print("room neighbours::::::::::::::::: "..room.id)
+			for k, v in pairs(self.neighbours) do
+				print (k, v, "\n--------------------------")
+				for k1, v1 in pairs(v) do
+					print (k1, v1)
+				end
+			end
+			--print(json.prettify(self.neighbours))
 			for direction, neighbours in pairs(self.neighbours) do
 				print("room #"..room.id.." has "..#neighbours.." neighbours on side "..direction)
 				for i = 1, #neighbours do
@@ -317,7 +329,7 @@
 
 			local function getConnections(connectedRooms)
 				for _, room in pairs(connectedRooms) do
-					if connectedRooms == self then
+					if room == self then
 						return true --returns true if neighbour is connected to room
 					end
 				end
@@ -326,10 +338,16 @@
 
 			local function getMid(p1, p2, random) --takes to points and returns the middle point between them,
 				--returns a random point between them if param random is set to true
-				local m
-				if (p1 < p2) then m = p1 + ((p2 - p1) / 2)
-				else m = p2 + ((p1 - p2) / 2) end
-				return math.floor(m)
+				local m --midPoint
+				local t --temp to swap points
+				if p2 < p1 then t = p1; p1 = p2; p2 = t end --swap p1 and p2 if p2 is smaller
+				local w = math.floor(p2 -p1) --width of space
+				
+				m = p2 - w/2
+				if (random) then
+					m = m + math.random(-w/2, w/2)
+				end
+				return math.round(m)
 			end
 
 			local doorWidth = 4 --needs to be set to a param
@@ -340,87 +358,79 @@
 				print(k, v)
 			end]]
 			for direction, neighbours in pairs(self.neighbours) do
-				for _, neighbour in pairs(neighbours) do
+				local doorWallTiles = {}
+				for i = 1, #neighbours do
+					local neighbour = neighbours[i]
 					if (neighbour ~= "map") then --dont draw hallways to map edges
-						local doorWallTiles = {}
 						local oppositeDir = self.expansionData[direction].opposite --gets opposite direction
 						--print (json.prettify(self.expansionData[direction]))
 						--print (json.prettify(neighbour.connectedRooms))
 						if (getConnections(neighbour.connectedRooms[oppositeDir])) then
-							print("do not draw hallway as already connected")
+							--print("do not draw hallway as already connected")
 						else
 							--print(json.prettify(self.connectedRooms))
-							
-							local availTiles = self.doorAvailWallTiles[direction][1] --avail tiles in rooms direction
-							local nAvailTiles = neighbour.doorAvailWallTiles[oppositeDir][1] --avail tiles in neighbourse opp direction
+
+							local nAvailTiles = {}
+							local availTiles = self.doorAvailWallTiles[direction][i] --avail tiles in rooms direction
+							if neighbour.neighbours[oppositeDir] then
+								local neighboursNeighbours = neighbour.neighbours[oppositeDir]
+								--print("neighbour id# "..neighbour.id.." has "..#neighboursNeighbours.." neighbours on side "..oppositeDir)
+								for j = 1, #neighboursNeighbours do
+									if neighboursNeighbours[j] == self then
+										nAvailTiles = neighbour.doorAvailWallTiles[oppositeDir][j] --avail tiles in neighbourse opp direction
+										--print("neighbour has room as neighbour")
+									end
+								end
+							else
+								--print("neighbour has no neighbours on side "..oppositeDir)
+							end
 
 							local x1, x2, y1, y2
-							if (#availTiles > 0) then
-								local skipConnection = false --to catch edge cases where hallway should not be drawn
+							if (#availTiles > 0 and #nAvailTiles > 0) then
 
 								x1, y1 = availTiles[1].x, availTiles[1].y
-
-								if (#nAvailTiles > 0) then --if both rooms have avail tiles for a hallway
-									x2, y2 = nAvailTiles[#nAvailTiles].x, nAvailTiles[#nAvailTiles].y
-								else
-									return
-								end
-
-								print("DOORWAYS AT:", x1, y1, x2, y2)
+								x2, y2 = nAvailTiles[#nAvailTiles].x, nAvailTiles[#nAvailTiles].y
 								x1, x2, y1, y2 = sortBounds(x1, x2, y1, y2)
+								--print("ROOM ID: "..room.id.." DIRECTION: "..direction.." DOORWAYS AT:", x1, y1, x2, y2)
 
 								if (direction == "up" or direction == "down") then
 									if (x2 > availTiles[#availTiles].x) then --reduces the size of the avail tiles if the target corridor has a bigger wall space
 										x2 = availTiles[#availTiles].x
 									end
-									if (x1 == x2) then --catches corner connections as they travel vertically
-										skipConnection = true
-									end
-									if (x1 > nAvailTiles[1].x and availTiles[#availTiles].x > x2) --catches connections that shouldn't be made, the rooms are not meetable
-									or (x1 < nAvailTiles[1].x and availTiles[#availTiles].x < x2) then
-										skipConnection = true
-									end
-									local midX = getMid(x1, x2)
+									local midX = getMid(x1, x2, true)
 									x1, x2 = midX - math.floor(doorWidth/2), midX + math.floor(doorWidth/2) - 1
 								else
 									if (y2 > availTiles[#availTiles].y) then --reduces the size of the avail tiles if the target corridor has a bigger wall space
 										y2 = availTiles[#availTiles].y
 									end
-									if (y1 == y2) then --catches corner connections
-										skipConnection = true
-									end
-									if (y1 > nAvailTiles[1].y and availTiles[#availTiles].y > y2) --catches connections that shouldn't be made, the rooms are not meetable
-									or (y1 < nAvailTiles[1].y and availTiles[#availTiles].y < y2) then
-										skipConnection = true
-									end
-									local midY = getMid(y1, y2)
+									local midY = getMid(y1, y2, true)
 									y1, y2 = midY - math.floor(doorWidth/2), midY + math.floor(doorWidth/2) - 1
 								end
-
-								for i = x1, x2 do
-									for j = y1, y2 do
-										if (skipConnection == false) then
-											local tile = pointsExpand.tileStore.tileColumns[i][j]
-											doorTiles[direction][#doorTiles[direction]+1] = tile
-											self.connectedRooms[direction] = neighbour --so we can check if neighbour already has hallway
-											--set hallway wall tiles
-											if (direction == "up" or direction == "down") then
-												if (i == x1) then doorWallTiles[#doorWallTiles+1] = tile end
-												if (i == x2) then doorWallTiles[#doorWallTiles+1] = tile end
-											end
-											if (direction == "left" or direction == "right") then
-												if (j == y1) then doorWallTiles[#doorWallTiles+1] = tile end
-												if (j == y2) then doorWallTiles[#doorWallTiles+1] = tile end
-											end
+								--set wall tiles for hallway
+								print("drawing hallway for room "..room.id.." in direction "..direction.." at "..x1..", "..y1.." to "..x2..", "..y2.."")
+								for j = x1, x2 do
+									for k = y1, y2 do
+										local tile = pointsExpand.tileStore.tileColumns[j][k]
+										doorTiles[direction][#doorTiles[direction]+1] = tile
+										self.connectedRooms[direction][#self.connectedRooms[direction] + 1] = neighbour --so we can check if neighbour already has hallway
+										--set hallway wall tiles
+										if (direction == "up" or direction == "down") then
+											if (j == x1 or j == x2) then doorWallTiles[#doorWallTiles+1] = tile; print("dx") end
 										end
+										if (direction == "left" or direction == "right") then
+											if (k == y1 or k == y2) then doorWallTiles[#doorWallTiles+1] = tile; print("dy") end
+										end
+										print(j, k)
 									end
 								end
+								setColor(doorTiles[direction], "room", room.id)
+								setType(doorTiles[direction], "floor")
+								print(#doorWallTiles)
+								setColor(doorWallTiles, "black")
+								setType(doorWallTiles, "wall")
 							end
 						end
 						--print("setting type for doors in room#"..room.id.."on side: "..direction.." with "..#doorTiles[direction].." tiles to floor")
-						setColor(doorTiles[direction], "room", room.id)
-						setType(doorTiles[direction], "floor")
-						setType(doorWallTiles, "wall")
 					end
 				end
 			end
@@ -469,9 +479,9 @@
 				--print("--on side "..direction)
 				if (self.expandDirComplete[direction] == false) then
 					local data = self.expansionData[direction] --used to get data to contract room
-					
 					for i = 1, #pointsExpand.roomStore do --get another room to compare with
 						local otherRoom = pointsExpand.roomStore[i] --croom = room to compare with
+						local foundNeighbour = false
 						if (room ~= otherRoom) then --dont compare with self
 							local rb, cb, s = self.bounds, otherRoom.bounds, self.spacing
 							 --print("spacing: "..s.." direction: "..direction.."\nroom bounds: ", rb.x1, rb.x2, rb.y1, rb.y2..
@@ -484,13 +494,11 @@
 									if direction == "up"
 									and (rb.y1 >= cb.y2) --checks room is on the right side of the compare room
 									and (rb.y1 <= cb.y2 + s) then --checks the actual room expansion
-										print ("room# "..room.id .. " expansion complete due to room# "..otherRoom.id.." on side "..direction)
-										self.expandDirComplete[direction] = true
+										foundNeighbour = true
 									elseif direction == "down"
 									and (rb.y2 <= cb.y1) --checks room is on the right side of the compare room
 									and (rb.y2 >= cb.y1 - s) then --checks the actual room expansion
-										print ("room# "..room.id .. " expansion complete due to room# "..otherRoom.id.." on side "..direction)
-										self.expandDirComplete[direction] = true
+										foundNeighbour = true
 									end
 								end
 							elseif direction == "left" or direction == "right" then
@@ -501,16 +509,18 @@
 									if direction == "left"
 									and (rb.x1 >= cb.x2) --checks room is on the right side of the compare room
 									and (rb.x1 <= cb.x2 + s) then --checks the actual room expansion
-										print ("room# "..room.id .. " expansion complete due to room# "..otherRoom.id.." on side "..direction)
-										self.expandDirComplete[direction] = true
+										foundNeighbour = true
 									elseif direction == "right"
 									and (rb.x2 <= cb.x1) --checks room is on the right side of the compare room
 									and (rb.x2 >= cb.x1 - s) then --checks the actual room expansion
-										print ("room# "..room.id .. " expansion complete due to room# "..otherRoom.id.." on side "..direction)
-										self.expandDirComplete[direction] = true
+										foundNeighbour = true
 									end
 								end
 							end
+						end
+						if (foundNeighbour) then
+							print ("room# "..room.id .. " expansion complete due to room# "..otherRoom.id.." on side "..direction)
+							self.expandDirComplete[direction] = true
 						end
 					end
 					--contract rooms if they have completed expansion
@@ -541,32 +551,68 @@
 			end
 		end
 
-		function room:setNeighbours() --sets neighbours based on results of compare
-			--print("Neighbours: up="..tostring(self.neighbours.up).." down="..tostring(self.neighbours.down).." left="..tostring(self.neighbours.left).." right="..tostring(self.neighbours.right))
-
-			for direction, _ in pairs(self.neighbours) do
-				if (self.expandDirComplete[direction] == false) then
-					if (#self.neighbours[direction] > 0) then
-						--print("closest room found for room# "..self.id.." is room# "..cRoom.id.." in direction "..direction)
-						self.expandDirComplete[direction] = true
+		function room:setNeighbours() --sets neighbours after expansion is complete\
+			local inset = pointsExpand.params.edgeInset --used for map edge distance from edge of tiles
+			print ("-set neighbours for room #"..room.id)
+			for direction, _ in pairs(self.expansionData) do --for each direction of the room
+				print("--on side "..direction)
+				for i = 1, #pointsExpand.roomStore do --get another room to compare with
+					local otherRoom = pointsExpand.roomStore[i] --readability
+					local foundNeighbour = false
+					if (room ~= otherRoom) then --dont compare with self
+						local rb, cb, s = self.bounds, otherRoom.bounds, pointsExpand.params.maxHallwayLength
+						if direction == "up" or direction == "down" then
+							if (rb.x1 >= cb.x1 - s) --checks if room is within compare room
+							and (rb.x1 <= cb.x2 + s)
+							or (rb.x2 >= cb.x1 - s)
+							and (rb.x2 <= cb.x2 + s) then
+								if direction == "up"
+								and (rb.y1 >= cb.y2) --checks room is on the right side of the compare room
+								and (rb.y1 <= cb.y2 + s) then --checks the actual room expansion
+									foundNeighbour = true
+								elseif direction == "down"
+								and (rb.y2 <= cb.y1) --checks room is on the right side of the compare room
+								and (rb.y2 >= cb.y1 - s) then --checks the actual room expansion
+									foundNeighbour = true
+								end
+							end
+						elseif direction == "left" or direction == "right" then
+							if (rb.y1 >= cb.y1 - s) --checks if room is within compare room
+							and (rb.y1 <= cb.y2 + s)
+							or (rb.y2 >= cb.y1 - s)
+							and (rb.y2 <= cb.y2 + s) then
+								if direction == "left"
+								and (rb.x1 >= cb.x2) --checks room is on the right side of the compare room
+								and (rb.x1 <= cb.x2 + s) then --checks the actual room expansion
+									foundNeighbour = true
+								elseif direction == "right"
+								and (rb.x2 <= cb.x1) --checks room is on the right side of the compare room
+								and (rb.x2 >= cb.x1 - s) then --checks the actual room expansion
+									foundNeighbour = true
+								end
+							end
+						end
+					end
+					if (foundNeighbour) then
+						print ("room# "..room.id .. " neighbrour is room# "..otherRoom.id.." on side "..direction)
+						self.neighbours[direction][#self.neighbours[direction]+1] = otherRoom
 					end
 				end
-			end
-			for direction, _ in pairs(self.neighbours) do
-			end
-		end
-		--[[
-		function room:contract()
-			for direction, data in pairs(self.expansionData) do
-				print(direction, data)
-				if (self.neighbours[direction] == nil) then
-					print(data.bound, data.boundExpand)
-					self.bounds[data.bound] = self.bounds[data.bound] + data.boundExpand
+				--check for edge of map
+				if (direction == "up" and room.bounds.y1 <= inset + self.spacing ) then
+					self.neighbours[direction][1] = "map"
+				end
+				if (direction == "down" and room.bounds.y2 > pointsExpand.height - inset - self.spacing) then
+					self.neighbours[direction][1] = "map"
+				end
+				if (direction == "left" and room.bounds.x1 <= inset + self.spacing) then
+					self.neighbours[direction][1] = "map"
+				end
+				if (direction == "right" and room.bounds.x2 > pointsExpand.width - inset - self.spacing) then
+					self.neighbours[direction][1] = "map"
 				end
 			end
-
-			
-		end]]
+		end
 
 		return room
 	end
@@ -576,7 +622,7 @@
 		self.textGroup = display.newGroup()
 		local defaultParams = { numRoomsX = 6, numRoomsY = 6, edgeInset = 10,
 		roomSpacingMin = 1.1, roomSpacingMax = 1.1, spawnChance = 60, randPosOffset = 2,
-		doorWidthMin = 3, doorWidthMax = 6, doorEdgeInset = 3 }
+		doorWidthMin = 3, doorWidthMax = 6, doorEdgeInset = 3, maxHallwayLength = 5}
 		self.params = defaultParams
 
 	end
