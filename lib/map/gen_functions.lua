@@ -142,7 +142,7 @@
 			end
 			for i = 1, #self.roomStore do
 				if (self.roomStore[i].expandComplete == false) then
-					self.roomStore[i]:setNeighbours()
+					self.roomStore[i]:compare()
 				end
 				self.roomStore[i]:draw() --unhide this to visualise the expansion of the rooms, costly redraws all rooms each frame
 			end
@@ -165,7 +165,7 @@
 				self.roomStore[i]:makeDoors()
 			end
 		elseif (self.frame == 7) then
-			self:setFinalMapColours()
+			--self:setFinalMapColours()
 		else
 			Runtime:removeEventListener( "enterFrame", self.onFrameRef )
 		end
@@ -268,6 +268,7 @@
 			self.doorAvailWallTiles = { up = {}, down = {}, left = {}, right = {} } --hold the wall tiles where door can be drawn
 
 			for direction, neighbours in pairs(self.neighbours) do
+				print("room #"..room.id.." has "..#neighbours.." neighbours on side "..direction)
 				for i = 1, #neighbours do
 				local neighbour = neighbours[i]
 					if (neighbour ~= "map") then --dont draw doors when rooms on map edges
@@ -459,86 +460,74 @@
 				end
 			end
 		end
+		
 
-		function room:compare(direction)
-			local neighbours = self.neighbours
+		function room:compare()
 			local inset = pointsExpand.params.edgeInset
-			local data = self.expansionData[direction]
-			for i = 1, #pointsExpand.roomStore do --get another room to compare with
-				local otherRoom = pointsExpand.roomStore[i] --croom = room to compare with
-				if (room ~= otherRoom) then --dont compare with self
-					local rb, cb, s, nd = self.bounds, otherRoom.bounds, self.spacing, self.neighbours[direction]
-					--[[
-					print("spacing: "..s.." direction: "..direction.."\nroom bounds: ", rb.x1, rb.x2, rb.y1, rb.y2..
-					"\ncRoom bounds: ", cb.x1, cb.x2, cb.y1, cb.y2.."\ncomparing room "..room.id.." with "..otherRoom.id)
-					]]--
-
-					if direction == "up" or direction == "down" then
-					    if (rb.x1 >= cb.x1 - s) --checks if room is within compare room
-					    and (rb.x1 <= cb.x2 + s)
-						or (rb.x2 >= cb.x1 - s)
-						and (rb.x2 <= cb.x2 + s) then
-					        if direction == "up"
-					        and (rb.y1 >= cb.y2) --checks room is on the right side of the compare room
-					        and (rb.y1 <= cb.y2 + s) then --checks the actual room expansion
-					            print (room.id .. " room up " .. otherRoom.id)
-					            nd[#nd+1] = otherRoom
-					        elseif direction == "down"
-					        and (rb.y2 <= cb.y1) --checks room is on the right side of the compare room
-					        and (rb.y2 >= cb.y1 - s) then --checks the actual room expansion
-					            print (room.id .. " room down " .. otherRoom.id)
-					            nd[#nd+1] = otherRoom
-					        end
-					    end
-					elseif direction == "left" or direction == "right" then
-					    if (rb.y1 >= cb.y1 - s) --checks if room is within compare room
-					    and (rb.y1 <= cb.y2 + s)
-					    or (rb.y2 >= cb.y1 - s)
-					    and (rb.y2 <= cb.y2 + s) then
-					        if direction == "left"
-					        and (rb.x1 >= cb.x2) --checks room is on the right side of the compare room
-					        and (rb.x1 <= cb.x2 + s) then --checks the actual room expansion
-					            print(room.id .. " room left " .. otherRoom.id)
-					            nd[#nd+1] = otherRoom
-					        elseif direction == "right"
-					        and (rb.x2 <= cb.x1) --checks room is on the right side of the compare room
-					        and (rb.x2 >= cb.x1 - s) then --checks the actual room expansion
-					            print(room.id .. " room right " .. otherRoom.id)
-					            nd[#nd+1] = otherRoom
-					        end
-					    end
-					end
-
-				end
-			end
-			if (direction == "up" and room.bounds.y1 <= inset + self.spacing ) then
-				neighbours[direction][1] = "map"
-			end
-			if (direction == "down" and room.bounds.y2 > pointsExpand.height - inset - self.spacing) then
-				neighbours[direction][1] = "map"
-			end
-			if (direction == "left" and room.bounds.x1 <= inset + self.spacing) then
-				neighbours[direction][1] = "map"
-			end
-			if (direction == "right" and room.bounds.x2 > pointsExpand.width - inset - self.spacing) then
-				neighbours[direction][1] = "map"
-			end
-
-			if (#neighbours[direction] > 0) then
-				if (neighbours[direction][1] ~= "map") then
-					self.bounds[data.bound] = self.bounds[data.bound] + data.boundContract
-				end
-			end
-		end
-
-		function room:setNeighbours() --sets neighbours based on results of compare
-			--print("Neighbours: up="..tostring(self.neighbours.up).." down="..tostring(self.neighbours.down).." left="..tostring(self.neighbours.left).." right="..tostring(self.neighbours.right))
-
-			for direction, _ in pairs(self.neighbours) do
+			--print ("-comparing room #"..room.id)
+			for direction, _ in pairs(self.expansionData) do --for each direction of the room
+				--print("--on side "..direction)
 				if (self.expandDirComplete[direction] == false) then
-					self:compare(direction)
-					if (#self.neighbours[direction] > 0) then
-						--print("closest room found for room# "..self.id.." is room# "..cRoom.id.." in direction "..direction)
+					local data = self.expansionData[direction] --used to get data to contract room
+					
+					for i = 1, #pointsExpand.roomStore do --get another room to compare with
+						local otherRoom = pointsExpand.roomStore[i] --croom = room to compare with
+						if (room ~= otherRoom) then --dont compare with self
+							local rb, cb, s = self.bounds, otherRoom.bounds, self.spacing
+							 --print("spacing: "..s.." direction: "..direction.."\nroom bounds: ", rb.x1, rb.x2, rb.y1, rb.y2..
+							--"\ncRoom bounds: ", cb.x1, cb.x2, cb.y1, cb.y2.."\ncomparing room "..room.id.." with "..otherRoom.id) 
+							if direction == "up" or direction == "down" then
+								if (rb.x1 >= cb.x1 - s) --checks if room is within compare room
+								and (rb.x1 <= cb.x2 + s)
+								or (rb.x2 >= cb.x1 - s)
+								and (rb.x2 <= cb.x2 + s) then
+									if direction == "up"
+									and (rb.y1 >= cb.y2) --checks room is on the right side of the compare room
+									and (rb.y1 <= cb.y2 + s) then --checks the actual room expansion
+										print ("room# "..room.id .. " expansion complete due to room# "..otherRoom.id.." on side "..direction)
+										self.expandDirComplete[direction] = true
+									elseif direction == "down"
+									and (rb.y2 <= cb.y1) --checks room is on the right side of the compare room
+									and (rb.y2 >= cb.y1 - s) then --checks the actual room expansion
+										print ("room# "..room.id .. " expansion complete due to room# "..otherRoom.id.." on side "..direction)
+										self.expandDirComplete[direction] = true
+									end
+								end
+							elseif direction == "left" or direction == "right" then
+								if (rb.y1 >= cb.y1 - s) --checks if room is within compare room
+								and (rb.y1 <= cb.y2 + s)
+								or (rb.y2 >= cb.y1 - s)
+								and (rb.y2 <= cb.y2 + s) then
+									if direction == "left"
+									and (rb.x1 >= cb.x2) --checks room is on the right side of the compare room
+									and (rb.x1 <= cb.x2 + s) then --checks the actual room expansion
+										print ("room# "..room.id .. " expansion complete due to room# "..otherRoom.id.." on side "..direction)
+										self.expandDirComplete[direction] = true
+									elseif direction == "right"
+									and (rb.x2 <= cb.x1) --checks room is on the right side of the compare room
+									and (rb.x2 >= cb.x1 - s) then --checks the actual room expansion
+										print ("room# "..room.id .. " expansion complete due to room# "..otherRoom.id.." on side "..direction)
+										self.expandDirComplete[direction] = true
+									end
+								end
+							end
+						end
+					end
+					--contract rooms if they have completed expansion
+					if (self.expandDirComplete[direction] == true) then
+						self.bounds[data.bound] = self.bounds[data.bound] + data.boundContract
+					end
+					--check for edge of map
+					if (direction == "up" and room.bounds.y1 <= inset + self.spacing ) then
+						self.expandDirComplete[direction] = true
+					end
+					if (direction == "down" and room.bounds.y2 > pointsExpand.height - inset - self.spacing) then
+						self.expandDirComplete[direction] = true
+					end
+					if (direction == "left" and room.bounds.x1 <= inset + self.spacing) then
+						self.expandDirComplete[direction] = true
+					end
+					if (direction == "right" and room.bounds.x2 > pointsExpand.width - inset - self.spacing) then
 						self.expandDirComplete[direction] = true
 					end
 				end
@@ -549,6 +538,21 @@
 				self.expandComplete = true
 			else
 				self.expandComplete = false
+			end
+		end
+
+		function room:setNeighbours() --sets neighbours based on results of compare
+			--print("Neighbours: up="..tostring(self.neighbours.up).." down="..tostring(self.neighbours.down).." left="..tostring(self.neighbours.left).." right="..tostring(self.neighbours.right))
+
+			for direction, _ in pairs(self.neighbours) do
+				if (self.expandDirComplete[direction] == false) then
+					if (#self.neighbours[direction] > 0) then
+						--print("closest room found for room# "..self.id.." is room# "..cRoom.id.." in direction "..direction)
+						self.expandDirComplete[direction] = true
+					end
+				end
+			end
+			for direction, _ in pairs(self.neighbours) do
 			end
 		end
 		--[[
