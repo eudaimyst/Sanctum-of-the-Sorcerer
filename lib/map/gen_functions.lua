@@ -89,7 +89,7 @@
 		local tCols, tRows = self.tileStore.tileColumns, self.tileStore.tileRows
 
 		if (self.frame == 1) then --first frame of generation
-			--make the insets grey
+			--make the insets 
 			for i = 1, p.edgeInset do
 				local columnL = tCols[i] --left and right columns
 				local columnR = tCols[#tCols-(i-1)]
@@ -101,11 +101,12 @@
 		elseif (self.frame == 2) then --divide room into sections, needs reworking to deal with remainder rather than using round divide
 
 			local trueW, trueH = #tCols - p.edgeInset*2, #tRows - p.edgeInset*2 --subtract the insets
+			local rem
 			for i = 0, p.numRoomsX do --start at 0 to draw line at start of first section
-				sectionsPosX[i+1] = p.edgeInset + math.round(trueW / p.numRoomsX) * i
+				sectionsPosX[i+1] = p.edgeInset + math.round((trueW / p.numRoomsX) * i)
 			end
 			for i = 0, p.numRoomsY do
-				sectionsPosY[i+1] = p.edgeInset + math.round(trueH / p.numRoomsY) * i
+				sectionsPosY[i+1] = p.edgeInset + math.round((trueH / p.numRoomsY) * i)
 			end
 			--visualise the cuts
 			for i = 1, #sectionsPosX do
@@ -170,7 +171,7 @@
 				self.roomStore[i]:makeDoors()
 			end
 		elseif (self.frame == 8) then
-			--self:setFinalMapColours()
+			self:setFinalMapColours()
 		else
 			Runtime:removeEventListener( "enterFrame", self.onFrameRef )
 		end
@@ -296,7 +297,7 @@
 						else dim = "y" end
 						print("room has "..#potentials.." potential door tiles on side "..direction)
 						print("neighbour has "..#nPotentials.." potential door tiles on side "..oppositeDir)
-						if (#nPotentials > 0) then --neighbour has potential wall tiles
+						if (#potentials > 0 and #nPotentials > 0) then --neighbour has potential wall tiles
 							local pos = potentials[1][dim] --bounds of wall tiles
 							local pos2 = potentials[#potentials][dim]
 							local nPos = nPotentials[1][dim] --bounds of neighbour wall tiles
