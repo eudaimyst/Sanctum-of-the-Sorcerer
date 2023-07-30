@@ -5,6 +5,7 @@
 	-----------------------------------------------------------------------------------------
 
 	--common modules
+	local util = require("lib.global.utilities")
 	local saveload = require( "lib.map.saveload")
 
 	local defaultTileset = { --collision data is saved in map data
@@ -27,6 +28,9 @@
 
 	-- include json for save/loading map
 	map.params = { width = 10, height = 10, tileStore = {}, tileSize = 128, tileset = defaultTileset }
+	map.worldWidth, map.worldHeight = map.params.width * map.params.tileSize, map.params.height * map.params.tileSize
+	map.centerX, map.centerY = map.worldWidth/2, map.worldHeight/2
+
 	map.imageLocation = "content/map/"
 
 
@@ -58,6 +62,7 @@
 				print("creating rect for tile id: "..self.id.. " with image "..image)
 				self.rect = display.newImageRect( map.group, self.imageFile, tileSize, tileSize )
 				self.rect.x, self.rect.y = self.worldX, self.worldY
+				util.zeroAnchors(self.rect)
 			end
 			tile:createRect()
 
@@ -85,11 +90,12 @@
 		print("loading map in map.lua")
 		local width, height, level, tileData = saveload.load("level")
 		self.params.width, self.params.height = width, height
+		self.worldWidth, self.worldHeight = self.params.width * self.params.tileSize, self.params.height * self.params.tileSize
+		self.centerX, self.centerY = self.worldWidth/2, self.worldHeight/2
 		self:createMapTiles(tileData)
 	end
 
 	function map:init()
-
 	end
 
 	function map:onFrame() --called from game or level editor on frame

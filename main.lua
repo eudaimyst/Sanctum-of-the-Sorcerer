@@ -14,4 +14,5 @@ local composer = require "composer"
 
 -- load menu screen
 --composer.gotoScene( "scenes.sc_menu" ) --skip menu for today
-composer.gotoScene( "scenes.sc_map_generator" )
+--composer.gotoScene( "scenes.sc_map_generator" )
+composer.gotoScene( "scenes.sc_level_editor" )

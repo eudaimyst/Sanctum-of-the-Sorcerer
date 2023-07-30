@@ -5,66 +5,53 @@
 	-----------------------------------------------------------------------------------------
 
 	--common modules
-	local util = require("lib.global.utilities")
 
 	-- Define module
-	local M = {}
+	local cam = {}
+	local cameraModes = { follow = {}, free = {} }
+	local map = nil --set by init function
+	local halfScreenWidth, halfScreenHeight = display.contentWidth / 2, display.contentHeight / 2
 
-	--M.zoomFactor = 1 --zoom factor, smaller zooms out, makes tiles smaller
-	M.pos = { x = 0, y = 0 } --camera position in world co-ords, centered on middle of screen
-	M.moveDelta = { x = 0, y = 0 } --per frame movement delta
-	M.smoothDeltas = {}
-	M.smoothDeltaFrames = 30
-	M.multiplier = 0 --per frame delta * moveSpeed to prevent duplicate calculations
-	M.extents = { x = 1920, y = 1080 } --extents of camera, x y dimensions of scene in world co-ords
-	M.halfExtents = { x = M.extents.x / 2, y = M.extents.y / 2 } --extents of camera, x y dimensions of scene in world co-ords
-	M.coords = { x1 = 0, x2 = 0, y1 = 0, y2 = 0 } --world positions of camera 4 corners, top left and bottom right, gets set on move
+	cam.bounds = {x1 = 0, y1 = 0, x2 = 0, y2 = 0}
+	cam.midPoint = {x = 0, y = 0}
+	cam.zoom = 1
+	cam.mode = cameraModes.free
+	cam.target = nil
 
-	M.moveTarget = {} --used to store current target so know move speed when moving camera
-
-	local function updateCoords(  ) --called when moving camera to update coord values
-
-		M.coords.x1 = M.pos.x - M.halfExtents.x
-		M.coords.x2 = M.pos.x + M.halfExtents.x
-		M.coords.y1 = M.pos.y - M.halfExtents.y
-		M.coords.y2 = M.pos.y + M.halfExtents.y
-
+	function cam:updateBounds()
+		self.bounds.x1 = self.midPoint.x - halfScreenWidth / self.zoom
+		self.bounds.y1 = self.midPoint.y - halfScreenHeight / self.zoom
+		self.bounds.x2 = self.midPoint.x + halfScreenWidth / self.zoom
+		self.bounds.y2 = self.midPoint.y + halfScreenHeight / self.zoom
 	end
 
-	function M.worldtoscreen (x, y) --takes an x, y in world position and returns its screen position
-		return x - M.coords.x1, y - M.coords.y1
+	function cam:moveToPoint(x, y)
+		self.midPoint.x = x
+		self.midPoint.y = y
+		self:updateBounds()
 	end
 
-	function M.init( )
+	function cam:directionalMove(direction)
+		self.midPoint.x = self.midPoint.x + direction.x
+		self.midPoint.y = self.midPoint.y + direction.y
+	end
 
-		for i = 0, M.smoothDeltaFrames do
-			M.smoothDeltas[i] = { x = 0, y = 0}
+	function cam.setMode(modeStr, target)
+		if modeStr == "follow" then
+			cam.mode = cameraModes.follow
+			cam.target = target
+		elseif modeStr == "free" then
+			cam.mode = cameraModes.free
+			cam.target = nil
+		else debug:error("camera.setMode: modeStr not recognised")
 		end
+	end
+
+	function cam.init(_map)
+		map = _map
+		cam:moveToPoint(map.centerX, map.centerY)
 
 	end
 
-	function M.moveCamera() --target to get move speed and direction to move
 
-		updateCoords()
-
-	end
-
-	function M.setPos(pos) --set position of camera to passed table {x, y}
-
-		M.moveDelta.x, M.moveDelta.y = pos.x - M.pos.x, pos.y - M.pos.y
-		M.pos.x, M.pos.y = pos.x, pos.y --add half to passed position to center camera
-
-		updateCoords()
-	end
-
-	function M.onFrame(  )
-
-		M.moveCamera()
-
-	    debug.updateText("camCoords", math.round(M.coords.x1)..", "..math.round(M.coords.y1))
-	    debug.updateText("camPos", math.round(M.pos.x)..", "..math.round(M.pos.y))
-	    debug.updateText("camDelta", math.round(M.moveDelta.x * 10) / 10 ..", "..math.round(M.moveDelta.y * 10) / 10 )
-
-	end
-
-	return M
+	return cam

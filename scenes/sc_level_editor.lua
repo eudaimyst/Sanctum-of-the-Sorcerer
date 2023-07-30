@@ -16,22 +16,24 @@
 	local map = require("lib.map")
 	local mouse = require("lib.input.mouse_input")
 	local key = require("lib.input.key_input")
+	local cam = require("lib.camera")
 
 	--create scene
 	local scene = composer.newScene()
 	local sceneGroup
+	
+	local function loadMap()
+		print("load map pressed")
+		map:loadMap()
+	end
+
+	local function saveMap()
+		print("save map pressed")
+		--map:saveMap()
+	end
 
 	local function firstFrame()
 
-		local function loadMap()
-			print("load map pressed")
-			map:loadMap()
-		end
-
-		local function saveMap()
-			print("save map pressed")
-			--map:saveMap()
-		end
 		local function updateFilename()
 		end
 
@@ -50,6 +52,7 @@
 
 		mouse.init() -- registers the mouse on frame event
 		key.init()
+		cam.init(map)
 	end
 
 	local function onFrame()

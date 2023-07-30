@@ -7,16 +7,16 @@
 	-- Define module
 	local M = {}
 
-	--x and y and facing in degrees values for moving entities 
+	--x and y and angle in degrees values for moving things 
 	M.move = {
-		up = {x = 0, y = -1, facing = 270},
-		upRight = {x = .666, y = -.666, facing = 315},
-		right = {x = 1, y = 0, facing = 0},
-		downRight = {x = .666,y = .666, facing = 45},
-		down = {x = 0,y = 1, facing = 90},
-		downLeft = {x = -.666,y = .666, facing = 135},
-		left = {x = -1,y = 0, facing = 180},
-		upLeft = {x = -.666,y = -.666, facing = 225}
+		up = {x = 0, y = -1, angle = 270},
+		upRight = {x = .666, y = -.666, angle = 315},
+		right = {x = 1, y = 0, angle = 0},
+		downRight = {x = .666,y = .666, angle = 45},
+		down = {x = 0,y = 1, angle = 90},
+		downLeft = {x = -.666,y = .666, angle = 135},
+		left = {x = -1,y = 0, angle = 180},
+		upLeft = {x = -.666,y = -.666, angle = 225}
 	}
 
 	--strings used when leading images, part of filenames
