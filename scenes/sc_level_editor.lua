@@ -19,6 +19,7 @@
 	local mouse = require("lib.input.mouse_input")
 	local key = require("lib.input.key_input")
 	local cam = require("lib.camera")
+	local debug = require("lib.debug")
 
 	--create scene
 	local scene = composer.newScene()
@@ -49,14 +50,16 @@
 			print("init cam debug")
 			map:createMapTiles(nil, camDebugTileSize, true)
 			camDebugRect = display.newRect(sceneGroup, 0, 0, 1, 1)
-			camDebugRect:setFillColor(1, .3, .3, .5)
+			util.zeroAnchors(camDebugRect)
+			camDebugRect:setFillColor(1, 1, .2, .5)
 
-			function camDebugRect:updatePos()
+			function camDebugRect:updatePos() --called from movemap when camDebugMode is enabled
 				local cb = cam.bounds
 				local scaledCB = {}
-				for k, v in pairs(cb) do
+				for k, v in pairs(cb) do --scales the cam bounds to the camDebugTileSize
 					scaledCB[k] = v / camDebugScale
 				end
+				--moves the rect to the scaled cam bounds
 				camDebugRect.x, camDebugRect.y, camDebugRect.width, camDebugRect.height = scaledCB.x1, scaledCB.y1, scaledCB.x2 - scaledCB.x1, scaledCB.y2 - scaledCB.y1
 			end
 			camDebugRect:updatePos()
@@ -85,8 +88,11 @@
 
 
 	local function moveMap(direction) --called by keyinput lib
-		print("moveMap called")
+		--print("moveMap called")
 		if (#map.tileStore.indexedTiles > 0) then
+			
+			debug.updateText( "camBoundMin", math.floor(cam.bounds.x1)..","..math.floor(cam.bounds.y1) )
+			debug.updateText( "camBoundMax", math.floor(cam.bounds.x2)..","..math.floor(cam.bounds.y2) )
       
 			cam:directionalMove(direction) --call function to update cam co-ords
 			if (camDebugMode) then --do not translate tiles if in cam debug mode
@@ -131,6 +137,7 @@
 		}
 		local editWindow = editor.createWindow( editWindowParams, sceneGroup )
 
+		debug.init(sceneGroup)
 		mouse.init() -- registers the mouse on frame event
 		key.init()
 		key.registerMoveListener(moveMap)
@@ -142,6 +149,7 @@
 	end
 
 	local function onFrame()
+		--print(cam.bounds.x1..","..cam.bounds.y1.."||"..cam.bounds.x2..","..cam.bounds.y2)
 
 	end
 

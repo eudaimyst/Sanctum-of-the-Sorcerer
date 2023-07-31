@@ -11,51 +11,22 @@
 	local cam = require("lib.camera")
 
 	-- Define module
-	local M = {}
+	local debug = {}
 
 	local debugGroup = {} --stores display group
 
 	local debugEnabled = false --whether or not to show debugUI
 	local debugCam = false
 
-	M.lineStore = {} --stores all debug lines to be drawn per frame
-	M.lineStoreCounter = 0
+	local sceneGroup
+
 	local lineTimer = 0
-
-	M.debugTextStore = {} --stores all debug texts so they can be updated
-	M.debugTextStoreCounter = 0
-
-	M.regTextStore = nil --stores references to variables that are updated to debugText on update
-	M.regTextStoreCounter = 0
-
-	M.drawLine = function ( x1, y1, x2, y2, r, g, b, a, w, timerLength )
-
-		if (debugEnabled) then --don't add any lines to store if debug is off
-			--set defaults, need positions but rest is white or width of 1
-			local r = r or 1
-			local g = g or 1
-			local b = b or 1
-			local a = a or 1
-			local w = w or 1
-			local timerLength = timerLength or 0
-			--create an object that holds line properties
-			local debugLine = 	{ x1 = x1, y1 = y1, x2 = x2, y2 = y2, r = r, g = g, b = b, a = a, w = w, --position, colour and width
-									timerLength = timerLength, timer = 0, displayLine = nil } --timer variables
-
-			debugLine.id = M.lineStoreCounter --set an id for debugLine so can remove from store
-			M.lineStore[M.lineStoreCounter] = debugLine --store line for future reference
-
-			M.lineStoreCounter = M.lineStoreCounter + 1 --increase counter for next line
-		end
-
-		return true
-	end
 
 	local function updateLines() --called from onFrame if debug enabled
 
 		lineTimer = lineTimer + util.frameDeltaTime --increase local timer
 
-		for k, debugLine in pairs ( M.lineStore ) do --for each line in store
+		for k, debugLine in pairs ( debug.lineStore ) do --for each line in store
 			--print(k, debugLine)
 
 			if ( debugLine.displayLine ) then --check if line has been drawn
@@ -68,7 +39,7 @@
 				if ( debugLine.timer  > debugLine.timerLength ) then --if timer has been passed
 					debugLine.displayLine:removeSelf( )
 					debugLine.displayLine = nil
-					M.lineStore[debugLine.id] = nil
+					debug.lineStore[debugLine.id] = nil
 				end
 
 			else
@@ -87,8 +58,8 @@
 		width = width or 100
 		height = height or 50
 		posX = posX or display.contentWidth - width - 20
-		posY = posY or display.contentHeight - height - 20 - ((height + 20) * M.debugTextStoreCounter)
-		label = label or ("debug"..tostring(M.debugTextStoreCounter))
+		posY = posY or display.contentHeight - height - 20 - ((height + 20) * debug.debugTextStoreCounter)
+		label = label or ("debug"..tostring(debug.debugTextStoreCounter))
 		value = value or "value"
 
 		local debugText = { labelRect = nil, valueRect = nil, bg = nil, group = nil}
@@ -125,44 +96,103 @@
 		debugText.valueRect.x = 5
 		debugText.valueRect.y = debugText.labelRect.contentHeight
 
-		M.debugTextStore[M.debugTextStoreCounter] = debugText
-		debugText.id = M.debugTextStoreCounter --set an ID so can remove from store
+		debug.debugTextStore[debug.debugTextStoreCounter] = debugText
+		debugText.id = debug.debugTextStoreCounter --set an ID so can remove from store
 
-		M.debugTextStoreCounter = M.debugTextStoreCounter + 1
+		debug.debugTextStoreCounter = debug.debugTextStoreCounter + 1
 
 		return debugText
 	end
 
-	M.fpsDisplay = {}
+	local function updateRegText()
 
-	function M.createFps()
-		M.fpsDisplay = createDebugText( "fps", "init", 0, 600, 100, 50 )
-	end
-	function M.updateFps(fps)
-		if (M.fpsDisplay) then
-			M.fpsDisplay:updateValue(fps)
+		while (debug.regTextStoreCounter > debug.debugTextStoreCounter) do --there is debugText object that can display text
+			createDebugText() --make new debugText to hold object
+		end
+		local i = 0
+		for k, register in pairs(debug.regTextStore) do --for each registered text
+			--print("registers: "..register.label)
+			if (register.label ~= debug.debugTextStore[i].labelRect.text) then
+				debug.debugTextStore[i]:updateLabel(register.label)
+			end
+			if (register.value ~= debug.debugTextStore[i].valueRect.text) then
+				debug.debugTextStore[i]:updateValue(register.value)
+			end
+			i = i + 1
 		end
 	end
 
-	function M.updateText( newLabel, newValue )
+	local function onFrame() --called every frame from event listener
+		if (debugEnabled) then 
+			--print("debug enabled")
+			updateRegText()
+			updateLines()
+		end
+	end
+	
+	debug.lineStore = {} --stores all debug lines to be drawn per frame
+	debug.lineStoreCounter = 0
 
-		--print("update debug text: ", newLabel, newValue)
+	debug.debugTextStore = {} --stores all debug texts so they can be updated
+	debug.debugTextStoreCounter = 0
+
+	debug.regTextStore = nil --stores references to variables that are updated to debugText on update
+	debug.regTextStoreCounter = 0
+	
+	debug.fpsDisplay = {}
+
+	function debug.drawLine( x1, y1, x2, y2, r, g, b, a, w, timerLength )
+
+		if (debugEnabled) then --don't add any lines to store if debug is off
+			--set defaults, need positions but rest is white or width of 1
+			local r = r or 1
+			local g = g or 1
+			local b = b or 1
+			local a = a or 1
+			local w = w or 1
+			local timerLength = timerLength or 0
+			--create an object that holds line properties
+			local debugLine = 	{ x1 = x1, y1 = y1, x2 = x2, y2 = y2, r = r, g = g, b = b, a = a, w = w, --position, colour and width
+									timerLength = timerLength, timer = 0, displayLine = nil } --timer variables
+
+			debugLine.id = debug.lineStoreCounter --set an id for debugLine so can remove from store
+			debug.lineStore[debug.lineStoreCounter] = debugLine --store line for future reference
+
+			debug.lineStoreCounter = debug.lineStoreCounter + 1 --increase counter for next line
+		end
+
+		return true
+	end
+
+	function debug.createFps()
+		debug.fpsDisplay = createDebugText( "fps", "init", 0, 600, 100, 50 )
+	end
+	
+	function debug.updateFps(fps)
+		if (debug.fpsDisplay) then
+			debug.fpsDisplay:updateValue(fps)
+		end
+	end
+
+	function debug.updateText( newLabel, newValue )
+
+		--print("update debug text: ", newLabel, newValue) 
 		local i = 0
 
 		local function createRegister()
-			--print("making new register")
+			print("making new register")
 			local register = { label = newLabel, value = newValue } --make new register
-			if (M.regTextStore == nil) then M.regTextStore = {} end
-			M.regTextStore[M.regTextStoreCounter] = register --add register in store
+			if (debug.regTextStore == nil) then debug.regTextStore = {} end
+			debug.regTextStore[debug.regTextStoreCounter] = register --add register in store
 
 
-			M.regTextStoreCounter = M.regTextStoreCounter + 1 --increase counter for store
+			debug.regTextStoreCounter = debug.regTextStoreCounter + 1 --increase counter for store
 		end
-		--print(M.regTextStore)
+		--print(debug.regTextStore)
 
-		if (M.regTextStore) then --store has registers in it
+		if (debug.regTextStore) then --store has registers in it
 			local foundReg = false --whether regText is found in loop
-			for k, register in pairs(M.regTextStore) do --check for registers that already exist
+			for k, register in pairs(debug.regTextStore) do --check for registers that already exist
 				if (register.label == newLabel) then --register exists for this label
 					--print("register exists for this label, not making")
 					foundReg = true
@@ -173,82 +203,59 @@
 				createRegister()
 			end
 		else
-			--print("no registers at all")
+			print("no registers at all")
 			createRegister() --create first register
 		end
 	end
 
-	local function updateRegText()
-
-		while (M.regTextStoreCounter > M.debugTextStoreCounter) do --there is debugText object that can display text
-			createDebugText() --make new debugText to hold object
-		end
-		local i = 0
-		for k, register in pairs(M.regTextStore) do --for each registered text
-			--print("registers: "..register)
-			if (register.label ~= M.debugTextStore[i].labelRect.text) then
-				M.debugTextStore[i]:updateLabel(register.label)
-			end
-			if (register.value ~= M.debugTextStore[i].valueRect.text) then
-				M.debugTextStore[i]:updateValue(register.value)
-			end
-			i = i + 1
-		end
-	end
-
-
-	function M.onFrame() --called every frame from onFrame event from scene
-
-		if (debugEnabled) then 
-			updateRegText()
-			updateLines()
-		end
-	end
-
-	function M.showUI() --called from toggleUI
+	function debug.showUI() --called from toggleUI
 		for i = 0, 0 do
 			createDebugText()
 		end
 	end
 
-	function M.hideUI() --called from toggleUI
+	function debug.hideUI() --called from toggleUI
 		print(debugGroup.numChildren.." debug group children remove")
 
-		for k, debugLine in pairs(M.lineStore) do
+		for k, debugLine in pairs(debug.lineStore) do
 			display.remove(debugLine.displayLine)
 			debugLine.displayLine = nil
-			M.lineStore[debugLine.id] = nil
+			debug.lineStore[debugLine.id] = nil
 		end
 
-		for k, debugText in pairs(M.debugTextStore) do
+		for k, debugText in pairs(debug.debugTextStore) do
 			display.remove(debugText.group)
 			debugText.group = nil
-			M.debugTextStore[debugText.id] = nil
+			debug.debugTextStore[debugText.id] = nil
 		end
 
-		M.lineStore = {} --stores all debug lines to be drawn per frame
-		M.lineStoreCounter = 0
+		debug.lineStore = {} --stores all debug lines to be drawn per frame
+		debug.lineStoreCounter = 0
 
-		M.debugTextStore = {}
-		M.debugTextStoreCounter = 0
+		debug.debugTextStore = {}
+		debug.debugTextStoreCounter = 0
 	end
 
-	function M.toggleUI() --called from keyinput
+	function debug.toggleUI() --called from keyinput
 		if (debugEnabled) then 
 			debugEnabled = false
-			M.hideUI()
+			debug.hideUI()
+			sceneGroup:remove(debugGroup)
+			sceneGroup:insert(debugGroup)
 		else
 			debugEnabled = true
-			M.showUI()
+			debug.showUI()
+			sceneGroup:remove(debugGroup)
+			sceneGroup:insert(debugGroup)
 		end
 	end
 
-	function M.createGroup() --called once from scene
-
+	function debug.init(_sceneGroup) --called once from scene
 		print("debugGroup made")
+		sceneGroup = _sceneGroup
 		debugGroup = display.newGroup( )
-		return debugGroup
 
+		Runtime:addEventListener( "enterFrame", onFrame )
 	end
 
-	return M
+	return debug

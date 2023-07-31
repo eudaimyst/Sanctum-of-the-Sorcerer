@@ -12,8 +12,8 @@
 	local cameraModes = { follow = {}, free = {} }
 	local halfScreenWidth, halfScreenHeight = display.contentWidth / 2, display.contentHeight / 2
 
-	cam.bounds = {x1 = 0, y1 = 0, x2 = 0, y2 = 0}
-	cam.midPoint = {x = 0, y = 0}
+	cam.bounds = {x1 = 0, y1 = 0, x2 = display.contentWidth, y2 = display.contentHeight}
+	cam.midPoint = {x = halfScreenWidth, y = halfScreenHeight}
 	cam.delta = {x = 0, y = 0}
 	cam.zoom = 1
 	cam.mode = cameraModes.free
