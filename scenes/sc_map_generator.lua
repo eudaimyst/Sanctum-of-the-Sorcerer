@@ -11,7 +11,7 @@
 	local mapgen = require("lib.map.generator")
 	local mouse = require("lib.input.mouse_input")
 	local key = require("lib.input.key_input")
-	local saveload = require("lib.map.saveload")
+	local fileio = require("lib.map.fileio")
 
 	--create the scene
 	local scene = composer.newScene()
@@ -81,7 +81,7 @@
 		end
 
 		local function saveMap()
-			saveload.save(mapgen.params.width, mapgen.params.height, mapgen.tileStore.indexedTiles, mapgen.params.level, "test_filename")
+			fileio.save(mapgen.params.width, mapgen.params.height, mapgen.tileStore.indexedTiles, mapgen.params.level, "test_filename")
 		end
 
 		--[[

@@ -1,15 +1,15 @@
 	-----------------------------------------------------------------------------------------
 	--
-	-- map/saveload.lua --for loading and saving map files
+	-- map/fileio.lua --for loading and saving map files
 	--
 	-----------------------------------------------------------------------------------------
 	-- Common modules
 	local json = require("json") --for encoding/decoding
 
 	-- Define module
-	local saveload = {}
+	local fileio = {}
 
-	function saveload.save(width, height, indexedTileStore, level, _fileName)
+	function fileio.save(width, height, indexedTileStore, level, _fileName)
 		local fileName = _fileName or "level"
 		local tileSet = level.tileset
 		local mapSaveData = { [1] = width, [2] = height, [3] = level.name }
@@ -39,7 +39,7 @@
 	    end
 	end
 
-	function saveload.load(_fileName)
+	function fileio.load(_fileName)
 		local fileName = _fileName or "level"
 		local fileDir = system.pathForFile(system.ResourceDirectory).."/levels/"
 		local filePath = fileDir..fileName..".json"
@@ -62,4 +62,4 @@
 	    return width, height, level, tileSaveData
 	end
 
-	return saveload
+	return fileio

@@ -6,7 +6,7 @@
 
 	--common modules
 	local util = require("lib.global.utilities")
-	local saveload = require( "lib.map.saveload")
+	local fileio = require( "lib.map.fileio")
 
 	local defaultTileset = { --collision data is saved in map data
 		[1] = {name = "void", savestring = "v", image = "void.png"},
@@ -88,7 +88,7 @@
 
 	function map:loadMap()
 		print("loading map in map.lua")
-		local width, height, level, tileData = saveload.load("level")
+		local width, height, level, tileData = fileio.load("level")
 		self.params.width, self.params.height = width, height
 		self.worldWidth, self.worldHeight = self.params.width * self.params.tileSize, self.params.height * self.params.tileSize
 		self.centerX, self.centerY = self.worldWidth/2, self.worldHeight/2
