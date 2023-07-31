@@ -16,6 +16,7 @@
 	local debugGroup = {} --stores display group
 
 	local debugEnabled = false --whether or not to show debugUI
+	local debugCam = false
 
 	M.lineStore = {} --stores all debug lines to be drawn per frame
 	M.lineStoreCounter = 0

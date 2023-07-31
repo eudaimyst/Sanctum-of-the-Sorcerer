@@ -11,6 +11,7 @@
 
 	--common modules
 	local gc = require("lib.global.constants")
+	local gv = require("lib.global.variables")
 	local util = require("lib.global.utilities")
 	local editor = require("lib.editor")
 	local map = require("lib.map")
@@ -21,6 +22,8 @@
 	--create scene
 	local scene = composer.newScene()
 	local sceneGroup
+
+	local camDebugMode = false
 	
 	local function loadMap()
 		print("load map pressed")
@@ -33,33 +36,54 @@
 		--map:saveMap()
 	end
 
+	local function initCamDebug()
+		if (map:clear()) then
+			print("clearing map")
+			map:createMapTiles(nil, 10)
+		end
+	end
+
+	local function endCamDebug()
+
+	end
+
+	local function  toggleDebugCam() --function used to debug camera movement on the map tiles --called by key input
+		if (camDebugMode == false) then
+			camDebugMode = true
+			initCamDebug()
+			
+		else
+			camDebugMode = false
+			endCamDebug()
+		end
+	end
+
 	local function moveMap(direction) --called by keyinput lib
 		print("moveMap called")
 		if (#map.tileStore.indexedTiles > 0) then
       
 			cam:directionalMove(direction) --call function to update cam co-ords
+			if (camDebugMode) then --do not translate tiles if in cam debug mode
+				--
 
-			--[[move all tiles in map - works!
-			for i = 1, #map.tileStore.indexedTiles do
+			else	
+				for i = 1, #map.tileStore.indexedTiles do --translates all tiles in the maps tileStore	
+					local tile = map.tileStore.indexedTiles[i]
+					tile:translate(-cam.delta.x, -cam.delta.y) --move tiles the opposite direction camera is moving 
+				end
 				
-				local tile = map.tileStore.indexedTiles[i]
-				--tile.rect.isVisible = true --make cam tiles visible
-				tile:translate(-cam.delta.x, -cam.delta.y) --move tiles the opposite direction camera is moving
-				--tile:createRect() 
+				--[[
+				print(cam.bounds.x1, cam.bounds.y1, cam.bounds.x2, cam.bounds.y2)
+				local camTiles = map:getTilesBetweenWorldBounds(cam.bounds.x1, cam.bounds.y1, cam.bounds.x2, cam.bounds.y2) --get cam tiles within world bounds
+				print(#camTiles.." found between bounds: "..cam.bounds.x1..", "..cam.bounds.y1.." AND "..cam.bounds.x2..", "..cam.bounds.y2)
+				for i = 1, #camTiles do
+					
+					local tile = camTiles[i]
+					--tile.rect.isVisible = true --make cam tiles visible
+					tile:translate(-cam.delta.x, -cam.delta.y)
+					--tile:createRect() 
+				end ]]
 			end
-			]]
-			
-			
-			print(cam.bounds.x1, cam.bounds.y1, cam.bounds.x2, cam.bounds.y2)
-			local camTiles = map:getTilesBetweenWorldBounds(cam.bounds.x1, cam.bounds.y1, cam.bounds.x2, cam.bounds.y2) --get cam tiles within world bounds
-			print(#camTiles.." found between bounds: "..cam.bounds.x1..", "..cam.bounds.y1.." AND "..cam.bounds.x2..", "..cam.bounds.y2)
-			for i = 1, #camTiles do
-				
-				local tile = camTiles[i]
-				--tile.rect.isVisible = true --make cam tiles visible
-				tile:translate(-cam.delta.x, -cam.delta.y)
-				--tile:createRect() 
-			end 
 		
 		else
 			print("no map to move")
@@ -85,7 +109,8 @@
 		mouse.init() -- registers the mouse on frame event
 		key.init()
 		key.registerMoveListener(moveMap)
-		cam.init(map)
+		key.registerDebugCamListener(toggleDebugCam)
+		cam.init()
 	end
 
 	local function onFrame()

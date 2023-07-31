@@ -25,11 +25,9 @@
 
 	map.tileStore = { tileRows = {}, tileCols = {}, indexedTiles = {}} --set by loadMap
 	map.startTileID = 0 --tile for character to start on, accessed by game loadMap
+	map.tileData = {}
 
-	-- include json for save/loading map
 	map.params = { width = 10, height = 10, tileStore = {}, tileSize = 128, tileset = defaultTileset }
-	map.worldWidth, map.worldHeight = map.params.width * map.params.tileSize, map.params.height * map.params.tileSize
-	map.centerX, map.centerY = map.worldWidth/2, map.worldHeight/2
 
 	map.imageLocation = "content/map/"
 
@@ -37,6 +35,27 @@
 		local x, y = math.round(_x / map.params.tileSize), math.round(_y / map.params.tileSize)
 		print("worldPointToTileCoords: ".._x.." = "..x..", ".._y.." = "..y)
 		return x, y
+	end
+
+	function map:clear()
+		local ts = self.tileStore --readability
+		for i = 1, #ts.indexedTiles do
+			print("clearing tile: "..i)
+			local tile = ts.indexedTiles[i]
+			ts.tileRows[tile.y][tile.x] = nil
+			ts.tileCols[tile.x][tile.y] = nil
+			if (tile.rect) then
+				tile.rect:removeSelf()
+			end
+			ts.indexedTiles[i] = nil
+		end
+		for i = 1, #ts.tileRows do
+			ts.tileRows[i] = nil
+		end
+		for i = 1, #ts.tileCols do
+			ts.tileCols[i] = nil
+		end
+		return true
 	end
 
 	function map:getTilesBetweenWorldBounds(x1, y1, x2, y2) --takes bounds in world position and returns table of tiles
@@ -54,17 +73,23 @@
 		return tileList
 	end
 
-	function map:createMapTiles(tileData) --called by editor/map, creates all tile objects for maps
+	function map:createMapTiles(_tileData, _tileSize) --called by editor/map, creates all tile objects for maps, tileData = optional map data, tileSize = optional force tile size in pixels
+		print("create map tiles called")
+		
+		local tileData = _tileData or self.tileData
+		local tileSize = _tileSize or self.params.tileSize
+		print("tileData length: "..#tileData)
 
-		local width, height, tileSize, tileset, fileName = self.params.width, self.params.height, self.params.tileSize, self.params.tileset, "level"
+		local width, height, tileset = self.params.width, self.params.height, self.params.tileset --set local vars for readability
+		
+		self.worldWidth, self.worldHeight = self.params.width * self.params.tileSize, self.params.height * self.params.tileSize
+		self.centerX, self.centerY = self.worldWidth/2, self.worldHeight/2
 
 		local function createTile(x, y, i) --new tile constructor
-
 			local tile = {}
 			tile.id, tile.x, tile.y = i, x, y --tile.x = tile column, tile.y = tile row
 			--tile screen pos is exclusively accessed through its rect
 			tile.world = { x = x * tileSize, y = y * tileSize }
-
 			local image
 			for j = 1, #defaultTileset do
 				if tileData[i].s == defaultTileset[j].savestring then
@@ -84,7 +109,7 @@
 			end
 
 			function tile:createRect()
-				--print("creating rect for tile id: "..self.id.. " with image "..image)
+				print("creating rect for tile id: "..self.id.. " with image "..image)
 				self.rect = display.newImageRect( map.group, self.imageFile, tileSize, tileSize )
 				self.rect.x, self.rect.y = self.world.x - map.centerX, self.world.y - map.centerY --subtract map centers to center tile rects
 				util.zeroAnchors(self.rect)
@@ -115,10 +140,11 @@
 	function map:loadMap()
 		print("loading map in map.lua")
 		local width, height, level, tileData = fileio.load("level")
-		self.params.width, self.params.height = width, height
-		self.worldWidth, self.worldHeight = self.params.width * self.params.tileSize, self.params.height * self.params.tileSize
-		self.centerX, self.centerY = self.worldWidth/2, self.worldHeight/2
-		self:createMapTiles(tileData)
+		self.params.width, self.params.height = width, height --width and height in tiles
+		self.worldWidth, self.worldHeight = self.params.width * self.params.tileSize, self.params.height * self.params.tileSize --width and height in pixels
+		self.centerX, self.centerY = self.worldWidth/2, self.worldHeight/2 --stores center of map in world coords to move camera to this pos
+		self:createMapTiles(tileData) --call function to create tiles
+		self.tileData = tileData --store tileData to redraw map without reloading
 		print("-----load map complete-----")
 	end
 

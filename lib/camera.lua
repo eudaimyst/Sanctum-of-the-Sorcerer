@@ -10,7 +10,6 @@
 	-- Define module
 	local cam = {}
 	local cameraModes = { follow = {}, free = {} }
-	local map = nil --set by init function
 	local halfScreenWidth, halfScreenHeight = display.contentWidth / 2, display.contentHeight / 2
 
 	cam.bounds = {x1 = 0, y1 = 0, x2 = 0, y2 = 0}
@@ -51,8 +50,7 @@
 		end
 	end
 
-	function cam.init(_map)
-		map = _map
+	function cam.init()
 
 	end
 

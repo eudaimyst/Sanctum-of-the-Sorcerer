@@ -1,4 +1,6 @@
+
 local vars = {}
+
 local prevFrameTime = 0
 
 vars.frame = {dt = 0, dts = 0, fps = 0} --holds all data related to current frame, dt = delta time

@@ -6,12 +6,14 @@
 
 	--common modules
 	local g = require("lib.global.constants")
+	local gv = require("lib.global.variables")
 	local debug = require("lib.debug")
 
 	-- Define module
 	local key = {}
 
-	local moveListeners = {} --functions to be called when movement is processed, registered by scene 
+	local moveListeners = {} --functions to be called when movement is processed, registered by scene
+	local debugCamListener = nil --setfenv by sc_level_editor to pass a function to debug the camera movement in the editor
 
 	key.moveDirection = nil --set by combination of movement keys pressed
 
@@ -72,7 +74,6 @@
 	local function onKeyEvent( event )
 		--print("key pressed")
 		--process input
-
 		if (activeInputField) then
 			local inputType = activeInputField.element.data.inputType
 			local inputKeys --the list of keyNames to compare the input with for the type
@@ -81,7 +82,6 @@
 			else
 				inputKeys = {numberKeys}
 			end
-
 			for i = 1, #inputKeys do
 				local keysToSend = inputKeys[i].keyName--set the default keys to keyname unless overriden
 				if (inputKeys[i].value) then --a seperate table is defined to pass a diff value than keyname
@@ -92,14 +92,12 @@
 						keysToSend = inputKeys[i].capitalValue
 					end
 				end
-
 				for j = 1, #keysToSend do --just pass the keyName
 					if (event.keyName == inputKeys[i].keyName[j] and event.phase == "down") then
 						activeInputField:inputSent(keysToSend[j])
 					end
 				end
 			end
-
 			if (event.keyName == "enter" and event.phase == "down") then activeInputField:inputComplete() end
 			if (event.keyName == "escape" and event.phase == "down") then activeInputField:inputCancel() end
 			if (event.keyName == "deleteBack" and event.phase == "down") then activeInputField:inputDelete() end
@@ -119,6 +117,9 @@
 		    if (event.keyName == "d" and event.phase == "down") then
 				debug.toggleUI()
 		    end
+			if (event.keyName == "c" and event.phase == "down") then
+				debugCamListener()
+			end
 		else
 		    if ((event.keyName == "d" or event.keyName == "right")  and event.phase == "down") then rightPressed = true end
 		    if ((event.keyName == "d" or event.keyName == "right")  and event.phase == "up") then rightPressed = false end
@@ -152,6 +153,9 @@
 
 	function key.registerMoveListener(func) --registers a passed function to be called when input event is called
 		moveListeners[#moveListeners+1] = func
+	end
+	function key.registerDebugCamListener(func)
+		debugCamListener = func
 	end
 
 	function key.init()
