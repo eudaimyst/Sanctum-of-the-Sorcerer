@@ -73,7 +73,7 @@
 		return tileList
 	end
 
-	function map:createMapTiles(_tileData, _tileSize) --called by editor/map, creates all tile objects for maps, tileData = optional map data, tileSize = optional force tile size in pixels
+	function map:createMapTiles(_tileData, _tileSize, camDebug) --called by editor/map, creates all tile objects for maps, tileData = optional map data, tileSize = optional force tile size in pixels
 		print("create map tiles called")
 		
 		local tileData = _tileData or self.tileData
@@ -82,7 +82,7 @@
 
 		local width, height, tileset = self.params.width, self.params.height, self.params.tileset --set local vars for readability
 		
-		self.worldWidth, self.worldHeight = self.params.width * self.params.tileSize, self.params.height * self.params.tileSize
+		self.worldWidth, self.worldHeight = self.params.width * tileSize, self.params.height * tileSize
 		self.centerX, self.centerY = self.worldWidth/2, self.worldHeight/2
 
 		local function createTile(x, y, i) --new tile constructor
@@ -109,9 +109,13 @@
 			end
 
 			function tile:createRect()
-				print("creating rect for tile id: "..self.id.. " with image "..image)
+				--print("creating rect for tile id: "..self.id.. " with image "..image)
 				self.rect = display.newImageRect( map.group, self.imageFile, tileSize, tileSize )
-				self.rect.x, self.rect.y = self.world.x - map.centerX, self.world.y - map.centerY --subtract map centers to center tile rects
+				if (camDebug) then 
+					self.rect.x, self.rect.y = self.world.x + map.centerX, self.world.y --subtract map centers to center tile rects
+				else
+					self.rect.x, self.rect.y = self.world.x - map.centerX, self.world.y - map.centerY --subtract map centers to center tile rects
+				end
 				util.zeroAnchors(self.rect)
 				--self.rect.isVisible = false
 			end

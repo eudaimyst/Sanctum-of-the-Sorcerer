@@ -39,12 +39,20 @@
 	local function initCamDebug()
 		if (map:clear()) then
 			print("clearing map")
-			map:createMapTiles(nil, 10)
+			map:createMapTiles(nil, 10, true)
+			for i = 1, #map.tileStore.indexedTiles do
+				local tile = map.tileStore.indexedTiles[i]
+				--print("camDebug Tile Data:") --for debugging why camdebug tiles are not visible
+				--print("tile id: "..tile.id.." x: "..tile.world.x.." y: "..tile.world.y)
+			end
 		end
 	end
 
 	local function endCamDebug()
-
+		if (map:clear()) then
+			print("clearing map")
+			map:createMapTiles(nil, nil, false)
+		end
 	end
 
 	local function  toggleDebugCam() --function used to debug camera movement on the map tiles --called by key input
