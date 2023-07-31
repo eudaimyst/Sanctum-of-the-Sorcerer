@@ -5,6 +5,7 @@
 	-----------------------------------------------------------------------------------------
 
 	--common modules
+	local gv = require("lib.global.variables")
 
 	-- Define module
 	local cam = {}
@@ -14,6 +15,7 @@
 
 	cam.bounds = {x1 = 0, y1 = 0, x2 = 0, y2 = 0}
 	cam.midPoint = {x = 0, y = 0}
+	cam.delta = {x = 0, y = 0}
 	cam.zoom = 1
 	cam.mode = cameraModes.free
 	cam.target = nil
@@ -32,8 +34,10 @@
 	end
 
 	function cam:directionalMove(direction)
-		self.midPoint.x = self.midPoint.x + direction.x
-		self.midPoint.y = self.midPoint.y + direction.y
+		cam.delta.x, cam.delta.y = direction.x * gv.frame.dt, direction.y * gv.frame.dt
+		self.midPoint.x = self.midPoint.x + cam.delta.x
+		self.midPoint.y = self.midPoint.y + cam.delta.y
+		self:updateBounds()
 	end
 
 	function cam.setMode(modeStr, target)
@@ -49,7 +53,6 @@
 
 	function cam.init(_map)
 		map = _map
-		cam:moveToPoint(map.centerX, map.centerY)
 
 	end
 

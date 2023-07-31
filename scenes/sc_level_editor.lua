@@ -10,7 +10,7 @@
 	local easing = require("lib.corona.easing")
 
 	--common modules
-	local g = require("lib.global.constants")
+	local gc = require("lib.global.constants")
 	local util = require("lib.global.utilities")
 	local editor = require("lib.editor")
 	local map = require("lib.map")
@@ -25,6 +25,7 @@
 	local function loadMap()
 		print("load map pressed")
 		map:loadMap()
+		cam:moveToPoint(map.worldWidth / 2, map.worldHeight / 2)
 	end
 
 	local function saveMap()
@@ -32,11 +33,42 @@
 		--map:saveMap()
 	end
 
-	local function firstFrame()
+	local function moveMap(direction) --called by keyinput lib
+		print("moveMap called")
+		if (#map.tileStore.indexedTiles > 0) then
+      
+			cam:directionalMove(direction) --call function to update cam co-ords
 
+			--[[move all tiles in map - works!
+			for i = 1, #map.tileStore.indexedTiles do
+				
+				local tile = map.tileStore.indexedTiles[i]
+				--tile.rect.isVisible = true --make cam tiles visible
+				tile:translate(-cam.delta.x, -cam.delta.y) --move tiles the opposite direction camera is moving
+				--tile:createRect() 
+			end
+			]]
+			
+			
+			print(cam.bounds.x1, cam.bounds.y1, cam.bounds.x2, cam.bounds.y2)
+			local camTiles = map:getTilesBetweenWorldBounds(cam.bounds.x1, cam.bounds.y1, cam.bounds.x2, cam.bounds.y2) --get cam tiles within world bounds
+			print(#camTiles.." found between bounds: "..cam.bounds.x1..", "..cam.bounds.y1.." AND "..cam.bounds.x2..", "..cam.bounds.y2)
+			for i = 1, #camTiles do
+				
+				local tile = camTiles[i]
+				--tile.rect.isVisible = true --make cam tiles visible
+				tile:translate(-cam.delta.x, -cam.delta.y)
+				--tile:createRect() 
+			end 
+		
+		else
+			print("no map to move")
+		end
+	end
+
+	local function firstFrame()
 		local function updateFilename()
 		end
-
 		local t = editor.elementTypes --readability
 		local editWindowSections = { --sections in the settings window that hold elements, uses index for ordering in ui
 			[1] = { label = "Save / Load", collapsable = true, elements = {
@@ -52,6 +84,7 @@
 
 		mouse.init() -- registers the mouse on frame event
 		key.init()
+		key.registerMoveListener(moveMap)
 		cam.init(map)
 	end
 

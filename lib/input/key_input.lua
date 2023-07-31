@@ -9,9 +9,11 @@
 	local debug = require("lib.debug")
 
 	-- Define module
-	local M = {}
+	local key = {}
 
-	M.moveDirection = nil --set by combination of movement keys pressed
+	local moveListeners = {} --functions to be called when movement is processed, registered by scene 
+
+	key.moveDirection = nil --set by combination of movement keys pressed
 
 	local upPressed
 	local downPressed
@@ -31,40 +33,40 @@
 					}
 	local specialKeys = { keyName = {"-", "="},  capitalValue = {"_", "+"} }
 
-	M.scrollValue = nil
-	M.scroll = false
-
-	M.char = nil --can be set during initialisation to call functions in character module
+	key.scrollValue = nil
+	key.scroll = false
+	key.char = nil --can be set during initialisation to call functions in character module
 
 	local function movement()
 	--if certain keys are pressed, set movement variables
 	    if (upPressed and not leftPressed and not downPressed and not rightPressed) then
-			M.moveDirection = g.move.up
+			key.moveDirection = g.move.up
 	    elseif (not upPressed and leftPressed and not downPressed and not rightPressed) then
-			M.moveDirection = g.move.left
+			key.moveDirection = g.move.left
 	    elseif (not upPressed and not leftPressed and downPressed and not rightPressed) then
-			M.moveDirection = g.move.down
+			key.moveDirection = g.move.down
 	    elseif (not upPressed and not leftPressed and not downPressed and rightPressed) then
-			M.moveDirection = g.move.right
+			key.moveDirection = g.move.right
 	    elseif (upPressed and leftPressed and not downPressed and not rightPressed) then
-			M.moveDirection = g.move.upLeft
+			key.moveDirection = g.move.upLeft
 	    elseif (upPressed and not leftPressed and not downPressed and rightPressed) then
-			M.moveDirection = g.move.upRight
+			key.moveDirection = g.move.upRight
 	    elseif (not upPressed and leftPressed and downPressed and not rightPressed) then
-			M.moveDirection = g.move.downLeft
+			key.moveDirection = g.move.downLeft
 	    elseif (not upPressed and not leftPressed and downPressed and rightPressed) then
-			M.moveDirection = g.move.downRight
+			key.moveDirection = g.move.downRight
 	    elseif (upPressed and leftPressed and not downPressed and rightPressed) then
-			M.moveDirection = g.move.up
+			key.moveDirection = g.move.up
 	    elseif (not upPressed and leftPressed and downPressed and rightPressed) then
-			M.moveDirection = g.move.down
+			key.moveDirection = g.move.down
 	    elseif (upPressed and leftPressed and downPressed and not rightPressed) then
-			M.moveDirection = g.move.left
+			key.moveDirection = g.move.left
 	    elseif (upPressed and not leftPressed and downPressed and rightPressed) then
-			M.moveDirection = g.move.right
+			key.moveDirection = g.move.right
 	    else
-			M.moveDirection = nil
+			key.moveDirection = nil
 	    end
+		print("movement key direction: "..tostring(key.moveDirection))
 	end
 
 	local function onKeyEvent( event )
@@ -140,16 +142,30 @@
 	    return false
 	end
 
-	function M.registerInputField(inputField)
+	function key.registerInputField(inputField)
 		activeInputField = inputField
 	end
 
-	function M.deregisterInputField()
+	function key.deregisterInputField()
 		activeInputField = nil
 	end
 
-	function M.init()
+	function key.registerMoveListener(func) --registers a passed function to be called when input event is called
+		moveListeners[#moveListeners+1] = func
+	end
+
+	function key.init()
 		Runtime:addEventListener( "key", onKeyEvent )
 	end
 
-	return M
+	local function onFrame(event) --not sure if want to do this on frame or not
+		if (key.moveDirection) then
+			for i = 1, #moveListeners do
+				moveListeners[i](key.moveDirection) --sends movement direction to each registered listener
+			end
+		end
+	end
+	
+	Runtime:addEventListener( "enterFrame", onFrame )
+
+	return key
