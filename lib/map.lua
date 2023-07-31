@@ -20,6 +20,7 @@
 
 	-- Define module
 	local map = {}
+	local cam = {} --set by init from scene
 
 	map.group = display.newGroup()
 
@@ -111,13 +112,10 @@
 			function tile:createRect()
 				--print("creating rect for tile id: "..self.id.. " with image "..image)
 				self.rect = display.newImageRect( map.group, self.imageFile, tileSize, tileSize )
-				if (camDebug) then 
-					self.rect.x, self.rect.y = self.world.x + map.centerX, self.world.y --subtract map centers to center tile rects
-				else
-					self.rect.x, self.rect.y = self.world.x - map.centerX, self.world.y - map.centerY --subtract map centers to center tile rects
-				end
+
+				self.rect.x, self.rect.y = self.world.x, self.world.y --subtract map centers to center tile rects
+				
 				util.zeroAnchors(self.rect)
-				--self.rect.isVisible = false
 			end
 			tile:createRect()
 
@@ -141,6 +139,13 @@
 		end
 	end
 
+	function map:updateTilesPos()
+		for i = 1, #self.tileStore.indexedTiles do --translates all tiles in the maps tileStore	
+			local tile = self.tileStore.indexedTiles[i]
+			tile:translate(-cam.bounds.x1, -cam.bounds.y1) --move tiles the opposite direction camera is moving 
+		end
+	end
+
 	function map:loadMap()
 		print("loading map in map.lua")
 		local width, height, level, tileData = fileio.load("level")
@@ -152,8 +157,9 @@
 		print("-----load map complete-----")
 	end
 
-	function map:init()
-
+	function map:init(sceneGroup, _cam)
+		sceneGroup:insert(self.group)
+		cam = _cam
 	end
 
 	function map:onFrame() --called from game or level editor on frame ????

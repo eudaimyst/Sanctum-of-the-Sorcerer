@@ -8,6 +8,7 @@
 	local composer = require("composer")
 	local physics = require("physics")
 	local easing = require("lib.corona.easing")
+	local json = require("json")
 
 	--common modules
 	local gc = require("lib.global.constants")
@@ -23,12 +24,17 @@
 	local scene = composer.newScene()
 	local sceneGroup
 
+	local camDebugRect --holds rect to visualise camera bounds 
+
+
+
 	local camDebugMode = false
 	
 	local function loadMap()
 		print("load map pressed")
 		map:loadMap()
-		cam:moveToPoint(map.worldWidth / 2, map.worldHeight / 2)
+		--cam:moveToPoint(map.worldWidth / 2, map.worldHeight / 2)
+		map:updateTilesPos()
 	end
 
 	local function saveMap()
@@ -38,20 +44,31 @@
 
 	local function initCamDebug()
 		if (map:clear()) then
-			print("clearing map")
-			map:createMapTiles(nil, 10, true)
-			for i = 1, #map.tileStore.indexedTiles do
-				local tile = map.tileStore.indexedTiles[i]
-				--print("camDebug Tile Data:") --for debugging why camdebug tiles are not visible
-				--print("tile id: "..tile.id.." x: "..tile.world.x.." y: "..tile.world.y)
+			local camDebugTileSize = 10
+			local camDebugScale = map.params.tileSize / camDebugTileSize
+			print("init cam debug")
+			map:createMapTiles(nil, camDebugTileSize, true)
+			camDebugRect = display.newRect(sceneGroup, 0, 0, 1, 1)
+			camDebugRect:setFillColor(1, .3, .3, .5)
+
+			function camDebugRect:updatePos()
+				local cb = cam.bounds
+				local scaledCB = {}
+				for k, v in pairs(cb) do
+					scaledCB[k] = v / camDebugScale
+				end
+				camDebugRect.x, camDebugRect.y, camDebugRect.width, camDebugRect.height = scaledCB.x1, scaledCB.y1, scaledCB.x2 - scaledCB.x1, scaledCB.y2 - scaledCB.y1
 			end
+			camDebugRect:updatePos()
 		end
 	end
 
 	local function endCamDebug()
 		if (map:clear()) then
-			print("clearing map")
+			print("end cam debug")
+			camDebugRect:removeSelf()
 			map:createMapTiles(nil, nil, false)
+			map:updateTilesPos()
 		end
 	end
 
@@ -66,14 +83,14 @@
 		end
 	end
 
+
 	local function moveMap(direction) --called by keyinput lib
 		print("moveMap called")
 		if (#map.tileStore.indexedTiles > 0) then
       
 			cam:directionalMove(direction) --call function to update cam co-ords
 			if (camDebugMode) then --do not translate tiles if in cam debug mode
-				--
-
+				camDebugRect:updatePos()
 			else	
 				for i = 1, #map.tileStore.indexedTiles do --translates all tiles in the maps tileStore	
 					local tile = map.tileStore.indexedTiles[i]
@@ -98,7 +115,7 @@
 		end
 	end
 
-	local function firstFrame()
+	local function firstFrame(sceneGroup)
 		local function updateFilename()
 		end
 		local t = editor.elementTypes --readability
@@ -118,7 +135,10 @@
 		key.init()
 		key.registerMoveListener(moveMap)
 		key.registerDebugCamListener(toggleDebugCam)
+		map:init(sceneGroup, cam)
 		cam.init()
+
+		
 	end
 
 	local function onFrame()
@@ -154,7 +174,7 @@
 
 			print("scene loaded")
 
-			firstFrame()
+			firstFrame(sceneGroup)
 
 			--add listerer for every frame to process all game logic
 			Runtime:addEventListener( "enterFrame", onFrame )
