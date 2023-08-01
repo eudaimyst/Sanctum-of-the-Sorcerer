@@ -62,22 +62,32 @@
 
 	function map:getTilesBetweenWorldBounds(x1, y1, x2, y2) --takes bounds in world position and returns table of tiles
 		local boundMin, boundMax = {x = 0, y = 0}, {x = 0, y = 0}
-		boundMin.x, boundMin.y = worldPointToTileCoords(x1, y1)
-		boundMax.x, boundMax.y = worldPointToTileCoords(x2, y2)
-		local boundWidth, boundHeight = boundMax.x - boundMin.x, boundMax.y - boundMin.y
+		boundMin.x, boundMin.y = worldPointToTileCoords(x1-1, y1-1)
+		boundMax.x, boundMax.y = worldPointToTileCoords(x2+1, y2+1)
+		--local boundWidth, boundHeight = boundMax.x - boundMin.x, boundMax.y - boundMin.y
 		local tileList = {}
-		for y = boundMin.y, boundMin.y + boundHeight do
-			for x = boundMin.x, boundMin.x + boundWidth do
-				local tx, ty = math.max(1, x), math.max(1, y)
-				print("getting tile: "..tx..", "..ty.." from tileStore")
-				for k, v in pairs(self.tileStore) do
-					print(k, v)
-				end
+		local boundaryTiles = { up = {}, down = {}, left = {}, right = {} } --tiles on the edge of the bounds
+		for y = boundMin.y, boundMax.y do
+			for x = boundMin.x, boundMax.x do
+				
+				local tx, ty = math.max(1, x), math.max(1, y) --clamp to 1 to prevent looking for tiles outside of map
+				--print("getting tile: "..tx..", "..ty.." from tileStore")
 				local tile = self.tileStore.tileCols[tx][ty]
 				tileList[#tileList+1] = tile
+				
+				if y == boundMin.y then
+					boundaryTiles.up[#boundaryTiles.up+1] = tile
+				elseif y == boundMax.y then
+					boundaryTiles.down[#boundaryTiles.down+1] = tile
+				elseif x == boundMin.x then
+					boundaryTiles.left[#boundaryTiles.left+1] = tile
+				elseif x == boundMax.x then
+					boundaryTiles.right[#boundaryTiles.right+1] = tile
+				end
+
 			end
 		end
-		return tileList
+		return tileList, boundaryTiles
 	end
 
 	function map:createMapTiles(_tileData, _tileSize, camDebug) --called by editor/map, creates all tile objects for maps, tileData = optional map data, tileSize = optional force tile size in pixels
@@ -109,7 +119,7 @@
 
 			function tile:translate(x, y) --translate tile and rect
 				if (self.rect) then
-					self.rect.x, self.rect.y = self.rect.x + x, self.rect.y + y
+					self.rect.x, self.rect.y = self.world.x - cam.bounds.x1 , self.world.y - cam.bounds.y1
 				end
 			end
 

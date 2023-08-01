@@ -51,7 +51,7 @@
 			map:createMapTiles(nil, camDebugTileSize, true)
 			camDebugRect = display.newRect(sceneGroup, 0, 0, 1, 1)
 			util.zeroAnchors(camDebugRect)
-			camDebugRect:setFillColor(1, 1, .2, .5)
+			camDebugRect:setFillColor(1, 1, .2, 0)
 
 			function camDebugRect:updatePos() --called from movemap when camDebugMode is enabled
 				local cb = cam.bounds
@@ -90,6 +90,28 @@
 
 	local function moveMap(direction) --called by keyinput lib
 		--print("moveMap called")
+
+		local function hideTiles(tileList)
+			for i = 1, #tileList do
+				local tile = tileList[i]
+				tile.rect.isVisible = false
+			end
+		end
+
+		local function showTiles(tileList)
+			for i = 1, #tileList do
+				local tile = tileList[i]
+				tile.rect.isVisible = true
+			end
+		end
+
+		local function resetTiles(tileList)
+			for i = 1, #tileList do
+				local tile = tileList[i]
+				tile.rect:setFillColor(1)
+			end
+		end
+
 		if (#map.tileStore.indexedTiles > 0) then
 			
 			debug.updateText( "camBoundMin", math.floor(cam.bounds.x1)..","..math.floor(cam.bounds.y1) )
@@ -99,31 +121,54 @@
 			if (camDebugMode) then --do not translate tiles if in cam debug mode
 				camDebugRect:updatePos()
 				local cb = camDebugRect.scaledCB
-				local camTiles = map:getTilesBetweenWorldBounds(camDebugRect.scaledCB.x1, camDebugRect.scaledCB.y1, camDebugRect.scaledCB.x2, camDebugRect.scaledCB.y2) --get cam tiles within world bounds
+				local camTiles, boundaryTiles = map:getTilesBetweenWorldBounds(cb.x1, cb.y1, cb.x2, cb.y2) --get cam tiles within scaled cam borders
 				--print(#camTiles.." found between bounds: "..cam.bounds.x1..", "..cam.bounds.y1.." AND "..cam.bounds.x2..", "..cam.bounds.y2)
+				
+				if direction.y > 0 then
+					resetTiles(boundaryTiles.up)
+				elseif direction.y < 0 then
+					resetTiles(boundaryTiles.down)
+				end
+				if direction.x > 0 then
+					resetTiles(boundaryTiles.left)
+				elseif direction.x < 0 then
+					resetTiles(boundaryTiles.right)
+				end
 				for i = 1, #camTiles do
-					
 					local tile = camTiles[i]
 					tile.rect:setFillColor(.5, 1, .5)
-					 
+				end 
+				for _, tileList in pairs(boundaryTiles) do
+					for i = 1, #tileList do
+						local tile = tileList[i]
+						tile.rect:setFillColor(1, .5, .5)
+					end
 				end
-			else	
-				for i = 1, #map.tileStore.indexedTiles do --translates all tiles in the maps tileStore	
-					local tile = map.tileStore.indexedTiles[i]
+			else --cam debug not on
+				
+				local cb = cam.bounds
+				local s = map.tileSize
+				local camTiles, boundaryTiles = map:getTilesBetweenWorldBounds( cb.x1-s, cb.y1-s, cb.x2+s, cb.y2+s ) --get cam tiles within scaled cam borders
+				print("translating "..#camTiles.." tiles")
+				for i = 1, #camTiles do
+					local tile = camTiles[i]
 					tile:translate(-cam.delta.x, -cam.delta.y) --move tiles the opposite direction camera is moving 
 				end
 				
-				--[[
-				print(cam.bounds.x1, cam.bounds.y1, cam.bounds.x2, cam.bounds.y2)
-				local camTiles = map:getTilesBetweenWorldBounds(cam.bounds.x1, cam.bounds.y1, cam.bounds.x2, cam.bounds.y2) --get cam tiles within world bounds
-				print(#camTiles.." found between bounds: "..cam.bounds.x1..", "..cam.bounds.y1.." AND "..cam.bounds.x2..", "..cam.bounds.y2)
-				for i = 1, #camTiles do
-					
-					local tile = camTiles[i]
-					--tile.rect.isVisible = true --make cam tiles visible
-					tile:translate(-cam.delta.x, -cam.delta.y)
-					--tile:createRect() 
-				end ]]
+				if direction.y > 0 then
+					hideTiles(boundaryTiles.up)
+					showTiles(boundaryTiles.down)
+				elseif direction.y < 0 then
+					hideTiles(boundaryTiles.down)
+					showTiles(boundaryTiles.up)
+				end
+				if direction.x > 0 then
+					hideTiles(boundaryTiles.left)
+					showTiles(boundaryTiles.right)
+				elseif direction.x < 0 then
+					hideTiles(boundaryTiles.right)
+					showTiles(boundaryTiles.left)
+				end 
 			end
 		
 		else
