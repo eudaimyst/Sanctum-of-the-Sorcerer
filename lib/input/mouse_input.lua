@@ -23,6 +23,8 @@
 	local rayForward
 	local queryHit
 
+	local mouseScrollListener --function to call when mouse is scrolled (set by scene)
+
 	local function checkCollisionPoint()
 		queryHit = physics.queryRegion( M.x, M.y, M.x - 1, M.y - 1 )
 
@@ -166,6 +168,7 @@
 	        if (event.scrollY ~= 0) then
 				M.scroll = true
 				M.scrollValue = event.scrollY
+				mouseScrollListener(event.scrollY)
 	            print( "Mouse is scrolling with a value of "..event.scrollY)
 
 				timer.performWithDelay( 0, mouseScrollComplete )
@@ -219,6 +222,10 @@
 			M.pressed = false --so can check for next click
 			M.delta.x, M.delta.y = 0, 0
 		end
+	end
+
+	function M.registerMouseScrollListener(func)
+		mouseScrollListener = func
 	end
 
 	local function onFrame()

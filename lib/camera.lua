@@ -26,6 +26,15 @@
 		self.bounds.y2 = self.midPoint.y + halfScreenHeight / self.zoom
 	end
 
+	function cam:adjustZoom(zoomIn)
+		if (zoomIn) then
+			self.zoom = self.zoom - 0.1
+		else
+			self.zoom = self.zoom + 0.1
+		end
+		self:updateBounds()
+	end
+
 	function cam:moveToPoint(x, y)
 		self.midPoint.x = x
 		self.midPoint.y = y

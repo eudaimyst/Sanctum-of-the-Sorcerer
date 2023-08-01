@@ -87,6 +87,14 @@
 		end
 	end
 
+	local function zoomMap(scrollValue)
+		local zoomSpeed = 1.1
+		if (scrollValue > 0) then
+			cam:adjustZoom(true)
+		elseif (scrollValue < 0) then
+			cam:adjustZoom(false)
+		end
+	end
 
 	local function moveMap(direction) --called by keyinput lib
 		--print("moveMap called")
@@ -194,6 +202,7 @@
 
 		debug.init(sceneGroup)
 		mouse.init() -- registers the mouse on frame event
+		mouse.registerMouseScrollListener(zoomMap)
 		key.init()
 		key.registerMoveListener(moveMap)
 		key.registerDebugCamListener(toggleDebugCam)
