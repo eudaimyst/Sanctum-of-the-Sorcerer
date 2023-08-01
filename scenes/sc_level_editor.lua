@@ -55,7 +55,8 @@
 
 			function camDebugRect:updatePos() --called from movemap when camDebugMode is enabled
 				local cb = cam.bounds
-				local scaledCB = {}
+				camDebugRect.scaledCB = {}
+				local scaledCB = camDebugRect.scaledCB
 				for k, v in pairs(cb) do --scales the cam bounds to the camDebugTileSize
 					scaledCB[k] = v / camDebugScale
 				end
@@ -97,6 +98,15 @@
 			cam:directionalMove(direction) --call function to update cam co-ords
 			if (camDebugMode) then --do not translate tiles if in cam debug mode
 				camDebugRect:updatePos()
+				local cb = camDebugRect.scaledCB
+				local camTiles = map:getTilesBetweenWorldBounds(camDebugRect.scaledCB.x1, camDebugRect.scaledCB.y1, camDebugRect.scaledCB.x2, camDebugRect.scaledCB.y2) --get cam tiles within world bounds
+				--print(#camTiles.." found between bounds: "..cam.bounds.x1..", "..cam.bounds.y1.." AND "..cam.bounds.x2..", "..cam.bounds.y2)
+				for i = 1, #camTiles do
+					
+					local tile = camTiles[i]
+					tile.rect:setFillColor(.5, 1, .5)
+					 
+				end
 			else	
 				for i = 1, #map.tileStore.indexedTiles do --translates all tiles in the maps tileStore	
 					local tile = map.tileStore.indexedTiles[i]

@@ -33,7 +33,8 @@
 	map.imageLocation = "content/map/"
 
 	local function worldPointToTileCoords(_x, _y) --takes x y in world coords and returns tile coords
-		local x, y = math.round(_x / map.params.tileSize), math.round(_y / map.params.tileSize)
+		--print("map width/height: "..map.worldWidth..", "..map.worldHeight)
+		local x, y = math.floor(_x / map.tileSize), math.floor( _y / map.tileSize)
 		print("worldPointToTileCoords: ".._x.." = "..x..", ".._y.." = "..y)
 		return x, y
 	end
@@ -67,7 +68,12 @@
 		local tileList = {}
 		for y = boundMin.y, boundMin.y + boundHeight do
 			for x = boundMin.x, boundMin.x + boundWidth do
-				local tile = map.tileStore.tileCols[x][y]
+				local tx, ty = math.max(1, x), math.max(1, y)
+				print("getting tile: "..tx..", "..ty.." from tileStore")
+				for k, v in pairs(self.tileStore) do
+					print(k, v)
+				end
+				local tile = self.tileStore.tileCols[tx][ty]
 				tileList[#tileList+1] = tile
 			end
 		end
@@ -82,7 +88,8 @@
 		print("tileData length: "..#tileData)
 
 		local width, height, tileset = self.params.width, self.params.height, self.params.tileset --set local vars for readability
-		
+		self.width, self.height = width, height
+		self.tileSize = tileSize
 		self.worldWidth, self.worldHeight = self.params.width * tileSize, self.params.height * tileSize
 		self.centerX, self.centerY = self.worldWidth/2, self.worldHeight/2
 
@@ -112,13 +119,10 @@
 			function tile:createRect()
 				--print("creating rect for tile id: "..self.id.. " with image "..image)
 				self.rect = display.newImageRect( map.group, self.imageFile, tileSize, tileSize )
-
 				self.rect.x, self.rect.y = self.world.x, self.world.y --subtract map centers to center tile rects
-				
 				util.zeroAnchors(self.rect)
 			end
 			tile:createRect()
-
 			return tile
 		end
 
@@ -126,11 +130,11 @@
 		for i = 1, #tileData do
 			--print(x, y)
 			local tile = createTile(x, y, i)
-			if y == 1 then map.tileStore.tileCols[x] = {} end
-			if x == 1 then map.tileStore.tileRows[y] = {} end
-			map.tileStore.tileCols[x][y] = tile
-			map.tileStore.tileRows[y][x] = tile
-			map.tileStore.indexedTiles[i] = tile
+			if y == 1 then self.tileStore.tileCols[x] = {} end
+			if x == 1 then self.tileStore.tileRows[y] = {} end
+			self.tileStore.tileCols[x][y] = tile
+			self.tileStore.tileRows[y][x] = tile
+			self.tileStore.indexedTiles[i] = tile
 			if x >= width then
 				x, y = 1, y + 1
 			else
@@ -150,8 +154,8 @@
 		print("loading map in map.lua")
 		local width, height, level, tileData = fileio.load("level")
 		self.params.width, self.params.height = width, height --width and height in tiles
-		self.worldWidth, self.worldHeight = self.params.width * self.params.tileSize, self.params.height * self.params.tileSize --width and height in pixels
-		self.centerX, self.centerY = self.worldWidth/2, self.worldHeight/2 --stores center of map in world coords to move camera to this pos
+		--self.worldWidth, self.worldHeight = self.params.width * self.params.tileSize, self.params.height * self.params.tileSize --width and height in pixels
+		--self.centerX, self.centerY = self.worldWidth/2, self.worldHeight/2 --stores center of map in world coords to move camera to this pos
 		self:createMapTiles(tileData) --call function to create tiles
 		self.tileData = tileData --store tileData to redraw map without reloading
 		print("-----load map complete-----")
