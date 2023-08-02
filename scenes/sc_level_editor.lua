@@ -222,7 +222,7 @@
 	end
 
 	local function createWindows()
-		
+
 		local function updateFilename()
 		end
 		local t = editor.elementTypes --readability
@@ -242,10 +242,7 @@
 	end
 
 	local function firstFrame(sceneGroup)
-
-		createWindows()
-
-
+		
 		debug.init(sceneGroup)
 		mouse.init() -- registers the mouse on frame event
 		mouse.registerMouseScrollListener(zoomMap)
@@ -255,6 +252,7 @@
 		map:init(sceneGroup, cam)
 		cam.init()
 
+		createWindows()
 		
 	end
 
