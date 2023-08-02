@@ -86,39 +86,76 @@
 			endCamDebug()
 		end
 	end
+	
+
+	local function hideTiles(tileList)
+		for i = 1, #tileList do
+			local tile = tileList[i]
+			tile:destroyRect()
+		end
+	end
+
+	local function showTiles(tileList)
+		for i = 1, #tileList do
+			local tile = tileList[i]
+			tile:createRect()
+		end
+	end
+
+	local function resetTiles(tileList)
+		for i = 1, #tileList do
+			local tile = tileList[i]
+			tile.rect:setFillColor(1)
+		end
+	end
 
 	local function zoomMap(scrollValue)
-		local zoomSpeed = 1.1
+		local zoomSpeed = .05
+		local zoomIn, zoomOut = 1, 2
+		local zoomDir = 0
 		if (scrollValue > 0) then
-			cam:adjustZoom(true)
+			zoomDir = zoomIn
 		elseif (scrollValue < 0) then
-			cam:adjustZoom(false)
+			zoomDir = zoomOut
+		end
+		cam:adjustZoom(zoomDir, zoomSpeed) --updates the zoom value and bounds of camera
+		
+		if (camDebugMode) then --do not scale tiles if in cam debug mode
+			camDebugRect:updatePos() --updates debug rect to new cam bounds
+			local cb = camDebugRect.scaledCB --scaled cam bounds
+			local camTiles, boundaryTiles = map:getTilesBetweenWorldBounds(cb.x1, cb.y1, cb.x2, cb.y2) --get cam tiles within scaled cam borders
+			--print(#camTiles.." found between bounds: "..cam.bounds.x1..", "..cam.bounds.y1.." AND "..cam.bounds.x2..", "..cam.bounds.y2)
+			if (zoomDir == zoomOut) then
+				for _, tileList in pairs(boundaryTiles) do --iterate through directions in boundary tiles
+					resetTiles(tileList) --reset tiles to default colour
+				end
+			elseif (zoomDir == zoomIn) then
+				for _, tileList in pairs(boundaryTiles) do --set color to red for tiles on cam bound edges
+					for i = 1, #tileList do
+						local tile = tileList[i]
+						tile.rect:setFillColor(1, .5, .5)
+					end
+				end
+			end
+			for i = 1, #camTiles do --set color to green for tiles within cam bounds
+				local tile = camTiles[i]
+				tile.rect:setFillColor(.5, 1, .5)
+			end 
+		else --cam debug not on
+			
+			local cb = cam.bounds
+			local s = map.tileSize
+			local camTiles, boundaryTiles = map:getTilesBetweenWorldBounds( cb.x1-s, cb.y1-s, cb.x2+s, cb.y2+s ) --get cam tiles within cam borders
+			for i = 1, #camTiles do
+				local tile = camTiles[i]
+				tile:updateRectPos() --move tiles the opposite direction camera is moving 
+			end
+			
 		end
 	end
 
 	local function moveMap(direction) --called by keyinput lib
 		--print("moveMap called")
-
-		local function hideTiles(tileList)
-			for i = 1, #tileList do
-				local tile = tileList[i]
-				tile.rect.isVisible = false
-			end
-		end
-
-		local function showTiles(tileList)
-			for i = 1, #tileList do
-				local tile = tileList[i]
-				tile.rect.isVisible = true
-			end
-		end
-
-		local function resetTiles(tileList)
-			for i = 1, #tileList do
-				local tile = tileList[i]
-				tile.rect:setFillColor(1)
-			end
-		end
 
 		if (#map.tileStore.indexedTiles > 0) then
 			
@@ -142,11 +179,11 @@
 				elseif direction.x < 0 then
 					resetTiles(boundaryTiles.right)
 				end
-				for i = 1, #camTiles do
+				for i = 1, #camTiles do --set color to green for tiles within cam bounds
 					local tile = camTiles[i]
 					tile.rect:setFillColor(.5, 1, .5)
 				end 
-				for _, tileList in pairs(boundaryTiles) do
+				for _, tileList in pairs(boundaryTiles) do --set color to red for tiles on cam bound edges
 					for i = 1, #tileList do
 						local tile = tileList[i]
 						tile.rect:setFillColor(1, .5, .5)
@@ -160,7 +197,7 @@
 				print("translating "..#camTiles.." tiles")
 				for i = 1, #camTiles do
 					local tile = camTiles[i]
-					tile:translate(-cam.delta.x, -cam.delta.y) --move tiles the opposite direction camera is moving 
+					tile:updateRectPos() --move tiles the opposite direction camera is moving 
 				end
 				
 				if direction.y > 0 then
@@ -184,7 +221,8 @@
 		end
 	end
 
-	local function firstFrame(sceneGroup)
+	local function createWindows()
+		
 		local function updateFilename()
 		end
 		local t = editor.elementTypes --readability
@@ -199,6 +237,14 @@
 			sceneGroup = sceneGroup, sectionData = editWindowSections, object = map
 		}
 		local editWindow = editor.createWindow( editWindowParams, sceneGroup )
+
+
+	end
+
+	local function firstFrame(sceneGroup)
+
+		createWindows()
+
 
 		debug.init(sceneGroup)
 		mouse.init() -- registers the mouse on frame event

@@ -71,10 +71,11 @@
 			for x = boundMin.x, boundMax.x do
 				
 				local tx, ty = math.max(1, x), math.max(1, y) --clamp to 1 to prevent looking for tiles outside of map
+				tx, ty = math.min(tx, self.width), math.min(ty, self.height) --clamp to map width/height
 				--print("getting tile: "..tx..", "..ty.." from tileStore")
 				local tile = self.tileStore.tileCols[tx][ty]
-				tileList[#tileList+1] = tile
 				
+				--add tiles to table in direction if they are on the bounds
 				if y == boundMin.y then
 					boundaryTiles.up[#boundaryTiles.up+1] = tile
 				elseif y == boundMax.y then
@@ -83,6 +84,8 @@
 					boundaryTiles.left[#boundaryTiles.left+1] = tile
 				elseif x == boundMax.x then
 					boundaryTiles.right[#boundaryTiles.right+1] = tile
+				else
+					tileList[#tileList+1] = tile --only add tiles to list if they are not on edges of bounds
 				end
 
 			end
@@ -117,13 +120,18 @@
 			end
 			tile.imageFile = self.imageLocation.."defaultTileset/"..image
 
-			function tile:translate(x, y) --translate tile and rect
+			function tile:updateRectPos() --updates the tiles rect position to match its world position within cam bounds and scaled by camera zoom
 				if (self.rect) then
-					self.rect.x, self.rect.y = self.world.x - cam.bounds.x1 , self.world.y - cam.bounds.y1
+					self.rect.xScale, self.rect.yScale = cam.zoom, cam.zoom
+					self.rect.x, self.rect.y = (self.world.x - cam.bounds.x1) * cam.zoom , (self.world.y - cam.bounds.y1) * cam.zoom
 				end
 			end
 
 			function tile:destroyRect()
+				if (self.rect) then
+					self.rect:removeSelf()
+					self.rect = nil
+				end
 			end
 
 			function tile:createRect()
@@ -132,6 +140,14 @@
 				self.rect.x, self.rect.y = self.world.x, self.world.y --subtract map centers to center tile rects
 				util.zeroAnchors(self.rect)
 			end
+
+			function tile:updateScale()
+				if (self.rect) then
+					self.rect.xScale, self.rect.yScale = cam.zoom, cam.zoom
+					self.rect.x, self.rect.y = (self.world.x - cam.bounds.x1) * cam.zoom , (self.world.y - cam.bounds.y1) * cam.zoom
+				end
+			end
+
 			tile:createRect()
 			return tile
 		end
@@ -156,7 +172,8 @@
 	function map:updateTilesPos()
 		for i = 1, #self.tileStore.indexedTiles do --translates all tiles in the maps tileStore	
 			local tile = self.tileStore.indexedTiles[i]
-			tile:translate(-cam.bounds.x1, -cam.bounds.y1) --move tiles the opposite direction camera is moving 
+			tile:updateRectPos()
+			--tile:translate(-cam.bounds.x1, -cam.bounds.y1) --move tiles the opposite direction camera is moving 
 		end
 	end
 
