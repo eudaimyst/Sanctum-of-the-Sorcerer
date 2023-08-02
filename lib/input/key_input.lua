@@ -68,7 +68,7 @@
 	    else
 			key.moveDirection = nil
 	    end
-		print("movement key direction: "..tostring(key.moveDirection))
+		--print("movement key direction: "..tostring(key.moveDirection))
 	end
 
 	local function onKeyEvent( event )

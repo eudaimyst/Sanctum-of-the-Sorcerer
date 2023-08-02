@@ -36,7 +36,7 @@
 	local function worldPointToTileCoords(_x, _y) --takes x y in world coords and returns tile coords
 		--print("map width/height: "..map.worldWidth..", "..map.worldHeight)
 		local x, y = math.floor(_x / map.tileSize), math.floor( _y / map.tileSize)
-		print("worldPointToTileCoords: ".._x.." = "..x..", ".._y.." = "..y)
+		--print("worldPointToTileCoords: ".._x.." = "..x..", ".._y.." = "..y)
 		return x, y
 	end
 
@@ -144,30 +144,30 @@
 
 					local searchCol = self.x+search[subID].x --columns of the tiles to search
 					local searchRow = self.y+search[subID].y --rows
-					print("checking wall type at col, row: "..searchCol..", "..searchRow )
+					print("checking wall type at col, row: "..searchCol..", "..searchRow.." for tile xy "..self.x..", "..self.y)
 					local Xtype = map.tileStore.tileCols[searchCol][self.y].type --get tile type to left/right
 					local Ytype = map.tileStore.tileCols[self.x][searchRow].type --get tile type above/below
-					--z=void i=innercorner o=outercorner h=horizontal v=vertical (short forms for saving)
 
-					if (Xtype == "wall" and Ytype == "wall") then --if there is a wall on the diagonal tile to prevent inner corners repeating
-						local innerWallType = map.tileStore.tileCols[searchCol][searchRow].type --store tiles type
-						if (innerWallType == "wall" or innerWallType == "void") then
-							subTypes[subID] = st.void --need to set "void" if theres a wall or "void" on other side of corner
-						else
-							subTypes[subID] = st.innerCorner --otherwise normal corner
-						end
+					if (Xtype == "wall" ) then 
+						if (Ytype == "wall") then
+							local innerWallType = map.tileStore.tileCols[searchCol][searchRow].type --store tiles type
+							if (innerWallType == "wall" or innerWallType == "void") then --if there is a wall or void on the diagonal tile to prevent inner corners repeating
+								subTypes[subID] = st.void --need to set "void" if theres a wall or "void" on other side of corner
+							else
+								subTypes[subID] = st.innerCorner --otherwise normal corner
+							end
 						elseif (Ytype == "void") then subTypes[subID] = st.void
-						elseif (Ytype == "room") then subTypes[subID] = st.horizontal
+						elseif (Ytype == "floor") then subTypes[subID] = st.horizontal end
 					end
 					if (Xtype == "void") then
 						if (Ytype == "void") then subTypes[subID] = st.void
 						elseif (Ytype == "wall") then subTypes[subID] = st.void
-						elseif (Ytype == "room") then subTypes[subID] = st.horizontal
+						elseif (Ytype == "floor") then subTypes[subID] = st.vertical
 						end
 					end
-					if (Xtype == "room") then
-						if (Ytype == "wall") then subTypes[subID] = st.void
-						elseif (Ytype == "room") then subTypes[subID] =	st.outerCorner
+					if (Xtype == "floor") then
+						if (Ytype == "wall") then subTypes[subID] = st.vertical
+						elseif (Ytype == "floor") then subTypes[subID] = st.outerCorner
 						elseif (Ytype == "void") then subTypes[subID] = st.void
 						end
 					end
@@ -176,7 +176,6 @@
 						print("tile: "..k.." = "..tostring(v))
 					end]]
 					local wallImageString = map.imageLocation.."defaultTileset/dungeon_walls/"..subTypes[subID]..subID..".png"
-					print(wallImageString)
 					self.wallImage[subID] = wallImageString
 				end
 				
@@ -200,19 +199,17 @@
 			function tile:createRect()
 				if (tile.type == "wall") then --if tile is a wall then we need to make a group for the subtiles
 					self.rect = display.newGroup()
+					map.group:insert(self.rect)
+					self.rect.anchorChildren = true
 					for i = 0, 3, 1 do --four corners
-						print(self.wallImage[i])
 						local wallRect = display.newImageRect( self.rect, self.wallImage[i], halfTileSize, halfTileSize ) --create rect for each wall
 						wallRect = util.zeroAnchors(wallRect)
-
 						local n, r = math.modf( i / 2 ) --set wall rect position using math
 						wallRect.x = r * tileSize - halfTileSize
 						wallRect.y = n * halfTileSize - halfTileSize
-
 					end
 				else
 					--print("creating rect for tile id: "..self.id.. " with image "..image)
-					print(self.imageFile)
 					self.rect = display.newImageRect( map.group, self.imageFile, tileSize, tileSize )
 				end
 				self.rect.x, self.rect.y = self.world.x, self.world.y --subtract map centers to center tile rects

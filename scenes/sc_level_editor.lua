@@ -122,7 +122,7 @@
 		end
 	end
 
-	local function showTiles(tileList)
+	local function  showTiles(tileList)
 		for i = 1, #tileList do
 			local tile = tileList[i]
 			tile:createRect()
