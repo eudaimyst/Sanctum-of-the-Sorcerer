@@ -30,12 +30,33 @@
 
 
 	local camDebugMode = false
+	local camTiles = {}
+	local boundaryTiles = {}
+	
+
+	local function refreshCamTiles(bounds, tileSize) --gets and updates all tiles within cam bounds, default bounds/spacing are cam bounds/tilesize unscaled
+
+		local cb = bounds or cam.bounds
+		local s = tileSize or map.tileSize * 2	--buffer size
+		camTiles, boundaryTiles = map:getTilesBetweenWorldBounds( cb.x1-s, cb.y1-s, cb.x2+s, cb.y2+s ) --get cam tiles within cam borders
+		if (camDebugMode == false) then
+			for _, tile in pairs(camTiles) do
+				if (tile.rect) then
+					tile:updateRectPos() --move tiles the opposite direction camera is moving 
+				else
+					tile:createRect()
+				end
+			end
+		end
+	end
 	
 	local function loadMap()
 		print("load map pressed")
 		map:loadMap()
 		--cam:moveToPoint(map.worldWidth / 2, map.worldHeight / 2)
 		map:updateTilesPos()
+		cam:moveToPoint(map.worldWidth / 2, map.worldHeight / 2)
+		refreshCamTiles()
 	end
 
 	local function saveMap()
@@ -49,9 +70,15 @@
 			local camDebugScale = map.params.tileSize / camDebugTileSize
 			print("init cam debug")
 			map:createMapTiles(nil, camDebugTileSize, true)
+			for _, tile in ipairs(map.tileStore.indexedTiles) do
+				tile:createRect()
+			end
+
 			camDebugRect = display.newRect(sceneGroup, 0, 0, 1, 1)
 			util.zeroAnchors(camDebugRect)
-			camDebugRect:setFillColor(1, 1, .2, 0)
+			camDebugRect:setFillColor(1, 1, 1, 1)
+			camDebugRect.tileSize = camDebugTileSize
+			camDebugRect.scale = camDebugScale
 
 			function camDebugRect:updatePos() --called from movemap when camDebugMode is enabled
 				local cb = cam.bounds
@@ -122,8 +149,8 @@
 		
 		if (camDebugMode) then --do not scale tiles if in cam debug mode
 			camDebugRect:updatePos() --updates debug rect to new cam bounds
-			local cb = camDebugRect.scaledCB --scaled cam bounds
-			local camTiles, boundaryTiles = map:getTilesBetweenWorldBounds(cb.x1, cb.y1, cb.x2, cb.y2) --get cam tiles within scaled cam borders
+			refreshCamTiles(camDebugRect.scaledCB, camDebugRect.tileSize) --updates cam tiles to new cam bounds
+
 			--print(#camTiles.." found between bounds: "..cam.bounds.x1..", "..cam.bounds.y1.." AND "..cam.bounds.x2..", "..cam.bounds.y2)
 			if (zoomDir == zoomOut) then
 				for _, tileList in pairs(boundaryTiles) do --iterate through directions in boundary tiles
@@ -142,15 +169,7 @@
 				tile.rect:setFillColor(.5, 1, .5)
 			end 
 		else --cam debug not on
-			
-			local cb = cam.bounds
-			local s = map.tileSize
-			local camTiles, boundaryTiles = map:getTilesBetweenWorldBounds( cb.x1-s, cb.y1-s, cb.x2+s, cb.y2+s ) --get cam tiles within cam borders
-			for i = 1, #camTiles do
-				local tile = camTiles[i]
-				tile:updateRectPos() --move tiles the opposite direction camera is moving 
-			end
-			
+			refreshCamTiles()
 		end
 	end
 
@@ -161,10 +180,12 @@
 			
 			debug.updateText( "camBoundMin", math.floor(cam.bounds.x1)..","..math.floor(cam.bounds.y1) )
 			debug.updateText( "camBoundMax", math.floor(cam.bounds.x2)..","..math.floor(cam.bounds.y2) )
+			debug.updateText( "#camTiles", #camTiles )
       
 			cam:directionalMove(direction) --call function to update cam co-ords
 			if (camDebugMode) then --do not translate tiles if in cam debug mode
 				camDebugRect:updatePos()
+				refreshCamTiles(camDebugRect.scaledCB, camDebugRect.tileSize) --updates cam tiles to new cam bounds
 				local cb = camDebugRect.scaledCB
 				local camTiles, boundaryTiles = map:getTilesBetweenWorldBounds(cb.x1, cb.y1, cb.x2, cb.y2) --get cam tiles within scaled cam borders
 				--print(#camTiles.." found between bounds: "..cam.bounds.x1..", "..cam.bounds.y1.." AND "..cam.bounds.x2..", "..cam.bounds.y2)
@@ -191,14 +212,7 @@
 				end
 			else --cam debug not on
 				
-				local cb = cam.bounds
-				local s = map.tileSize
-				local camTiles, boundaryTiles = map:getTilesBetweenWorldBounds( cb.x1-s, cb.y1-s, cb.x2+s, cb.y2+s ) --get cam tiles within scaled cam borders
-				print("translating "..#camTiles.." tiles")
-				for i = 1, #camTiles do
-					local tile = camTiles[i]
-					tile:updateRectPos() --move tiles the opposite direction camera is moving 
-				end
+				refreshCamTiles()
 				
 				if direction.y > 0 then
 					hideTiles(boundaryTiles.up)
@@ -215,7 +229,6 @@
 					showTiles(boundaryTiles.left)
 				end 
 			end
-		
 		else
 			print("no map to move")
 		end
@@ -242,7 +255,7 @@
 	end
 
 	local function firstFrame(sceneGroup)
-		
+
 		debug.init(sceneGroup)
 		mouse.init() -- registers the mouse on frame event
 		mouse.registerMouseScrollListener(zoomMap)

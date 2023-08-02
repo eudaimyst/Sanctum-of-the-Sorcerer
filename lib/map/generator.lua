@@ -20,12 +20,12 @@
 	-- Define module
 	local mapgen = { params = {} }
 
-	local defaultTileset = {
-		[1] = {name = "void", colour = {0, 0, 0}, savestring = "v", collision = "false"},
-		[2] = {name = "wall", colour = {.6, 0, 0}, savestring = "x", collision = "false"},
-		[3] = {name = "floor", colour = {.2, .6, .2}, savestring = "f", collision = "true"},
-		[4] = {name = "water", colour = {.2, .2, .6}, savestring = "w", collision = "true"},
-		[5] = {name = "blocker", colour = {.4, .4, .4}, savestring = "b", collision = "false"}
+	local defaultTileset = { --this is the default tileset data FOR THE MAP GENERATOR ONLY
+		[1] = {name = "void", colour = {0, 0, 0}, savestring = "v", collision = 1 },
+		[2] = {name = "wall", colour = {.6, 0, 0}, savestring = "x", collision = 1 },
+		[3] = {name = "floor", colour = {.2, .6, .2}, savestring = "f", collision = 0 },
+		[4] = {name = "water", colour = {.2, .2, .6}, savestring = "w", collision = 0 },
+		[5] = {name = "blocker", colour = {.4, .4, .4}, savestring = "b", collision = 1 }
 	}
 
 	mapgen.levels = {

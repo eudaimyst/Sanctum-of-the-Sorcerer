@@ -8,15 +8,16 @@
 	local util = require("lib.global.utilities")
 	local fileio = require( "lib.map.fileio")
 
-	local defaultTileset = { --collision data is saved in map data
-		[1] = {name = "void", savestring = "v", image = "void.png"},
-		[2] = {name = "wall", savestring = "x", image = "dungeon_wall.png"},
-		[3] = {name = "floor", savestring = "f", image = "dungeon_floor.png"},
-		[4] = {name = "water", savestring = "w", image = "void.png"},
-		[5] = {name = "blocker", savestring = "b", image = "dungeon_wall.png"}
+	local defaultTileset = { --this is the default tileset data FOR THE SCENE ONLY (map generator has its own fix is TODO)
+		void = { savestring = "v", image = "void.png"},
+		wall = { savestring = "x", image = "dungeon_wall.png"},
+		floor = { savestring = "f", image = "dungeon_floor.png"},
+		water = { savestring = "w", image = "void.png"},
+		blocker = { savestring = "b", image = "dungeon_wall.png"}
 	}
 	--not yet implemented
-	local wallAffixes = { z = "void_", i = "inner_corner_", o = "outer_corner_", h = "horizontal_", v = "vertical_", e = "error_" }
+
+	local wallSubTypes = { void = "void_", innerCorner = "inner_corner_", outerCorner = "outer_corner_", horizontal = "horizontal_", vertical = "vertical_", error = "error_" }
 
 	-- Define module
 	local map = {}
@@ -101,6 +102,8 @@
 		print("tileData length: "..#tileData)
 
 		local width, height, tileset = self.params.width, self.params.height, self.params.tileset --set local vars for readability
+		local halfTileSize = tileSize/2
+
 		self.width, self.height = width, height
 		self.tileSize = tileSize
 		self.worldWidth, self.worldHeight = self.params.width * tileSize, self.params.height * tileSize
@@ -112,13 +115,73 @@
 			--tile screen pos is exclusively accessed through its rect
 			tile.world = { x = x * tileSize, y = y * tileSize }
 			local image
-			for j = 1, #defaultTileset do
-				if tileData[i].s == defaultTileset[j].savestring then
-					--print("found")
-					image = defaultTileset[j].image
+
+			for k, v in pairs(defaultTileset) do
+				if tileData[i].s == v.savestring then
+					image = v.image
+					--print("setting type for tile id: "..i.." to "..k)
+					tile.type = k --sets the tile type string to the key name of the matching tileset entry
 				end
 			end
+
 			tile.imageFile = self.imageLocation.."defaultTileset/"..image
+			--print("tile image file: "..tile.imageFile)
+			
+			function tile:setWallSubType() --look at neighbouring tiles to set a subtype for this tile
+				local st = wallSubTypes
+
+				local search = {
+					[0] = {x = -1, y = -1}, --search left + up
+					[1] = {x = 1, y = -1}, --search right + up
+					[2] = {x = -1, y = 1}, --search left + down
+					[3] = {x = 1, y = 1}, --search right + down
+				}
+				local subTypes = {} --each indice gets set to a value from wallSubTypes
+				--store tiletypes for readability
+				self.wallImage = {}
+				for subID = 0, 3, 1 do
+					subTypes[subID] = st.error --set default to error
+
+					local searchCol = self.x+search[subID].x --columns of the tiles to search
+					local searchRow = self.y+search[subID].y --rows
+					print("checking wall type at col, row: "..searchCol..", "..searchRow )
+					local Xtype = map.tileStore.tileCols[searchCol][self.y].type --get tile type to left/right
+					local Ytype = map.tileStore.tileCols[self.x][searchRow].type --get tile type above/below
+					--z=void i=innercorner o=outercorner h=horizontal v=vertical (short forms for saving)
+
+					if (Xtype == "wall" and Ytype == "wall") then --if there is a wall on the diagonal tile to prevent inner corners repeating
+						local innerWallType = map.tileStore.tileCols[searchCol][searchRow].type --store tiles type
+						if (innerWallType == "wall" or innerWallType == "void") then
+							subTypes[subID] = st.void --need to set "void" if theres a wall or "void" on other side of corner
+						else
+							subTypes[subID] = st.innerCorner --otherwise normal corner
+						end
+						elseif (Ytype == "void") then subTypes[subID] = st.void
+						elseif (Ytype == "room") then subTypes[subID] = st.horizontal
+					end
+					if (Xtype == "void") then
+						if (Ytype == "void") then subTypes[subID] = st.void
+						elseif (Ytype == "wall") then subTypes[subID] = st.void
+						elseif (Ytype == "room") then subTypes[subID] = st.horizontal
+						end
+					end
+					if (Xtype == "room") then
+						if (Ytype == "wall") then subTypes[subID] = st.void
+						elseif (Ytype == "room") then subTypes[subID] =	st.outerCorner
+						elseif (Ytype == "void") then subTypes[subID] = st.void
+						end
+					end
+					--[[
+					for k, v in pairs(self) do
+						print("tile: "..k.." = "..tostring(v))
+					end]]
+					local wallImageString = map.imageLocation.."defaultTileset/dungeon_walls/"..subTypes[subID]..subID..".png"
+					print(wallImageString)
+					self.wallImage[subID] = wallImageString
+				end
+				
+				tile.subTypes = subTypes
+			end
 
 			function tile:updateRectPos() --updates the tiles rect position to match its world position within cam bounds and scaled by camera zoom
 				if (self.rect) then
@@ -135,36 +198,53 @@
 			end
 
 			function tile:createRect()
-				--print("creating rect for tile id: "..self.id.. " with image "..image)
-				self.rect = display.newImageRect( map.group, self.imageFile, tileSize, tileSize )
+				if (tile.type == "wall") then --if tile is a wall then we need to make a group for the subtiles
+					self.rect = display.newGroup()
+					for i = 0, 3, 1 do --four corners
+						print(self.wallImage[i])
+						local wallRect = display.newImageRect( self.rect, self.wallImage[i], halfTileSize, halfTileSize ) --create rect for each wall
+						wallRect = util.zeroAnchors(wallRect)
+
+						local n, r = math.modf( i / 2 ) --set wall rect position using math
+						wallRect.x = r * tileSize - halfTileSize
+						wallRect.y = n * halfTileSize - halfTileSize
+
+					end
+				else
+					--print("creating rect for tile id: "..self.id.. " with image "..image)
+					print(self.imageFile)
+					self.rect = display.newImageRect( map.group, self.imageFile, tileSize, tileSize )
+				end
 				self.rect.x, self.rect.y = self.world.x, self.world.y --subtract map centers to center tile rects
 				util.zeroAnchors(self.rect)
+				self:updateRectPos()
 			end
 
-			function tile:updateScale()
-				if (self.rect) then
-					self.rect.xScale, self.rect.yScale = cam.zoom, cam.zoom
-					self.rect.x, self.rect.y = (self.world.x - cam.bounds.x1) * cam.zoom , (self.world.y - cam.bounds.y1) * cam.zoom
-				end
-			end
-
-			tile:createRect()
+			--tile:createRect()
 			return tile
 		end
 
 		local x, y = 1, 1
-		for i = 1, #tileData do
+		for i = 1, #tileData do --for each tile in the tileData taken from the map file
 			--print(x, y)
 			local tile = createTile(x, y, i)
-			if y == 1 then self.tileStore.tileCols[x] = {} end
-			if x == 1 then self.tileStore.tileRows[y] = {} end
-			self.tileStore.tileCols[x][y] = tile
+			if y == 1 then self.tileStore.tileCols[x] = {} end --create the tileCols 
+			if x == 1 then self.tileStore.tileRows[y] = {} end --create the tileRows 
+			self.tileStore.tileCols[x][y] = tile --store the tile in the correct position in tileCols
 			self.tileStore.tileRows[y][x] = tile
-			self.tileStore.indexedTiles[i] = tile
-			if x >= width then
-				x, y = 1, y + 1
+			self.tileStore.indexedTiles[i] = tile --also store the tile in an indexed table
+
+			if x >= width then --reached the end of tile creation for the row
+				x, y = 1, y + 1 --increase the counter for the y axis and reset the x
 			else
-				x = x + 1
+				x = x + 1 --increase the counter for the x axis
+			end
+		end
+
+		for i = 1, #self.tileStore.indexedTiles do --set subtypes, must be after all tiles created to get neighbour tiles
+			local tile = self.tileStore.indexedTiles[i]
+			if tile.type == "wall" then
+				tile:setWallSubType()
 			end
 		end
 	end
