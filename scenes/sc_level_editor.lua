@@ -87,8 +87,6 @@
 	end
 
 	local function zoomMap(scrollValue)
-		local zoomSpeed = .05
-		local zoomTime = .3
 		local zoomIn, zoomOut = 1, 2
 		local zoomDir = 0
 		if (scrollValue > 0) then
@@ -96,8 +94,12 @@
 		elseif (scrollValue < 0) then
 			zoomDir = zoomIn
 		end
-		timer.performWithDelay( zoomTime, map:cameraZoom(zoomDir), -1, "zoomTimer" ) --starts a timer once bg has faded in
-		cam:adjustZoom(zoomDir, zoomSpeed, zoomTime) --updates the zoom value and bounds of camera
+		local function doZoom()
+			print("do")
+			map:cameraZoom(zoomDir)
+		end
+		local zoomTimer = timer.performWithDelay( 1, doZoom, -1 ) --starts a timer once bg has faded in
+		cam:adjustZoom(zoomDir, zoomTimer) --updates the zoom value and bounds of camera
 	end
 
 	local function moveMap(direction) --called by keyinput lib

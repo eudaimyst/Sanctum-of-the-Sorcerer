@@ -382,6 +382,8 @@
 
 	function map:cameraZoom(zoomDir) --1 = zoom in, 2 = zoom out
 		self:refreshCamTiles()
+		cam:updateBounds()
+		print("zooming")
 		if (zoomDir == 1) then
 			for _, tileList in pairs(cam.boundaryTiles) do
 				hideTiles(tileList)

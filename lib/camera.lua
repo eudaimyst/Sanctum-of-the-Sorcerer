@@ -22,6 +22,9 @@
 	cam.midPoint = {x = halfScreenWidth, y = halfScreenHeight}
 	cam.delta = {x = 0, y = 0}
 	cam.zoom = 1
+	cam.targetZoom = 1
+	cam.zoomSpeed = .05
+	cam.zoomTime = 300
 	cam.moveSpeed = 1
 	cam.screenTiles = {} --holds references to all tiles displayed on screen within bounds
 	cam.boundaryTiles = {} --holds references to tiles that are on the boundary of the screen
@@ -37,19 +40,19 @@
 			end
 		end
 	end
-
-	function cam:adjustZoom(zoomDir, zoomSpeed, zoomTime) --zoomDir is a boolean, 1 = zoom in, 2 = zoom out, speed is a float
-		local z
+ 
+	function cam:adjustZoom(zoomDir, zoomTimer) --zoomDir is a boolean, 1 = zoom in, 2 = zoom out, speed is a float
 		local function cancelZoomTimer()
-			timer.cancel("zoomTimer")
+			print("cancelling zoom timer")
+			cam.zoom = cam.targetZoom
+			timer.cancel(zoomTimer)
 		end
 		if (zoomDir == 1) then
-			z = zoomSpeed
+			cam.targetZoom = cam.targetZoom + cam.zoomSpeed
 		elseif (zoomDir == 2) then
-			z = -zoomSpeed
+			cam.targetZoom = cam.targetZoom - cam.zoomSpeed
 		end
-		transition.cancel("zoomTimer") --cancel any existing zoomTimer
-		transition.to(self, {time = zoomTime, transition = easing.inOutSine, onComplete = cancelZoomTimer(), zoom = self.zoom + z })
+		local zoomTrans = transition.to(self, {time = cam.zoomTime, transition = easing.inOutSine, onComplete = cancelZoomTimer, zoom = cam.targetZoom } )
 		self:updateBounds()
 	end
 
