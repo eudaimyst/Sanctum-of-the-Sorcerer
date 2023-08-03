@@ -39,16 +39,56 @@
 		--print("worldPointToTileCoords: ".._x.." = "..x..", ".._y.." = "..y)
 		return x, y
 	end
+	
+	local function hideTiles(tileList)
+		for i = 1, #tileList do
+			if (tileList[i].rect) then
+				tileList[i]:destroyRect()
+			end
+			tileList[i].rect = nil
+		end
+	end
+	map.hidetiles = hideTiles
+
+	local function  showTiles(tileList)
+		for i = 1, #tileList do
+			if (not tileList[i].rect) then
+				--print("showing tile for id "..i.." at world x, y: "..tileList[i].world.x, tileList[i].world.y)
+				tileList[i]:createRect()
+				tileList[i]:updateRectPos()
+			end
+		end
+	end
+	map.showTiles = showTiles
+	
+	local function setColor(tileList, color)
+		local c = { r = 1, g = 1, b = 1, a = 1 }
+		if (color == "red") then
+			c.r = 1; c.g = .5; c.b = .5
+		elseif (color == "green") then
+			c.r = .5; c.g = 1; c.b = .5
+		end
+		for i = 1, #tileList do
+			if (tileList[i].rect.numChildren) then
+				for j = 1, tileList[i].rect.numChildren do
+					tileList[i].rect[j]:setFillColor(c.r, c.g, c.b, c.a)
+				end
+			else
+				tileList[i].rect:setFillColor(c.r, c.g, c.b, c.a)
+			end
+		end
+	end
+	map.setColor = setColor
 
 	function map:clear()
 		local ts = self.tileStore --readability
 		for i = 1, #ts.indexedTiles do
-			print("clearing tile: "..i)
-			local tile = ts.indexedTiles[i]
-			ts.tileRows[tile.y][tile.x] = nil
-			ts.tileCols[tile.x][tile.y] = nil
-			if (tile.rect) then
-				tile.rect:removeSelf()
+			--print("clearing tile: "..i)
+			ts.tileRows[ts.indexedTiles[i].y][ts.indexedTiles[i].x] = nil
+			ts.tileCols[ts.indexedTiles[i].x][ts.indexedTiles[i].y] = nil
+			if (ts.indexedTiles[i].rect) then
+				ts.indexedTiles[i].rect:removeSelf()
+				ts.indexedTiles[i].rect = nil
 			end
 			ts.indexedTiles[i] = nil
 		end
@@ -61,44 +101,62 @@
 		return true
 	end
 
+	local function clampToMapSize(_x, _y) --takes tile pos and returns clamped tile pos
+		local x, y
+		x, y = math.max(1, _x), math.max(1, _y) --clamp to 1 to prevent looking for tiles outside of map
+		x, y = math.min(x, map.width), math.min(y, map.height) --clamp to map width/height
+		return x, y
+	end
+
 	function map:getTilesBetweenWorldBounds(x1, y1, x2, y2) --takes bounds in world position and returns table of tiles
-		local boundMin, boundMax = {x = 0, y = 0}, {x = 0, y = 0}
-		boundMin.x, boundMin.y = worldPointToTileCoords(x1-1, y1-1)
-		boundMax.x, boundMax.y = worldPointToTileCoords(x2+1, y2+1)
+		local cMin, cMax = {x = 0, y = 0}, {x = 0, y = 0} --bounds of the cam
+		cMin.x, cMin.y = worldPointToTileCoords(x1, y1)
+		cMax.x, cMax.y = worldPointToTileCoords(x2, y2)
+		local bMin, bMax = {x = 0, y = 0}, {x = 0, y = 0} --bounds of the cam
+		bMin.x, bMin.y = worldPointToTileCoords(x1 - self.tileSize, y1 - self.tileSize)
+		bMax.x, bMax.y = worldPointToTileCoords(x2 + self.tileSize, y2 + self.tileSize)
 		--local boundWidth, boundHeight = boundMax.x - boundMin.x, boundMax.y - boundMin.y
 		local tileList = {}
 		local boundaryTiles = { up = {}, down = {}, left = {}, right = {} } --tiles on the edge of the bounds
-		for y = boundMin.y, boundMax.y do
-			for x = boundMin.x, boundMax.x do
-				
-				local tx, ty = math.max(1, x), math.max(1, y) --clamp to 1 to prevent looking for tiles outside of map
-				tx, ty = math.min(tx, self.width), math.min(ty, self.height) --clamp to map width/height
+		local tx, ty --used for clamping
+		for y = cMin.y, cMax.y do
+			for x = cMin.x, cMax.x do
+				tx, ty = clampToMapSize(x, y)
 				--print("getting tile: "..tx..", "..ty.." from tileStore")
-				local tile = self.tileStore.tileCols[tx][ty]
-				
-				--add tiles to table in direction if they are on the bounds
-				if y == boundMin.y then
-					boundaryTiles.up[#boundaryTiles.up+1] = tile
-				elseif y == boundMax.y then
-					boundaryTiles.down[#boundaryTiles.down+1] = tile
-				elseif x == boundMin.x then
-					boundaryTiles.left[#boundaryTiles.left+1] = tile
-				elseif x == boundMax.x then
-					boundaryTiles.right[#boundaryTiles.right+1] = tile
-				else
-					tileList[#tileList+1] = tile --only add tiles to list if they are not on edges of bounds
-				end
-
+				tileList[#tileList+1] = self.tileStore.tileCols[tx][ty]
 			end
+		end
+		for y = bMin.y, bMax.y do
+			tx, ty = clampToMapSize(bMin.x, y)
+			boundaryTiles.left[#boundaryTiles.left+1] = self.tileStore.tileCols[tx][ty]
+			tx, ty = clampToMapSize(bMax.x, y)
+			boundaryTiles.right[#boundaryTiles.right+1] = self.tileStore.tileCols[tx][ty]
+		end
+		for x = bMin.x, bMax.x do
+			tx, ty = clampToMapSize(x, bMin.y)
+			boundaryTiles.up[#boundaryTiles.up+1] = self.tileStore.tileCols[tx][ty]
+			tx, ty = clampToMapSize(x, bMax.y)
+			boundaryTiles.down[#boundaryTiles.down+1] = self.tileStore.tileCols[tx][ty]
+		end
+		print(#tileList.." tiles between bounds ", x1, y1, x2, y2)
+		for k, v in pairs(boundaryTiles) do
+			print("boundary "..k.." has "..#v.." tiles")
 		end
 		return tileList, boundaryTiles
 	end
 
-	function map:createMapTiles(_tileData, _tileSize, camDebug) --called by editor/map, creates all tile objects for maps, tileData = optional map data, tileSize = optional force tile size in pixels
+	function map:createMapTiles(_tileData) --called by editor/map, creates all tile objects for maps, tileData = optional map data, tileSize = optional force tile size in pixels
 		print("create map tiles called")
 		
 		local tileData = _tileData or self.tileData
-		local tileSize = _tileSize or self.params.tileSize
+		local tileSize
+
+		if (cam.mode == cam.modes.debug) then
+			print("camdebug tilesize = "..cam.mode.debugTileSize)
+			tileSize = cam.mode.debugTileSize
+		else
+			tileSize = self.params.tileSize
+		end
 		print("tileData length: "..#tileData)
 
 		local width, height, tileset = self.params.width, self.params.height, self.params.tileset --set local vars for readability
@@ -144,7 +202,7 @@
 
 					local searchCol = self.x+search[subID].x --columns of the tiles to search
 					local searchRow = self.y+search[subID].y --rows
-					print("checking wall type at col, row: "..searchCol..", "..searchRow.." for tile xy "..self.x..", "..self.y)
+					--print("checking wall type at col, row: "..searchCol..", "..searchRow.." for tile xy "..self.x..", "..self.y)
 					local Xtype = map.tileStore.tileCols[searchCol][self.y].type --get tile type to left/right
 					local Ytype = map.tileStore.tileCols[self.x][searchRow].type --get tile type above/below
 
@@ -171,10 +229,7 @@
 						elseif (Ytype == "void") then subTypes[subID] = st.void
 						end
 					end
-					--[[
-					for k, v in pairs(self) do
-						print("tile: "..k.." = "..tostring(v))
-					end]]
+
 					local wallImageString = map.imageLocation.."defaultTileset/dungeon_walls/"..subTypes[subID]..subID..".png"
 					self.wallImage[subID] = wallImageString
 				end
@@ -212,11 +267,13 @@
 					--print("creating rect for tile id: "..self.id.. " with image "..image)
 					self.rect = display.newImageRect( map.group, self.imageFile, tileSize, tileSize )
 				end
-				self.rect.x, self.rect.y = self.world.x, self.world.y --subtract map centers to center tile rects
+				self.rect.x, self.rect.y = self.world.x, self.world.y
 				util.zeroAnchors(self.rect)
-				self:updateRectPos()
+				if (cam.mode ~= cam.modes.debug) then
+					self:updateRectPos()
+				end
 			end
-
+			--tiles by default do not have a rect, createRect is called when tile needs to be shown, ie between camera bounds on camera move
 			--tile:createRect()
 			return tile
 		end
@@ -244,13 +301,12 @@
 				tile:setWallSubType()
 			end
 		end
+		print(#self.tileStore.indexedTiles.." map tiles created \n ----map creation complete----")
 	end
 
 	function map:updateTilesPos()
-		for i = 1, #self.tileStore.indexedTiles do --translates all tiles in the maps tileStore	
-			local tile = self.tileStore.indexedTiles[i]
-			tile:updateRectPos()
-			--tile:translate(-cam.bounds.x1, -cam.bounds.y1) --move tiles the opposite direction camera is moving 
+		for i = 1, #self.tileStore.indexedTiles do --
+			self.tileStore.indexedTiles[i]:updateRectPos()
 		end
 	end
 
@@ -263,6 +319,84 @@
 		self:createMapTiles(tileData) --call function to create tiles
 		self.tileData = tileData --store tileData to redraw map without reloading
 		print("-----load map complete-----")
+		return true
+	end
+	
+	function map:refreshCamTiles(bounds, tileSize) --gets and updates all tiles within cam bounds, default bounds/spacing are cam bounds/tilesize unscaled
+
+		local cb = bounds or cam.bounds
+		local s = tileSize or self.tileSize * 2	--buffer size
+		cam.screenTiles, cam.boundaryTiles = self:getTilesBetweenWorldBounds( cb.x1-s, cb.y1-s, cb.x2+s, cb.y2+s ) --get cam tiles within cam borders
+
+	end
+
+	function map:updateDebugTiles(direction) --when camera is in debug mode this called to update tiles rather than move them
+		--[[print("scaled")
+		for k, v in pairs(cam.mode.scaledBounds) do
+			print(k, v)
+		end]]
+		self:refreshCamTiles(cam.mode.scaledBounds, cam.mode.tileSize) --updates cam tiles to new cam bounds
+		
+		if direction.y > 0 then
+			setColor(cam.boundaryTiles.up, "white")
+		elseif direction.y < 0 then
+			setColor(cam.boundaryTiles.down, "white")
+		end
+		if direction.x > 0 then
+			setColor(cam.boundaryTiles.left, "white")
+		elseif direction.x < 0 then
+			setColor(cam.boundaryTiles.right, "white")
+		end
+		setColor(cam.screenTiles, "green")
+		for _, tileList in pairs(cam.boundaryTiles) do --set color to red for tiles on cam bound edges
+			setColor(tileList, "red")
+		end
+	end
+
+	function map:cameraMove(direction) --called when the camera moves in a direction to hide/show tiles at camera boundary
+		if (cam.mode == cam.modes.debug) then --if debug movde is on for camera, we do not move / destroy tiles, only update their display
+			self:updateDebugTiles(direction)
+		else
+			self:refreshCamTiles() --gets camera screen and boundary tiles
+
+
+			local t = cam.boundaryTiles --readability
+			--hide tiles at opposite direction of movement, show tiles in direction of movement
+			if direction.y > 0 then
+				hideTiles(t.up); showTiles(t.down)
+			elseif direction.y < 0 then
+				hideTiles(t.down); showTiles(t.up)
+			end
+			if direction.x > 0 then
+				hideTiles(t.left); showTiles(t.right)
+			elseif direction.x < 0 then
+				hideTiles(t.right); showTiles(t.left)
+			end
+			for _, tile in pairs(cam.screenTiles) do
+				if (tile.rect) then --tiles already has rect
+					tile:updateRectPos() --update the tiles rect based off cam bounds  
+				end
+			end
+		end
+	end
+
+	function map:cameraZoom(zoomDir) --1 = zoom in, 2 = zoom out
+		self:refreshCamTiles()
+		if (zoomDir == 1) then
+			for _, tileList in pairs(cam.boundaryTiles) do
+				hideTiles(tileList)
+			end
+		elseif (zoomDir == 2) then
+			for _, tileList in pairs(cam.boundaryTiles) do
+				print("showing "..#cam.boundaryTiles.." tiles")
+				showTiles(tileList)
+			end
+		end
+		for _, tile in pairs(cam.screenTiles) do
+			if (tile.rect) then --tiles already has rect
+				tile:updateRectPos() --update the tiles rect based off cam bounds  
+			end
+		end
 	end
 
 	function map:init(sceneGroup, _cam)
