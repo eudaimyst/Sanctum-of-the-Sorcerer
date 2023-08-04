@@ -9,94 +9,121 @@
 	local physics = require("physics")
 
 	--common modules
-	local g = require("lib.global.constants")
+	local gc = require("lib.global.constants")
 	local util = require("lib.global.utilities")
+	local debug = require("lib.debug")
+	local mouse = require("lib.input.mouse_input")
+	local key = require("lib.input.key_input")
+	local map = require("lib.map")
+	local cam = require("lib.camera")
+	--[[
+	local gameObj = require("lib.entity.game_object")
+	local entity = require("lib.entity")
+	]]
+	local entity = require("lib.entity")
+	local character = require("lib.entity.game_object.puppet.character")
 
 	--create scene
 	local scene = composer.newScene()
+	local sceneGroup
 
-	local group = display.newGroup( )
+	local function  toggleDebugCam() --function used to debug camera movement on the map tiles --called by key input
+		if (cam.mode == cam.modes.debug) then
+			cam.mode = cam.modes.free
+			--endCamDebug() TODO: move these to cam library
+		else
+			cam.mode = cam.modes.debug
+			--initCamDebug()
+		end
+	end
+	local function zoomMap(scrollValue)
+		local zoomIn, zoomOut = 1, 2
+		local zoomDir = 0
+		if (scrollValue > 0) then
+			zoomDir = zoomOut
+		elseif (scrollValue < 0) then
+			zoomDir = zoomIn
+		end
+		local function doZoom()
+			print("do")
+			map:cameraZoom(zoomDir)
+		end
+		local zoomTimer = timer.performWithDelay( 1, doZoom, -1 ) --starts a timer once bg has faded in
+		cam:adjustZoom(zoomDir, zoomTimer) --updates the zoom value and bounds of camera
+	end
+	local function moveInput(direction)
+	end
 
 	local function firstFrame()
 
+		debug.init(sceneGroup)
+		mouse.init() -- registers the mouse on frame event
+		mouse.registerMouseScrollListener(zoomMap)
+		key.init()
+		key.registerMoveListener(moveInput)
+		key.registerDebugCamListener(toggleDebugCam)
+		map:init(sceneGroup, cam)
+		cam.init()
+		print("calling game object create from scene")
+
+		entity:setGroup(sceneGroup) --passes group to entity which gets stored for all created entities
+		local char = character:create()
+		--gameObj:create(sceneGroup)
 	end
 
 	local function onFrame()
-
 	end
 
-	function scene:create( event )
+	function scene:create( event ) -- Called when scene's view does not exist.
+		sceneGroup = self.view
 		display.setDefault( "background", .09, .09, .09 )
-		-- Called when scene's view does not exist.
-		--
-		-- INSERT code here to initialize scene
-		-- e.g. add display objects to 'sceneGroup', add touch listeners, etc.
-		-- create scene group 
-
-		local sceneGroup = self.view
 		-- We need physics started to add bodies
 		physics.start()
 		physics.setGravity( 0, 0 )
-
 	end
 
 	function scene:show( event )
-		local sceneGroup = self.view
+
+		sceneGroup = self.view
 		local phase = event.phase
 
-		if phase == "will" then
-			-- Called when scene is still off screen and is about to move on screen
-		elseif phase == "did" then
-			-- Called when scene is now on screen
-			--
-			-- INSERT code here to make scene come alive
-			-- e.g. start timers, begin animation, play audio, etc.
-
+		if phase == "will" then -- Called when scene is still off screen and is about to move on screen
+			
+		elseif phase == "did" then -- Called when scene is now on screen
 			print("scene loaded")
-
 			firstFrame()
 
-			--add listerer for every frame to process all game logic
-			Runtime:addEventListener( "enterFrame", onFrame )
+			
+			Runtime:addEventListener( "enterFrame", onFrame ) --listerer for every frame
 		end
 	end
 
 	function scene:hide( event )
-		local sceneGroup = self.view
 
+		sceneGroup = self.view
 		local phase = event.phase
 
-		if event.phase == "will" then
-			-- Called when scene is on screen and is about to move off screen
-			--
-			-- INSERT code here to pause scene
-			-- e.g. stop timers, stop animation, unload sounds, etc.)
-		elseif phase == "did" then
-			-- Called when scene is now off screen
+		if event.phase == "will" then -- Called when scene is on screen and is about to move off screen
+			
+		elseif phase == "did" then -- Called when scene is now off screen
+			
 		end
-
 	end
 
 	function scene:destroy( event )
-
 		-- Called prior to removal of scene's "view" (sceneGroup)
-		--
-		-- INSERT code here to cleanup scene
-		-- e.g. remove display objects, remove touch listeners, save state, etc.
-		local sceneGroup = self.view
 
-		package.loaded[physics] = nil
-		physics = nil
+		sceneGroup = self.view
+
+		package.loaded[physics] = nil; physics = nil
 	end
 
 	---------------------------------------------------------------------------------
-
-	-- Listener setup
+	-- Scene Listener setup
 	scene:addEventListener( "create", scene )
 	scene:addEventListener( "show", scene )
 	scene:addEventListener( "hide", scene )
 	scene:addEventListener( "destroy", scene )
-
 	-----------------------------------------------------------------------------------------
 
 	return scene
