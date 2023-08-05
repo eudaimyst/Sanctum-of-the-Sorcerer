@@ -10,12 +10,12 @@
 	local puppet = require("lib.entity.game_object.puppet")
 
 	-- Define module
-	local character = {}
+	local lib_character = {}
 
-	function character:create()
+	function lib_character:create()
 		print("creating character object")
-		local c = puppet:create()
-		return c
+		local char = puppet:create()
+		return char
 	end
 
-	return character
+	return lib_character

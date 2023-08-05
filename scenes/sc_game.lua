@@ -1,7 +1,6 @@
 	-----------------------------------------------------------------------------------------
 	--
-	-- sc_game.lua - game scene
-	--
+	-- sc_game.lua - game scene 	--
 	-----------------------------------------------------------------------------------------
 
 	--common modules - solar2d
@@ -21,7 +20,7 @@
 	local entity = require("lib.entity")
 	]]
 	local entity = require("lib.entity")
-	local character = require("lib.entity.game_object.puppet.character")
+	local game = require("lib.game")
 
 	--create scene
 	local scene = composer.newScene()
@@ -51,6 +50,7 @@
 		local zoomTimer = timer.performWithDelay( 1, doZoom, -1 ) --starts a timer once bg has faded in
 		cam:adjustZoom(zoomDir, zoomTimer) --updates the zoom value and bounds of camera
 	end
+
 	local function moveInput(direction)
 	end
 
@@ -67,7 +67,8 @@
 		print("calling game object create from scene")
 
 		entity:setGroup(sceneGroup) --passes group to entity which gets stored for all created entities
-		local char = character:create()
+		
+		game.firstFrame()
 		--gameObj:create(sceneGroup)
 	end
 

@@ -16,25 +16,24 @@
     local idCounter = 1 --counter to give each entity a unique id
 	
     -- Define module
-	local entity = {}
-    entity.store = {}
-    entity.parentGroup = nil --set by setGroup function
+	local lib_entity = {}
+    lib_entity.store = {}
+    lib_entity.parentGroup = nil --set by setGroup function
 
-    function entity:create() --store = any store be it gameObjects, enemies etc...
+    function lib_entity:create() --store = any store be it gameObjects, enemies etc...
         print("creating entity")
-        local e = {}
-        e.id = idCounter --unique id for each entity
-        e.world = {x = 0, y = 0}
-        e.group = display.newGroup() --create a new display group for this entity that will be used for all display objects
+        local entity = {}
+        entity.id = idCounter --unique id for each entity
+        entity.world = {x = 0, y = 0}
+        entity.group = display.newGroup() --create a new display group for this entity that will be used for all display objects
         if (self.parentGroup == nil) then
             print("ERROR: parentGroup is nil, set parentGroup with entity:setGroup(group)")
-            return
         else
-            self.parentGroup:insert(e.group) --
+            self.parentGroup:insert(entity.group) --
         end
-        self.store[e.id] = e --stores the eneity in this modules entity store
+        self.store[entity.id] = entity --stores the eneity in this modules entity store
 
-        function e:DestroySelf()
+        function entity:DestroySelf()
             self.displayGroup:removeSelf()
             self.displayGroup = nil
             entity.store[self.id] = nil
@@ -45,18 +44,35 @@
             self = nil
         end
 
+        --copies the params from the passed or default params table to the entity
+        function entity:setParams(defaultParams, _params)
+            if (_params) then --if passed a table of params
+                for param, defaultValue in pairs(defaultParams) do --for each param in the default params
+                    if (_params[param]) then --if passed param exists
+                        self[param] = _params[param] --overide the default param
+                    else
+                        self[param] = defaultValue --set the default value
+                    end
+                end
+            else --no params passed
+                for param, defaultValue in pairs(defaultParams) do  --for each param in the default params
+                    self[param] = defaultValue --set the default value
+                end
+            end
+        end
+
         idCounter = idCounter + 1
-        print("entity created with id: " .. e.id)
-        return e
+        print("entity created with id: " .. entity.id)
+        return entity
     end
 
-    function entity:Destroy(e)
-        e:DestroySelf()
+    function lib_entity:Destroy(entity)
+        entity:DestroySelf()
         return true
     end
 
-    function entity:setGroup(group) --sets the group for the entity (all modules that extend the entity class will use this)
-        entity.parentGroup = group
+    function lib_entity:setGroup(group) --sets the group for the entity (all modules that extend the entity class will use this)
+        lib_entity.parentGroup = group
     end
 
-	return entity
+	return lib_entity
