@@ -13,7 +13,7 @@
     -- Functions to perform Spell cast / Attacks goes here (as opposed to decided whether to do them which is in subclasses)
     -- Animation / directional facing logic
 	-----------------------------------------------------------------------------------------
-
+	local json = require("json")
 	--common modules
 	local gc = require("lib.global.constants")
 	local util = require("lib.global.utilities")
@@ -21,6 +21,7 @@
 
 	-- Define module
 	local lib_puppet = {}
+    lib_puppet.store = {}
 
 	local defaultAttackAnimation = {
 		pre = { frames = {}, rate = 10, loop = true, duration = .5 },
@@ -38,22 +39,17 @@
 			main = { frames = {}, rate = 3, loop = true, duration = .5 },
 			post = { frames = {}, rate = 10, loop = false, duration = .5 }, },
 		attacks = { defaultAttackAnimation },
-		spells = { defaultAttackAnimation },
 	}
 
-    local defaultParams = {
+    local defaultParams = { isPuppet = true,
 		attackList = {}, spellList = {}, animations = {},
-		isAttacking = false, isCasting = false, isDead = false,
+		isAttacking = false, isDead = false,
 		state = "idle", currentFrame = 0,
+		width = 64, height = 128
 	}
 
-	function lib_puppet:create(_params) --creates the game object
-		print("creating puppet")
-
-		local puppet = gameObject:create(_params, true) --creates game object for puppet
-		puppet.directional = true --all puppets are directional
-		puppet.path = "content/game_objects/puppets/" --path for puppets
-		puppet.width, puppet.height = 64, 128 --width and height of default puppet
+	function lib_puppet.setParams(puppet, _params)
+		print("setting puppet params")
 
 		if (not _params) then --if no params passed use default anaimations
 			defaultParams.animations = util.deepcopy(defaultAnimations)
@@ -61,17 +57,37 @@
 			defaultParams.animations = util.deepcopy(defaultAnimations)
 		end
 		puppet:setParams(defaultParams, _params) --adds puppet params
+		--print("PUPPET PARAMS:--------\n" .. json.prettify(puppet) .. "\n----------------------")
+	end
+
+    function lib_puppet:storeObject(puppet)
+        puppet.puppetID = #self.store + 1 --creates the object id --NOTE: Different to entity id
+        self.store[puppet.puppetID] = puppet --stores the object in this modules store of object
+    end
+
+	function lib_puppet.puppetFactory(puppet)
+		print("adding puppet functions")
 
  		---@diagnostic disable-next-line: duplicate-set-field (deliberately overriding updateFileName for puppet)
-		function puppet:updateFileName()
+		 function puppet:updateFileName() --sets file name referred to by display object
             print("updating puppets file name")
 			self.fName = self.path..self.name.."/"..self.state.."/"..self.facingDirection.image.."/"..self.currentFrame..".png"
 		end
-        puppet:updateFileName() --sets initial fName
-        puppet:makeRect() --creates rect on object creation (remove when camera starts to call this)
+	end
 
-        
-        print("puppet created with id: " .. puppet.objID)
+	function lib_puppet:create(_params) --creates the game object
+		print("creating puppet")
+
+		local puppet = gameObject:create(_params) --creates game object for puppet
+
+		puppet.directional = true --all puppets are directional
+		puppet.path = "content/game_objects/puppets/" --path for puppets
+
+		lib_puppet.setParams(puppet, _params) --sets puppet params
+		lib_puppet.puppetFactory(puppet) --adds functions to puppet
+
+		lib_puppet:storeObject(puppet)
+        print("puppet created with puppet id: " .. puppet.puppetID)
 		return puppet
 	end
 

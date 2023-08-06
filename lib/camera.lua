@@ -57,6 +57,7 @@
 	end
 
 	function cam:moveToPoint(x, y)
+		cam.delta.x, cam.delta.y = x - self.midPoint.x, y - self.midPoint.y
 		self.midPoint.x = x
 		self.midPoint.y = y
 		self:updateBounds()
@@ -77,6 +78,14 @@
 			self.mode = self.modes.free
 			self.target = nil
 		else debug:error("camera.setMode: modeStr not recognised")
+		end
+	end
+
+	function cam:onFrame()
+		--print("target x, y: ", self.target.world.x, self.target.world.y)
+		if (self.mode == self.modes.follow) and (self.target) then
+			--print("move to point")
+			self:moveToPoint(self.target.world.x, self.target.world.y)
 		end
 	end
 

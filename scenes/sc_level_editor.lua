@@ -106,9 +106,8 @@
 		--print("moveMap called")
 
 		if (#map.tileStore.indexedTiles > 0) then
-			local cb = cam.bounds
-			debug.updateText( "camBoundMin", math.floor(cb.x1)..","..math.floor(cb.y1) )
-			debug.updateText( "camBoundMax", math.floor(cb.x2)..","..math.floor(cb.y2) )
+			debug.updateText( "camBoundMin", math.floor(cam.bounds.x1)..","..math.floor(cam.bounds.y1) )
+			debug.updateText( "camBoundMax", math.floor(cam.bounds.x2)..","..math.floor(cam.bounds.y2) )
 			debug.updateText( "#camTiles", #cam.screenTiles )
 			cam:directionalMove(direction) --call function to update cam co-ords
 			map:cameraMove(direction)

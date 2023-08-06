@@ -4,6 +4,7 @@
 	--
 	-----------------------------------------------------------------------------------------
 
+	local json = require("json")
 	--common modules
 	local g = require("lib.global.constants")
 	local util = require("lib.global.utilities")
@@ -13,13 +14,12 @@
 	local lib_character = {}
 
 	function lib_character:create(_params)
-		
-		print("creating character object")
+		print("creating character entity")
 		
 		local char = puppet:create(_params)
-		char.name = "character"
-		char.width, char.height = 128, 128
+		--print("CHARACTER PARAMS:--------\n" .. json.prettify(char) .. "\n----------------------")
         
+		char:updateFileName()
 		char:makeRect() --creates rect on object creation (remove when camera starts to call this)
 
 		return char

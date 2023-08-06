@@ -138,9 +138,9 @@
 			tx, ty = clampToMapSize(x, bMax.y)
 			boundaryTiles.down[#boundaryTiles.down+1] = self.tileStore.tileCols[tx][ty]
 		end
-		print(#tileList.." tiles between bounds ", x1, y1, x2, y2)
+		--print(#tileList.." tiles between bounds ", x1, y1, x2, y2)
 		for k, v in pairs(boundaryTiles) do
-			print("boundary "..k.." has "..#v.." tiles")
+			--print("boundary "..k.." has "..#v.." tiles")
 		end
 		return tileList, boundaryTiles
 	end
@@ -359,18 +359,16 @@
 		else
 			self:refreshCamTiles() --gets camera screen and boundary tiles
 
-
-			local t = cam.boundaryTiles --readability
 			--hide tiles at opposite direction of movement, show tiles in direction of movement
 			if direction.y > 0 then
-				hideTiles(t.up); showTiles(t.down)
+				hideTiles(cam.boundaryTiles.up); showTiles(cam.boundaryTiles.down)
 			elseif direction.y < 0 then
-				hideTiles(t.down); showTiles(t.up)
+				hideTiles(cam.boundaryTiles.down); showTiles(cam.boundaryTiles.up)
 			end
 			if direction.x > 0 then
-				hideTiles(t.left); showTiles(t.right)
+				hideTiles(cam.boundaryTiles.left); showTiles(cam.boundaryTiles.right)
 			elseif direction.x < 0 then
-				hideTiles(t.right); showTiles(t.left)
+				hideTiles(cam.boundaryTiles.right); showTiles(cam.boundaryTiles.left)
 			end
 			for _, tile in pairs(cam.screenTiles) do
 				if (tile.rect) then --tiles already has rect
