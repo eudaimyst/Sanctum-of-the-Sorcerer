@@ -69,7 +69,6 @@
 		entity:setGroup(sceneGroup) --passes group to entity which gets stored for all created entities
 		
 		game.firstFrame()
-		--gameObj:create(sceneGroup)
 	end
 
 	local function onFrame()

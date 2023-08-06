@@ -12,9 +12,16 @@
 	-- Define module
 	local lib_character = {}
 
-	function lib_character:create()
+	function lib_character:create(_params)
+		
 		print("creating character object")
-		local char = puppet:create()
+		
+		local char = puppet:create(_params)
+		char.name = "character"
+		char.width, char.height = 128, 128
+        
+		char:makeRect() --creates rect on object creation (remove when camera starts to call this)
+
 		return char
 	end
 

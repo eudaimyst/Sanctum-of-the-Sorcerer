@@ -9,14 +9,14 @@
 
 	--x and y and angle in degrees values for moving things 
 	M.move = {
-		up = {x = 0, y = -1, angle = 270},
-		upRight = {x = .666, y = -.666, angle = 315},
-		right = {x = 1, y = 0, angle = 0},
-		downRight = {x = .666,y = .666, angle = 45},
-		down = {x = 0,y = 1, angle = 90},
-		downLeft = {x = -.666,y = .666, angle = 135},
-		left = {x = -1,y = 0, angle = 180},
-		upLeft = {x = -.666,y = -.666, angle = 225}
+		up = {x = 0, y = -1, angle = 270, image = "up"},
+		upRight = {x = .666, y = -.666, angle = 315, image = "up_right"},
+		right = {x = 1, y = 0, angle = 0, image = "right"},
+		downRight = {x = .666,y = .666, angle = 45, image = "down_right"},
+		down = {x = 0,y = 1, angle = 90, image = "down"},
+		downLeft = {x = -.666,y = .666, angle = 135, image = "down_left"},
+		left = {x = -1,y = 0, angle = 180, image = "left"},
+		upLeft = {x = -.666,y = -.666, angle = 225, image = "up_left"},
 	}
 
 	--strings used when leading images, part of filenames
