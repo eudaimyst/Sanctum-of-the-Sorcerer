@@ -14,9 +14,6 @@
 		print("mapgen functions: ", k, v)
 	end
 
-	-- Local variables
-	local mapgenIndex = 1 --used for iterating map generator
-
 	-- Define module
 	local mapgen = { params = {} }
 
@@ -53,6 +50,7 @@
 	end
 
 	mapgen.tileStore = { tileColumns = {}, tileRows = {}, indexedTiles = {} }
+	mapgen.rooms = {} --stores room data for gen funcs that use them
 	mapgen.index = 1 --used for iterating map generator to draw variable number of tiles per frame 
 	mapgen.run = false
 	mapgen.paused = false
@@ -149,7 +147,7 @@
 	function mapgen:runGenFunc()
 		print("level print")
 		--print(json.prettify( self.params.level ))
-		self.params.level.method:startGen(nil, self.tileStore, self.params.level.tileset)
+		self.params.level.method:startGen(nil, self)
 	end
 
 	function mapgen:makeTile(x, y)

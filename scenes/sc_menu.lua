@@ -19,12 +19,12 @@
 	local buttonSpacing = 68
 	local buttonOffsetY = 60
 	
-	local titleImage = "content/menu_title.png"
+	local titleImage = "content/menu/title.png"
 	local sceneGroup
 	local halfScreenX, halfScreenY = display.actualContentWidth / 2, display.actualContentHeight / 2
 
 	local function onPlay()
-		--composer.gotoScene( "game" )
+		composer.gotoScene( "scenes.sc_game" )
 	end
 
 	local function onLevelEditor()

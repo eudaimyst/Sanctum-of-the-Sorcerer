@@ -9,10 +9,10 @@
 	-- Define module
 	local fileio = {}
 
-	function fileio.save(width, height, indexedTileStore, level, _fileName)
+	function fileio.save(width, height, indexedTileStore, spawnPoint, level, _fileName)
 		local fileName = _fileName or "level"
 		local tileSet = level.tileset
-		local mapSaveData = { [1] = width, [2] = height, [3] = level.name }
+		local mapSaveData = { [1] = width, [2] = height, [3] = spawnPoint, [4] = level.name }
 
 		local filePath = system.pathForFile( fileName..".json", system.DocumentsDirectory )
 
@@ -54,7 +54,9 @@
 	        saveData = json.decode( contents ) --decode json contents and store in a local table
 	        --print(json.prettify(saveData)) confirms file is loading by printing contents of data
 	    end
-	    local width, height, level = tonumber(saveData[1]), tonumber(saveData[2]), saveData[3]
+	    local width, height, level = tonumber(saveData[1]), tonumber(saveData[2]), saveData[4]
+		local spawnPoint = { x = tonumber(saveData[3].x), y = tonumber(saveData[3].y) }
+		print("spawnpoint x, y = "..spawnPoint.x..", "..spawnPoint.y)
 	    local tileSaveData = {}
 	    for i = 1, #saveData-3 do
 	    	tileSaveData[i] = saveData[i+4]

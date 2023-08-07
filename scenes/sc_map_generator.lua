@@ -81,7 +81,8 @@
 		end
 
 		local function saveMap()
-			fileio.save(mapgen.params.width, mapgen.params.height, mapgen.tileStore.indexedTiles, mapgen.params.level, "test_filename")
+			fileio.save(mapgen.params.width, mapgen.params.height, mapgen.tileStore.indexedTiles,
+			mapgen.spawnPoint, mapgen.params.level, "level+spawnPoint")
 		end
 
 		--[[

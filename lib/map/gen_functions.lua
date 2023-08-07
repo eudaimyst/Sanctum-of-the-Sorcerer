@@ -10,6 +10,7 @@
 	-- Define module
 	local genFuncs = {run = false}
 
+	local mapgen --stores mapgen module for use in genFuncs, set in startGen()
 
 	local pointsExpand, rogue, noise, wfc, mixed = {}, {}, {}, {}, {}
 	genFuncs.pointsExpand, genFuncs.rogue, genFuncs.noise, genFuncs.wfc, genFuncs.mixed = pointsExpand, rogue, noise, wfc, mixed
@@ -172,12 +173,22 @@
 			end
 		elseif (self.frame == 8) then
 			self:setFinalMapColours()
+		elseif (self.frame == 9) then
+			self:setSpawnPoint()
 		else
 			Runtime:removeEventListener( "enterFrame", self.onFrameRef )
 		end
 		if (doNextFrame) then
 			self.frame = self.frame + 1 --iterate frame counters
 		end
+	end
+
+	function pointsExpand:setSpawnPoint()
+		local randroom = self.roomStore[math.random(1, #self.roomStore)]
+		local roomMidPoint = randroom:getMidPoint()
+		mapgen.spawnPoint = { x = roomMidPoint.x, y = roomMidPoint.y }
+		local tile = self.tileStore.tileColumns[roomMidPoint.x][roomMidPoint.y]
+		tile.rect:setFillColor(1, 1, 0)
 	end
 
 	function pointsExpand:setFinalMapColours()
@@ -238,6 +249,13 @@
 				setColor(tiles, "white")
 				setType(tiles, "wall")
 			end
+		end
+
+		function room:getMidPoint()
+			local midPoint = {x = 0, y = 0}
+			midPoint.x = math.floor((self.bounds.x1 + self.bounds.x2)/2)
+			midPoint.y = math.floor((self.bounds.y1 + self.bounds.y2)/2)
+			return midPoint
 		end
 
 		function room:setPotentialDoorTiles()
@@ -628,13 +646,14 @@
 
 	end
 
-	function pointsExpand:startGen(_params, tileStore, tileset)
+	function pointsExpand:startGen(_params, _mapgen)
+		mapgen = _mapgen
 		self.roomStore = {} --created by the generator
-		self.tileset = tileset
-		self.tileStore = tileStore
-		self.width, self.height = #tileStore.tileColumns, #tileStore.tileRows
+		self.tileset = mapgen.params.level.tileset
+		self.tileStore = mapgen.tileStore
+		self.width, self.height = #self.tileStore.tileColumns, #self.tileStore.tileRows
 		if (_params) then
-			self.params = _params --set params if passed
+			self.params = _params --set para1ms if passed
 		end
 
 		self.frame = 1 --current frame of the generation function (iterated onFrame)
@@ -645,6 +664,7 @@
 		print("starting generation function points expand")
 		print("tilecount = "..#self.tileStore.indexedTiles)
 		Runtime:addEventListener( "enterFrame", onFrame )
+
 	end
 
 	return genFuncs
