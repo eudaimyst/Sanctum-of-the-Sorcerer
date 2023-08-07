@@ -10,6 +10,7 @@
 	local fileio = {}
 
 	function fileio.save(width, height, indexedTileStore, spawnPoint, level, _fileName)
+		print("-----------------map save begin -------------------")
 		local fileName = _fileName or "level"
 		local tileSet = level.tileset
 		local mapSaveData = { [1] = width, [2] = height, [3] = spawnPoint, [4] = level.name }
@@ -28,7 +29,7 @@
 			end
 		end
 
-		print("mapSaveData:\n-----------------\n"..json.prettify(mapSaveData))
+		--print("mapSaveData:\n-----------------\n"..json.prettify(mapSaveData))
 
 		local file = io.open( filePath, "w" ) --open file for writing
 
@@ -37,12 +38,11 @@
 	        file:write( json.encode( mapSaveData ) )  --write map data
 	        io.close( file ) --close file
 	    end
+		print("-----------------map save complete -------------------")
 	end
 
-	function fileio.load(_fileName)
-		local fileName = _fileName or "level"
-		local fileDir = system.pathForFile(system.ResourceDirectory).."/levels/"
-		local filePath = fileDir..fileName..".json"
+	function fileio.load(filePath)
+		print("-----------------map load begin -------------------")
 		local saveData
 
 		local file = io.open( filePath, "r" ) --open file for reading
@@ -61,6 +61,7 @@
 	    for i = 1, #saveData-3 do
 	    	tileSaveData[i] = saveData[i+4]
 	    end
+		print("-----------------map load complete -------------------")
 	    return width, height, spawnPoint, level, tileSaveData
 	end
 

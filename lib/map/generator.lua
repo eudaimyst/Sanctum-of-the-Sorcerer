@@ -106,9 +106,8 @@
 	function mapgen:startTileGen(completeListener) --called by scene when button is pressed
 		local tileCount = #self.tileStore.indexedTiles
 		if ( tileCount == 0 or self.paused) then
-			local p = self.params
-			self.group.x = display.contentWidth / 2 - (p.width + 1) * p.tileSize / 2
-			self.group.y = display.contentHeight / 2 - (p.height + 1) * p.tileSize / 2
+			self.group.x = display.contentWidth / 2 - (self.params.width + 1) * self.params.tileSize / 2
+			self.group.y = display.contentHeight / 2 - (self.params.height + 1) * self.params.tileSize / 2
 			self.completeListener = completeListener
 			if (self.paused) then --if mapgen has been previously paused we do not reset the index but continue genration
 				self.paused = false
@@ -126,6 +125,7 @@
 		self.run = false
 	end
 	function mapgen:deleteMap()
+
 		if (not self.run) then --cant clear tiles while tileGen running
 			local ts = self.tileStore
 			for i = 1, #ts.indexedTiles do
@@ -142,12 +142,13 @@
 				ts.tileColumns[i] = nil
 			end
 		end
+		
 	end
 
-	function mapgen:runGenFunc()
+	function mapgen:runGenFunc(completeListener)
 		print("level print")
 		--print(json.prettify( self.params.level ))
-		self.params.level.method:startGen(nil, self)
+		self.params.level.method:startGen(nil, self, completeListener)
 	end
 
 	function mapgen:makeTile(x, y)

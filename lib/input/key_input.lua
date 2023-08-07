@@ -162,7 +162,7 @@
 		Runtime:addEventListener( "key", onKeyEvent )
 	end
 
-	local function onFrame(event) --not sure if want to do this on frame or not
+	function key.onFrame(event) --not sure if want to do this on frame or not
 		if (key.moveDirection) then
 			for i = 1, #moveListeners do
 				moveListeners[i](key.moveDirection) --sends movement direction to each registered listener
@@ -170,6 +170,6 @@
 		end
 	end
 	
-	Runtime:addEventListener( "enterFrame", onFrame )
+	--Runtime:addEventListener( "enterFrame", onFrame )
 
 	return key

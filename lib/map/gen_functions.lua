@@ -176,6 +176,9 @@
 		elseif (self.frame == 9) then
 			self:setSpawnPoint()
 		else
+			if (self.completeListener) then
+				self.completeListener()
+			end
 			Runtime:removeEventListener( "enterFrame", self.onFrameRef )
 		end
 		if (doNextFrame) then
@@ -226,7 +229,7 @@
 		room.connectedRooms = { up = {}, down = {}, left = {}, right = {} } --stores a reference to room when hallway is created
 
 		room.idText = display.newText( self.textGroup, tostring(room.id), 0, 0, native.systemFontBold, self.params.tileSize )
-		room.idText:setFillColor( 1, 1, 0, 1 )
+		room.idText:setFillColor( 1, 1, 0, 0 )
 
 		self.roomStore[room.id] = room
 
@@ -646,8 +649,9 @@
 
 	end
 
-	function pointsExpand:startGen(_params, _mapgen)
+	function pointsExpand:startGen(_params, _mapgen, completeListener)
 		mapgen = _mapgen
+		self.completeListener = completeListener
 		self.roomStore = {} --created by the generator
 		self.tileset = mapgen.params.level.tileset
 		self.tileStore = mapgen.tileStore

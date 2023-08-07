@@ -25,6 +25,9 @@
 			spawnPos = map:getSpawnPoint()
 		}
 		game.char = character:create(charParams)
+		
+		cam:setMode("follow", game.char)
+			
 	end
 
 	function game.init(_cam, _map)
