@@ -162,7 +162,7 @@
 		Runtime:addEventListener( "key", onKeyEvent )
 	end
 
-	function key.onFrame(event) --not sure if want to do this on frame or not
+	function key.onFrame(event) --each frame check if movement key is pressed and send direction to registered listeners
 		if (key.moveDirection) then
 			for i = 1, #moveListeners do
 				moveListeners[i](key.moveDirection) --sends movement direction to each registered listener

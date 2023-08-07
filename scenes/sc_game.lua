@@ -132,6 +132,7 @@
 			key.onFrame()
 			cam:onFrame()
 			map:cameraMove(game.char.moveDirection)
+			game.char:updateRectPos()
 		end
 
 	end

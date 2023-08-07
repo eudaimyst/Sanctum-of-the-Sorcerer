@@ -49,8 +49,7 @@
 
             self.world.x = self.world.x + (self.moveDirection.x * self.moveSpeed * gv.frame.dts)
             self.world.y = self.world.y + (self.moveDirection.y * self.moveSpeed * gv.frame.dts)
-            
-            self:updateRectPos()
+
         end
 
         function gameObject:setMoveDirection(dir) --sets move direction and forces updating facing direction
@@ -74,8 +73,10 @@
             end
         end
 
-        function gameObject:updateRectPos()
+        function gameObject:updateRectPos() --needs to be called after cam bounds has been updated on frame or jitters
+
             self.rect.x, self.rect.y = self.world.x + self.xOffset - cam.bounds.x1, self.world.y + self.yOffset - cam.bounds.y1
+            
         end
 
 		function gameObject:makeRect() --makes game objects rect if doesn't exist

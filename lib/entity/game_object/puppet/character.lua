@@ -4,10 +4,7 @@
 	--
 	-----------------------------------------------------------------------------------------
 
-	local json = require("json")
 	--common modules
-	local g = require("lib.global.constants")
-	local util = require("lib.global.utilities")
 	local puppet = require("lib.entity.game_object.puppet")
 
 	-- Define module
