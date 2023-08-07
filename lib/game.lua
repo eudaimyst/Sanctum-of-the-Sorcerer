@@ -14,14 +14,23 @@
 
 	-- Define module
 	local game = {}
+	local cam, map --set on init()
 
 	function game.spawnChar()
+		
+		print("char getting spawn point from map: ")
 		local charParams = { 
 			name = "character", width = 128, height = 128,
 			moveSpeed = 300,
-			spawnPos = { x = display.actualContentWidth / 2, y = display.actualContentHeight / 2}
+			spawnPos = map:getSpawnPoint()
 		}
 		game.char = character:create(charParams)
+	end
+
+	function game.init(_cam, _map)
+		print("setting cam and map for game library")
+		cam = _cam
+		map = _map
 	end
 
 	function game.firstFrame()

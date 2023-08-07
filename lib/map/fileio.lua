@@ -61,7 +61,7 @@
 	    for i = 1, #saveData-3 do
 	    	tileSaveData[i] = saveData[i+4]
 	    end
-	    return width, height, level, tileSaveData
+	    return width, height, spawnPoint, level, tileSaveData
 	end
 
 	return fileio

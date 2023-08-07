@@ -310,10 +310,20 @@
 		end
 	end
 
+	function map:getSpawnPoint()
+		if self.spawnPoint then
+			return self.spawnPoint
+		else
+			return { x = self.worldWidth/2, y = self.worldHeight/2 }
+		end
+	end
+
 	function map:loadMap()
 		print("loading map in map.lua")
-		local width, height, level, tileData = fileio.load("level")
+		local width, height, spawnPoint, level, tileData = fileio.load("level")
 		self.params.width, self.params.height = width, height --width and height in tiles
+		self.spawnPoint = {x = spawnPoint.x * self.params.tileSize, y = spawnPoint.y * self.params.tileSize}
+		print("spawnPoint set to map: "..self.spawnPoint.x..", "..self.spawnPoint.y)
 		--self.worldWidth, self.worldHeight = self.params.width * self.params.tileSize, self.params.height * self.params.tileSize --width and height in pixels
 		--self.centerX, self.centerY = self.worldWidth/2, self.worldHeight/2 --stores center of map in world coords to move camera to this pos
 		self:createMapTiles(tileData) --call function to create tiles

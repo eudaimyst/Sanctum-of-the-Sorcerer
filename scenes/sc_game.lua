@@ -32,7 +32,7 @@
 		if map:loadMap() then
 			--cam:moveToPoint(map.worldWidth / 2, map.worldHeight / 2)
 			map:updateTilesPos()
-			cam:moveToPoint(map.worldWidth / 2, map.worldHeight / 2)
+			cam:moveToPoint(map.spawnPoint.x, map.spawnPoint.y)
 			map:refreshCamTiles()
 			map.showTiles(cam.screenTiles)
 		end
@@ -88,12 +88,13 @@
 		key.registerDebugCamListener(toggleDebugCam)
 		map:init(sceneGroup, cam)
 		cam.init()
+		game.init(cam, map)
 		print("calling game object create from scene")
 
 		entity:setGroup(sceneGroup) --passes group to entity which gets stored for all created entities
 		
 		loadMap()
-		game.firstFrame()
+		game.firstFrame() --spawns character
 		followCharacter()
 	end
 
