@@ -26,6 +26,7 @@
 
 	local defaultAttackAnimation = {
 		pre = { frames = 1, rate = 10, loop = true, duration = .5 },
+		windup = { frames = 1, rate = 10, loop = true, duration = .5 },
 		main = { frames = 1, rate = 10, loop = false, duration = .5 },
 		post = { frames = 1, rate = 10, loop = false, duration = .5 },
 	}
