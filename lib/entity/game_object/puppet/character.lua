@@ -18,7 +18,7 @@
         
 		--char:updateFileName()
 		char:loadTextures()
-		char:makeRect() --creates rect on object creation (remove when camera starts to call this)
+		char:makeRect() --creates rect on creation
 
 		return char
 	end
