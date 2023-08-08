@@ -112,7 +112,7 @@
 		map:init(sceneGroup, cam)
 		mapgen:init(sceneGroup)
 		cam.init()
-		game.init(cam, map)
+		game.init(cam, map, key)
 		print("calling game object create from scene")
 
 		entity:setGroup(sceneGroup) --passes group to entity which gets stored for all created entities
@@ -129,10 +129,7 @@
 			debug.updateText( "camBoundMax", math.floor(cam.bounds.x2)..","..math.floor(cam.bounds.y2) )
 			debug.updateText( "#camTiles", #cam.screenTiles )
 			debug.updateText( "charWorldPos", game.char.world.x..","..game.char.world.y )
-			key.onFrame()
-			cam:onFrame()
-			map:cameraMove(game.char.moveDirection)
-			game.char:updateRectPos()
+			game:onFrame()
 		end
 
 	end

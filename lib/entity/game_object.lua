@@ -19,10 +19,10 @@
 	--common modules
 	local gc = require("lib.global.constants")
     local gv = require("lib.global.variables")
-	local util = require("lib.global.utilities")
+	--local util = require("lib.global.utilities")
     local entity = require("lib.entity")
     local cam = require("lib.camera")
-    local json = require("json")
+    --local json = require("json")
 
 	-- Define module
 	local lib_gameObject = {}
@@ -36,13 +36,14 @@
         image = "default.png", path = "content/game_objects/", fName = "",
         spawnPos = { x = 0, y = 0 },
         directional = false, moveDirection = gc.move.down, facingDirection = gc.move.down,
+        isMoving = false,
     }
 
     function lib_gameObject.gameObjectFactory(gameObject)
 		print("adding gameObject functions")
 
         function gameObject:move(dir) --called each frame from key_input by scene
-            
+            self.isMoving = true
             if ( self.moveDirection ~= dir ) then --if not already moving or moving in a different direction
                 self:setMoveDirection(dir)
             end
@@ -60,8 +61,11 @@
         function gameObject:setFacingDirection(dir) --sets facing direction and re-creates rect
             self.facingDirection = dir
             self:updateFileName()
+            --[[
             self:destroyRect()
             self:makeRect()
+            ]]
+            self:updateRectImage()
         end
 
         function gameObject:updateFileName() --updates fileName based on current facing direction
@@ -74,15 +78,22 @@
         end
 
         function gameObject:updateRectPos() --needs to be called after cam bounds has been updated on frame or jitters
-
             self.rect.x, self.rect.y = self.world.x + self.xOffset - cam.bounds.x1, self.world.y + self.yOffset - cam.bounds.y1
-            
+        end
+
+        function gameObject:updateRectImage()
+            self.rect.fill = {
+                type = "image",
+                filename = self.fName,  -- "filename" property required
+                baseDir = system.ResourceDirectory;     -- "baseDir" property required
+            }
         end
 
 		function gameObject:makeRect() --makes game objects rect if doesn't exist
             print("making gameObject rect, isPuppet = " .. tostring(self.isPuppet))
             if (self.rect) then
-                self:destroyRect()
+                print("rect already created")
+                return
             end
             self.rect = display.newImageRect(self.group, self.fName, self.width, self.height)
             self.rect.x, self.rect.y = self.world.x + self.xOffset, self.world.y + self.yOffset
@@ -124,6 +135,12 @@
 
         print("gameObject created with id: " .. gameObject.objID)
         return gameObject
+    end
+
+    function lib_gameObject:clearMovement()
+        for _, obj in ipairs(self.store) do
+            obj.isMoving = false
+        end
     end
 
 	return lib_gameObject
