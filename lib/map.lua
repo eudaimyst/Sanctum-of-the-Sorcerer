@@ -318,16 +318,19 @@
 		end
 	end
 
-	function map:loadMap(fName, isResource)
+	function map:loadMap(_fName, isResource)
 		print("loadMap called from map lib")
 		local filePath
 		if (isResource) then
-			filePath = system.pathForFile( fName, system.ResourceDirectory )..".json"
+			--local fName = _fName
+			filePath = system.pathForFile( system.ResourceDirectory ).."/levels/".._fName..".json"
+			print("filePath: "..filePath)
 		else
 			filePath = system.pathForFile( fName, system.DocumentsDirectory )..".json"
 		end
 
 		local width, height, spawnPoint, level, tileData = fileio.load(filePath)
+
 		self.params.width, self.params.height = width, height --width and height in tiles
 		self.spawnPoint = {x = spawnPoint.x * self.params.tileSize, y = spawnPoint.y * self.params.tileSize}
 		print("spawnPoint set to map: "..self.spawnPoint.x..", "..self.spawnPoint.y)

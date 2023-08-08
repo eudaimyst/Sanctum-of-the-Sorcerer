@@ -29,7 +29,7 @@
 
 	local function loadMap()
 		print("load map pressed")
-		if map:loadMap() then
+		if map:loadMap("level1", true) then
 			--cam:moveToPoint(map.worldWidth / 2, map.worldHeight / 2)
 			map:updateTilesPos()
 			cam:moveToPoint(map.worldWidth / 2, map.worldHeight / 2)
@@ -153,7 +153,7 @@
 
 	local function onFrame()
 		--print(cam.bounds.x1..","..cam.bounds.y1.."||"..cam.bounds.x2..","..cam.bounds.y2)
-
+		key.onFrame() --calls checks for movement
 	end
 
 	function scene:create( event )

@@ -43,6 +43,7 @@
 
 	function fileio.load(filePath)
 		print("-----------------map load begin -------------------")
+		print("filepath: "..filePath)
 		local saveData
 
 		local file = io.open( filePath, "r" ) --open file for reading
