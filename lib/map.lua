@@ -31,7 +31,9 @@
 
 	map.params = { width = 10, height = 10, tileStore = {}, tileSize = 128, tileset = defaultTileset }
 
-	map.imageLocation = "content/map/"
+	local mapImageFolder = "content/map/"
+
+	
 
 	local function worldPointToTileCoords(_x, _y) --takes x y in world coords and returns tile coords
 		--print("map width/height: "..map.worldWidth..", "..map.worldHeight)
@@ -145,13 +147,25 @@
 		return tileList, boundaryTiles
 	end
 
+	function map:createTexturesFromTileset(tileset)
+		
+		for k, tileData in pairs(self.params.tileset) do
+			print("creating tileset for texture: "..k)
+			local fName = mapImageFolder.."default_tileset/"..tileset[k].image
+			
+			print(fName)
+			tileData.texture = graphics.newTexture( { type = "image", filename = fName, baseDir = system.ResourceDirectory } )
+		end
+
+	end
+
 	function map:createMapTiles(_tileData) --called by editor/map, creates all tile objects for maps, tileData = optional map data, tileSize = optional force tile size in pixels
 		print("create map tiles called")
 		
 		local tileData = _tileData or self.tileData
 		local tileSize
 
-		if (cam.mode == cam.modes.debug) then
+		if (cam.mode == cam.modes.debug) then --if debugging cam tiles have different size
 			print("camdebug tilesize = "..cam.mode.debugTileSize)
 			tileSize = cam.mode.debugTileSize
 		else
@@ -159,32 +173,35 @@
 		end
 		print("tileData length: "..#tileData)
 
-		local width, height, tileset = self.params.width, self.params.height, self.params.tileset --set local vars for readability
-		local halfTileSize = tileSize/2
-
-		self.width, self.height = width, height
-		self.tileSize = tileSize
+		--TODO: clean this up by copying all params to module
+		self.width, self.height = self.params.width, self.params.height
+		self.tileSize = self.params.tileSize
+		self.tileset = self.params.tileset
 		self.worldWidth, self.worldHeight = self.params.width * tileSize, self.params.height * tileSize
 		self.centerX, self.centerY = self.worldWidth/2, self.worldHeight/2
+		local width, height, tileset = self.width, self.height, self.tileset --set local vars for readability
+		local halfTileSize = tileSize/2
+
+		self:createTexturesFromTileset(defaultTileset)
 
 		local function createTile(x, y, i) --new tile constructor
 			local tile = {}
 			tile.id, tile.x, tile.y = i, x, y --tile.x = tile column, tile.y = tile row
 			--tile screen pos is exclusively accessed through its rect
 			tile.world = { x = x * tileSize, y = y * tileSize }
-			local image
-
-			for k, v in pairs(defaultTileset) do
-				if tileData[i].s == v.savestring then
-					image = v.image
-					--print("setting type for tile id: "..i.." to "..k)
-					tile.type = k --sets the tile type string to the key name of the matching tileset entry
+			
+			function tile.setTypeFromTileSet(tileset)
+				for k, v in pairs(tileset) do
+					if tileData[i].s == v.savestring then
+						--print("setting type for tile id: "..i.." to "..k)
+						tile.type = k --sets the tile type string to the key name of the matching tileset entry
+					end
 				end
 			end
-
-			tile.imageFile = self.imageLocation.."defaultTileset/"..image
+			tile.setTypeFromTileSet(tileset)
+			tile.imageTexture = defaultTileset[tile.type].texture --imageFileLocation for this tile
 			--print("tile image file: "..tile.imageFile)
-			
+
 			function tile:setWallSubType() --look at neighbouring tiles to set a subtype for this tile
 				local st = wallSubTypes
 
@@ -196,7 +213,7 @@
 				}
 				local subTypes = {} --each indice gets set to a value from wallSubTypes
 				--store tiletypes for readability
-				self.wallImage = {}
+				self.wallTexture = {}
 				for subID = 0, 3, 1 do
 					subTypes[subID] = st.error --set default to error
 
@@ -230,8 +247,12 @@
 						end
 					end
 
-					local wallImageString = map.imageLocation.."defaultTileset/dungeon_walls/"..subTypes[subID]..subID..".png"
-					self.wallImage[subID] = wallImageString
+					--local wallImageString = map.imageLocation.."defaultTileset/dungeon_walls/"..subTypes[subID]..subID..".png"
+					local fName = mapImageFolder.."default_tileset/dungeon_walls/"..subTypes[subID]..subID..".png"
+					
+					--print(fName)
+					self.wallTexture[subID] = graphics.newTexture( { type = "image", filename = fName, baseDir = system.ResourceDirectory } )
+					--self.wallImage[subID] = wallImageString
 				end
 				
 				tile.subTypes = subTypes
@@ -257,7 +278,7 @@
 					map.group:insert(self.rect)
 					self.rect.anchorChildren = true
 					for i = 0, 3, 1 do --four corners
-						local wallRect = display.newImageRect( self.rect, self.wallImage[i], halfTileSize, halfTileSize ) --create rect for each wall
+						local wallRect = display.newImageRect( self.rect, self.wallTexture[i].filename, self.wallTexture[i].baseDir, halfTileSize, halfTileSize ) --create rect for each wall
 						wallRect = util.zeroAnchors(wallRect)
 						local n, r = math.modf( i / 2 ) --set wall rect position using math
 						wallRect.x = r * tileSize - halfTileSize
@@ -265,7 +286,7 @@
 					end
 				else
 					--print("creating rect for tile id: "..self.id.. " with image "..image)
-					self.rect = display.newImageRect( map.group, self.imageFile, tileSize, tileSize )
+					self.rect = display.newImageRect( map.group, self.imageTexture.filename, self.imageTexture.baseDir, tileSize, tileSize )
 				end
 				self.rect.x, self.rect.y = self.world.x, self.world.y
 				util.zeroAnchors(self.rect)
@@ -326,7 +347,7 @@
 			filePath = system.pathForFile( system.ResourceDirectory ).."/levels/".._fName..".json"
 			print("filePath: "..filePath)
 		else
-			filePath = system.pathForFile( fName, system.DocumentsDirectory )..".json"
+			filePath = system.pathForFile( _fName..".json", system.DocumentsDirectory )
 		end
 
 		local width, height, spawnPoint, level, tileData = fileio.load(filePath)

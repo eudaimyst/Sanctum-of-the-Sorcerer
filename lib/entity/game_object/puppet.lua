@@ -25,21 +25,25 @@
     lib_puppet.store = {}
 
 	local defaultAttackAnimation = {
-		pre = { frames = {}, rate = 10, loop = true, duration = .5 },
-		main = { frames = {}, rate = 10, loop = false, duration = .5 },
-		post = { frames = {}, rate = 10, loop = false, duration = .5 },
+		pre = { frames = 1, rate = 10, loop = true, duration = .5 },
+		main = { frames = 1, rate = 10, loop = false, duration = .5 },
+		post = { frames = 1, rate = 10, loop = false, duration = .5 },
 	}
 
 	local defaultAnimations = {
-		idle = { frames = {}, rate = 3, loop = true, duration = .5 },
-		walk = { frames = { 0, 1, 2, 3 }, rate = 6, loop = true, duration = .5 },
-		sneak = { frames = {}, rate = 5, loop = true, duration = .5 },
-		sprint = { frames = {}, rate = 10, loop = true, duration = .5 },
+		idle = { frames = 1, rate = 3, loop = true, duration = .5 },
+		walk = { frames = 4, rate = 6, loop = true, duration = .5 },
+		sneak = { frames = 1, rate = 5, loop = true, duration = .5 },
+		sprint = { frames = 1, rate = 10, loop = true, duration = .5 },
 		death = {
-			pre = { frames = {}, rate = 10, loop = false, duration = .5 },
-			main = { frames = {}, rate = 3, loop = true, duration = .5 },
-			post = { frames = {}, rate = 10, loop = false, duration = .5 }, },
-		attacks = { defaultAttackAnimation },
+			pre = { frames = 1, rate = 10, loop = false, duration = .5 },
+			main = { frames = 1, rate = 3, loop = true, duration = .5 },
+			post = { frames = 1, rate = 10, loop = false, duration = .5 }, },
+		attack = {
+			pre = { frames = 1, rate = 10, loop = true, duration = .5 },
+			main = { frames = 1, rate = 10, loop = false, duration = .5 },
+			post = { frames = 1, rate = 10, loop = false, duration = .5 },
+		}
 	}
 
     local defaultParams = { isPuppet = true,
@@ -77,11 +81,47 @@
 
 		function puppet:nextAnimFrame() --called to set next frame of animation
 			self.currentFrame = self.currentFrame + 1
-			if self.currentFrame > #self.animations[self.state].frames - 1 then --reset current frame once reached anim's frame count
+			if self.currentFrame > self.animations[self.state].frames - 1 then --reset current frame once reached anim's frame count
 				self.currentFrame = 0
 			end
-			self:updateFileName()
-            self:updateRectImage()
+            self:updateRectImage(self.currentFrame)
+		end
+
+		function puppet:loadTextures() --overrides gameObject function
+			print("loading puppet textures")
+			self.textures = {}
+			for _, dir in pairs(gc.move) do --for each direction
+				print("adding textures for direction: "..dir.image)
+				self.textures[dir.image] = {}
+				for animName, animData in pairs(self.animations) do --for each animation
+					print("adding textures for animName: "..animName)
+					self.textures[dir.image][animName] = {}
+					if (animData.frames) then --if no sub animations (walk, spring, etc...)
+						for i = 0, animData.frames - 1 do --zero indexed animation file names
+							print("adding textures for frame: "..i)
+							self.textures[dir.image][animName][i] = graphics.newTexture( { type="image", baseDir=system.ResourceDirectory, 
+							filename=self.path..self.name.."/"..animName.."/"..dir.image.."/"..i..".png"
+							} )
+						end
+						print("setting texture to ", self.facingDirection.image, self.state, self.currentFrame)
+						self.texture = self.textures[self.facingDirection.image][self.state][self.currentFrame]
+					else
+						for subAnimName, subAnimData in pairs(animData) do --for each sub animation (pre, main, post, idles, special... etc)
+							print("adding textures for subAnimName: "..subAnimName)
+							self.textures[dir.image][animName][subAnimName] = {}
+							for i = 0, subAnimData.frames - 1 do --zero indexed animation file names
+								print("adding textures for frame: "..i)
+								self.textures[dir.image][animName][subAnimName][i] = graphics.newTexture( {
+									type="image", baseDir=system.ResourceDirectory, 
+									filename=self.path..self.name.."/"..animName.."/"..subAnimName.."/"..dir.image.."/"..i..".png"
+								} )
+							end
+						end
+						print("setting texture to ", self.facingDirection.image, self.state, self.subAnim, self.currentFrame)
+						self.texture = self.textures[self.facingDirection.image][self.state][self.subAnim][self.currentFrame]
+					end
+				end
+			end
 		end
 
 		function puppet:updateAnimationFrames() --called on each game render frame
@@ -90,11 +130,11 @@
 			else
 				self.state = "idle"
 				--check to make sure current frame is not past animation state frames
-				if (self.currentFrame > #self.animations[self.state].frames) then
-					self.currentFrame = #self.animations[self.state].frames  --minus one as frames are zero indexed
+				if (self.currentFrame > self.animations[self.state].frames) then
+					self.currentFrame = self.animations[self.state].frames  --minus one as frames are zero indexed
 				end
 			end
-			if (#self.animations[self.state].frames > 0) then --if theres more than one frame in the anim data
+			if (self.animations[self.state].frames > 0) then --if theres more than one frame in the anim data
 				self.frameTimer = self.frameTimer + gv.frame.dts --add frame delta to timer
 			end
 			if self.frameTimer >= 1 / self.animations[self.state].rate then --timer is greater than the animations rate

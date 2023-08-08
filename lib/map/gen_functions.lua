@@ -273,7 +273,7 @@
 						edgeWall = true
 					end
 				end
-				print("room with id: "..room.id.." has "..#self.wallTiles[direction].." wall tiles on "..direction.." side")
+				--print("room with id: "..room.id.." has "..#self.wallTiles[direction].." wall tiles on "..direction.." side")
 				if (not edgeWall) then
 					for i = 1, #self.wallTiles[direction] - edgeInset*2 do
 						local tile = self.wallTiles[direction][i + edgeInset]
@@ -293,16 +293,16 @@
 			local eData = self.expansionData
 			local data = self.wallData
 			self.doorAvailWallTiles = { up = {}, down = {}, left = {}, right = {} } --hold the wall tiles where door can be drawn
-			print("room neighbours::::::::::::::::: "..room.id)
-			for k, v in pairs(self.neighbours) do
+			--print("room neighbours::::::::::::::::: "..room.id)
+			--[[ for k, v in pairs(self.neighbours) do
 				print (k, v, "\n--------------------------")
 				for k1, v1 in pairs(v) do
 					print (k1, v1)
 				end
-			end
+			end ]]
 			--print(json.prettify(self.neighbours))
 			for direction, neighbours in pairs(self.neighbours) do
-				print("room #"..room.id.." has "..#neighbours.." neighbours on side "..direction)
+				--("room #"..room.id.." has "..#neighbours.." neighbours on side "..direction)
 				for i = 1, #neighbours do
 				local neighbour = neighbours[i]
 					if (neighbour ~= "map") then --dont draw doors when rooms on map edges
@@ -316,8 +316,8 @@
 						local dim --dimension of tile x or y for readability
 						if (direction == "up" or direction == "down") then dim = "x" --to get x and y values from tiles
 						else dim = "y" end
-						print("room has "..#potentials.." potential door tiles on side "..direction)
-						print("neighbour has "..#nPotentials.." potential door tiles on side "..oppositeDir)
+						--print("room has "..#potentials.." potential door tiles on side "..direction)
+						--print("neighbour has "..#nPotentials.." potential door tiles on side "..oppositeDir)
 						if (#potentials > 0 and #nPotentials > 0) then --neighbour has potential wall tiles
 							local pos = potentials[1][dim] --bounds of wall tiles
 							local pos2 = potentials[#potentials][dim]
@@ -326,16 +326,16 @@
 							local startPos = math.max(pos, nPos) --bounds of avail door space
 							local endPos = math.min(pos2, nPos2)
 							local len = endPos - startPos + 1 --length of avail space
-							print("overlapping length: "..len)
+							--print("overlapping length: "..len)
 							if (len >= pointsExpand.params.doorWidthMin) then
 								for j = 1, len do --for each tile in potential door space
-									print(#potentials.." potentials in room "..room.id)
-									print(i + startPos - pos.."/"..#potentials)
-									print("setting wall tiles for neighbour #"..i..", "..direction..", ".. j + startPos - pos .." as available")
+									--print(#potentials.." potentials in room "..room.id)
+									--print(i + startPos - pos.."/"..#potentials)
+									--print("setting wall tiles for neighbour #"..i..", "..direction..", ".. j + startPos - pos .." as available")
 									availTiles[i][j] = potentials[j + startPos - pos] --store the tiles
 								end
 								if (availTiles) then
-									print(#availTiles[i])
+									--print(#availTiles[i])
 									if #availTiles[i] > 0 then
 										setColor(availTiles[i], "black")
 									end
@@ -429,7 +429,7 @@
 									y1, y2 = midY - math.floor(doorWidth/2), midY + math.floor(doorWidth/2) - 1
 								end
 								--set wall tiles for hallway
-								print("drawing hallway for room "..room.id.." in direction "..direction.." at "..x1..", "..y1.." to "..x2..", "..y2.."")
+								--print("drawing hallway for room "..room.id.." in direction "..direction.." at "..x1..", "..y1.." to "..x2..", "..y2.."")
 								for j = x1, x2 do
 									for k = y1, y2 do
 										local tile = pointsExpand.tileStore.tileColumns[j][k]
@@ -447,7 +447,7 @@
 								end
 								setColor(doorTiles[direction], "room", room.id)
 								setType(doorTiles[direction], "floor")
-								print(#doorWallTiles)
+								--print(#doorWallTiles)
 								setColor(doorWallTiles, "black")
 								setType(doorWallTiles, "wall")
 							end
@@ -475,7 +475,7 @@
 			--print("self.id set "..#self.tiles.." tiles")
 			if (self.expandComplete) then
 				setColor(self.tiles, "room", self.id)
-				print("setting type for "..#self.tiles.." tiles in room#"..self.id.." to floor")
+				--print("setting type for "..#self.tiles.." tiles in room#"..self.id.." to floor")
 				setType(self.tiles, "floor")
 			else
 				setColor(self.tiles, "white")
@@ -488,7 +488,7 @@
 					--print("expanding room with id "..self.id)
 					self.bounds[data.bound] = self.bounds[data.bound] + data.boundExpand
 				else
-					print("expansion complete for room# "..room.id.." in "..direction.." direction")
+					--print("expansion complete for room# "..room.id.." in "..direction.." direction")
 				end
 			end
 		end
@@ -541,7 +541,7 @@
 							end
 						end
 						if (foundNeighbour) then
-							print ("room# "..room.id .. " expansion complete due to room# "..otherRoom.id.." on side "..direction)
+							--print ("room# "..room.id .. " expansion complete due to room# "..otherRoom.id.." on side "..direction)
 							self.expandDirComplete[direction] = true
 						end
 					end
@@ -566,7 +566,7 @@
 			end
 			local ec = self.expandDirComplete
 			if ec.up and ec.down and ec.left and ec.right then
-				print("expand completed for room# "..room.id)
+				--print("expand completed for room# "..room.id)
 				self.expandComplete = true
 			else
 				self.expandComplete = false
@@ -575,9 +575,9 @@
 
 		function room:setNeighbours() --sets neighbours after expansion is complete\
 			local inset = pointsExpand.params.edgeInset --used for map edge distance from edge of tiles
-			print ("-set neighbours for room #"..room.id)
+			--print ("-set neighbours for room #"..room.id)
 			for direction, _ in pairs(self.expansionData) do --for each direction of the room
-				print("--on side "..direction)
+				--print("--on side "..direction)
 				for i = 1, #pointsExpand.roomStore do --get another room to compare with
 					local otherRoom = pointsExpand.roomStore[i] --readability
 					local foundNeighbour = false
@@ -616,7 +616,7 @@
 						end
 					end
 					if (foundNeighbour) then
-						print ("room# "..room.id .. " neighbrour is room# "..otherRoom.id.." on side "..direction)
+						--print ("room# "..room.id .. " neighbrour is room# "..otherRoom.id.." on side "..direction)
 						self.neighbours[direction][#self.neighbours[direction]+1] = otherRoom
 					end
 				end

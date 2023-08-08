@@ -53,6 +53,18 @@
 
         end
 
+        function gameObject:loadTextures() --called when created
+            if (self.directional) then
+                self.textures = {}
+                for dir, _ in pairs(gc.move) do
+                    self.textures[dir] = graphics.newTexture({type="image", filename=self.path..self.name.."/"..dir..".png", baseDir=system.ResourceDirectory})
+                end
+                self.texture = self.textures[self.facingDirection] --sets initial texture from current direction in stored table
+            else
+                self.texture = graphics.newTexture({type="image", filename=self.path..self.name..".png", baseDir=system.ResourceDirectory}) --set initial texture
+            end
+        end
+
         function gameObject:setMoveDirection(dir) --sets move direction and forces updating facing direction
             self.moveDirection = dir
             self:setFacingDirection(dir)
@@ -60,42 +72,56 @@
 
         function gameObject:setFacingDirection(dir) --sets facing direction and re-creates rect
             self.facingDirection = dir
-            self:updateFileName()
-            --[[
-            self:destroyRect()
-            self:makeRect()
-            ]]
-            self:updateRectImage()
-        end
-
-        function gameObject:updateFileName() --updates fileName based on current facing direction
-            print("updating gameObject file name")
-            if (self.directional == true) then --if directional, add facing direction directory to file name
-                self.fName = self.path..self.name.."/"..self.facingDirection.image..".png"
-            else
-                self.fName = self.path..self.name..".png"
-            end
+            self.texture = self.textures[dir]
+            self:updateRectImage(dir)
         end
 
         function gameObject:updateRectPos() --needs to be called after cam bounds has been updated on frame or jitters
             self.rect.x, self.rect.y = self.world.x + self.xOffset - cam.bounds.x1, self.world.y + self.yOffset - cam.bounds.y1
         end
 
-        function gameObject:updateRectImage()
-            self.rect.fill = {
-                type = "image",
-                filename = self.fName,  -- "filename" property required
-                baseDir = system.ResourceDirectory;     -- "baseDir" property required
-            }
+        function gameObject:updateRectImage(dir, state, frame) --called to update image of rect -frame = optional frame number, key of textures table
+            print("updating rect with "..tostring(dir), tostring(state), tostring(frame))
+            if (self.rect) then                
+                if (frame) then
+                    self.rect.fill = {
+                        type = "image",
+                        filename = self.textures[dir][state][frame].filename,     -- "filename" property required
+                        baseDir = self.texture[dir][state][frame].baseDir;       -- "baseDir" property required
+                    }
+                elseif (state) then
+                    self.rect.fill = {
+                        type = "image",
+                        filename = self.textures[dir][state].filename,     -- "filename" property required
+                        baseDir = self.texture[dir][state].baseDir;       -- "baseDir" property required
+                    }
+                elseif (dir) then
+                    self.rect.fill = {
+                        type = "image",
+                        filename = self.textures[dir].filename,     -- "filename" property required
+                        baseDir = self.texture[dir].baseDir;       -- "baseDir" property required
+                    }
+                else
+                    self.rect.fill = {
+                        type = "image",
+                        filename = self.texture.filename,     -- "filename" property required
+                        baseDir = self.texture.baseDir;                 -- "baseDir" property required
+                    }
+                end
+            end
+            print("updated rect image")
         end
 
 		function gameObject:makeRect() --makes game objects rect if doesn't exist
             print("making gameObject rect, isPuppet = " .. tostring(self.isPuppet))
+            if (self.texture == nil) then
+                self:loadTextures()
+            end
             if (self.rect) then
                 print("rect already created")
                 return
             end
-            self.rect = display.newImageRect(self.group, self.fName, self.width, self.height)
+            self.rect = display.newImageRect(self.group, self.texture.filename, self.texture.baseDir, self.width, self.height)
             self.rect.x, self.rect.y = self.world.x + self.xOffset, self.world.y + self.yOffset
 		end
 
@@ -117,7 +143,7 @@
 
         local gameObject = entity:create() --creates the entity using the entity module and bases the object off of it
         
-		print("setting gameObject params")
+		print("setting gameObject params") --entity function
         gameObject:setParams(defaultParams, _params) --sets the params of the object to the passed params or the default params
 		--print("GAME OBJECT PARAMS:--------\n" .. json.prettify(gameObject) .. "\n----------------------")
 
@@ -132,6 +158,7 @@
         lib_gameObject.gameObjectFactory(gameObject) --adds functions to gameObject
         lib_gameObject:storeObject(gameObject) --stores gameObject
 
+        --gameObject:loadTextures()
 
         print("gameObject created with id: " .. gameObject.objID)
         return gameObject
