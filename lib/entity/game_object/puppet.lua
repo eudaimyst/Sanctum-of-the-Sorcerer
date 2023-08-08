@@ -31,7 +31,7 @@
 	}
 
 	local defaultAnimations = {
-		idle = { frames = 1, rate = 3, loop = true, duration = .5 },
+		idle = { frames = 4, rate = .8, loop = true, duration = .5 },
 		walk = { frames = 4, rate = 6, loop = true, duration = .5 },
 		sneak = { frames = 1, rate = 5, loop = true, duration = .5 },
 		sprint = { frames = 1, rate = 10, loop = true, duration = .5 },
@@ -47,7 +47,7 @@
 	}
 
     local defaultParams = { isPuppet = true,
-		attackList = {}, spellList = {}, animations = {},
+		attackList = {}, animations = {},
 		isAttacking = false, isDead = false,
 		state = "idle", currentFrame = 0, frameTimer = 0,
 		width = 64, height = 128
@@ -128,8 +128,8 @@
 			else
 				self.state = "idle"
 				--check to make sure current frame is not past animation state frames
-				if (self.currentFrame > self.animations[self.state].frames) then
-					self.currentFrame = self.animations[self.state].frames  --minus one as frames are zero indexed
+				if (self.currentFrame > self.animations[self.state].frames - 1) then
+					self.currentFrame = self.animations[self.state].frames - 1  --minus one as frames are zero indexed
 				end
 			end
 			if (self.animations[self.state].frames > 0) then --if theres more than one frame in the anim data
