@@ -371,7 +371,7 @@
 	end
 
 	function map:cameraMove(direction) --called when the camera moves in a direction to hide/show tiles at camera boundary
-		if (cam.mode == cam.modes.debug) then --if debug movde is on for camera, we do not move / destroy tiles, only update their display
+		if (cam.mode == cam.modes.debug) then --if debug mode is on for camera, we do not move / destroy tiles, only update their display
 			self:updateDebugTiles(direction)
 		else
 			self:refreshCamTiles() --gets camera screen and boundary tiles

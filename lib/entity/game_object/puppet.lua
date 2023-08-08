@@ -84,7 +84,7 @@
             self:updateRectImage()
 		end
 
-		function puppet:onFrame() --called on each game render frame
+		function puppet:updateAnimationFrames() --called on each game render frame
 			if (self.isMoving) then --set the state to walk if moving (set in game object)
 				self.state = "walk"
 			else

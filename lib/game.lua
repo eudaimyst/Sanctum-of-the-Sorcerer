@@ -34,13 +34,13 @@
 		
 		gameObject:clearMovement() --sets isMoving to false for all game objects, before being set by key input
 
-		key:onFrame()
+		key:onFrame() --processes key inputs
 
-		cam:onFrame()
-		map:cameraMove(game.char.moveDirection)
-		self.char:updateRectPos()
+		cam:onFrame() --processes camera movement (follow atm)
+		map:cameraMove(game.char.moveDirection) --calls func to move map tiles and destroy boundaries etc...
+		self.char:updateRectPos() --updates game char position on screen, game object function
 		
-		puppet:onFrame()
+		game.char:updateAnimationFrames() --changes chars current frame based on animation timer
 	end
 
 	function game.init(_cam, _map, _key)
