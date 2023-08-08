@@ -22,7 +22,7 @@
 	--local util = require("lib.global.utilities")
     local entity = require("lib.entity")
     local cam = require("lib.camera")
-    --local json = require("json")
+    local json = require("json")
 
 	-- Define module
 	local lib_gameObject = {}
@@ -80,36 +80,37 @@
             self.rect.x, self.rect.y = self.world.x + self.xOffset - cam.bounds.x1, self.world.y + self.yOffset - cam.bounds.y1
         end
 
-        function gameObject:updateRectImage(dir, state, frame) --called to update image of rect -frame = optional frame number, key of textures table
-            print("updating rect with "..tostring(dir), tostring(state), tostring(frame))
-            if (self.rect) then                
-                if (frame) then
+        function gameObject:updateRectImage() --called to update image of rect -frame = optional frame number, key of textures table
+            print(json.prettify(self.textures))
+            if (self.rect) then
+                if (self.isPuppet) then
+                    print(self.facingDirection.image, self.state, self.currentFrame)
+                    local tex = self.textures[self.facingDirection.image][self.state][self.currentFrame]
+                    print(tex.filename)
+                    print(tex.baseDir)
                     self.rect.fill = {
                         type = "image",
-                        filename = self.textures[dir][state][frame].filename,     -- "filename" property required
-                        baseDir = self.texture[dir][state][frame].baseDir;       -- "baseDir" property required
+                        filename = self.textures[self.facingDirection.image][self.state][self.currentFrame].filename,     -- "filename" property required
+                        baseDir = self.textures[self.facingDirection.image][self.state][self.currentFrame].baseDir       -- "baseDir" property required
                     }
-                elseif (state) then
+                elseif (self.directional) then
+                    print(self.facingDirection.image)
                     self.rect.fill = {
                         type = "image",
-                        filename = self.textures[dir][state].filename,     -- "filename" property required
-                        baseDir = self.texture[dir][state].baseDir;       -- "baseDir" property required
-                    }
-                elseif (dir) then
-                    self.rect.fill = {
-                        type = "image",
-                        filename = self.textures[dir].filename,     -- "filename" property required
-                        baseDir = self.texture[dir].baseDir;       -- "baseDir" property required
+                        filename = self.textures[self.facingDirection.image].filename,     -- "filename" property required
+                        baseDir = self.textures[self.facingDirection.image].baseDir       -- "baseDir" property required
                     }
                 else
                     self.rect.fill = {
-                        type = "image",
-                        filename = self.texture.filename,     -- "filename" property required
-                        baseDir = self.texture.baseDir;                 -- "baseDir" property required
+                    type = "image",
+                    filename = self.texture.filename,     -- "filename" property required
+                    baseDir = self.texture.baseDir                 -- "baseDir" property required
                     }
                 end
-            end
             print("updated rect image")
+            else
+                print("rect doesn't exist")
+            end
         end
 
 		function gameObject:makeRect() --makes game objects rect if doesn't exist

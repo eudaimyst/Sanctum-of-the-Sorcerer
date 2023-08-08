@@ -147,9 +147,12 @@
 				if (self.roomStore[i].expandComplete == false) then
 					self.roomStore[i]:compare()
 				end
-				self.roomStore[i]:draw() --unhide this to visualise the expansion of the rooms, costly redraws all rooms each frame
+				--self.roomStore[i]:draw() --unhide this to visualise the expansion of the rooms, costly redraws all rooms each frame
 			end
 		elseif (self.frame == 5) then
+			for i = 1, #self.roomStore do
+				self.roomStore[i]:draw() --draw one final time
+			end
 			for i = 1, #self.roomStore do
 				self.roomStore[i]:setNeighbours() --set the neighbours of each room
 			end

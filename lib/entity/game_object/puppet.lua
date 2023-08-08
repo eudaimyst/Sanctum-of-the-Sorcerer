@@ -84,7 +84,7 @@
 			if self.currentFrame > self.animations[self.state].frames - 1 then --reset current frame once reached anim's frame count
 				self.currentFrame = 0
 			end
-            self:updateRectImage(self.currentFrame)
+            self:updateRectImage()
 		end
 
 		function puppet:loadTextures() --overrides gameObject function
@@ -103,10 +103,8 @@
 							filename=self.path..self.name.."/"..animName.."/"..dir.image.."/"..i..".png"
 							} )
 						end
-						print("setting texture to ", self.facingDirection.image, self.state, self.currentFrame)
-						self.texture = self.textures[self.facingDirection.image][self.state][self.currentFrame]
 					else
-						for subAnimName, subAnimData in pairs(animData) do --for each sub animation (pre, main, post, idles, special... etc)
+						for subAnimName, subAnimData in pairs(animData) do --for each sub animation (pre, main, post... etc)
 							print("adding textures for subAnimName: "..subAnimName)
 							self.textures[dir.image][animName][subAnimName] = {}
 							for i = 0, subAnimData.frames - 1 do --zero indexed animation file names
@@ -117,11 +115,11 @@
 								} )
 							end
 						end
-						print("setting texture to ", self.facingDirection.image, self.state, self.subAnim, self.currentFrame)
-						self.texture = self.textures[self.facingDirection.image][self.state][self.subAnim][self.currentFrame]
 					end
 				end
 			end
+			print("setting texture to ", self.facingDirection.image, self.state, self.currentFrame)
+			self.texture = self.textures[self.facingDirection.image][self.state][self.currentFrame]
 		end
 
 		function puppet:updateAnimationFrames() --called on each game render frame
