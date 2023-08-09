@@ -17,6 +17,7 @@
 	local mapgen = require("lib.map.generator")
 	local mapIO = require("lib.map.fileio")
 	local cam = require("lib.camera")
+	local hud = require("lib.game.hud")
 	--[[
 	local gameObj = require("lib.entity.game_object")
 	local entity = require("lib.entity")
@@ -42,16 +43,6 @@
 		end
 	end
 
-	local function  toggleDebugCam() --function used to debug camera movement on the map tiles --called by key input
-		if (cam.mode == cam.modes.debug) then
-			cam.mode = cam.modes.free
-			--endCamDebug() TODO: move these to cam library
-		else
-			cam.mode = cam.modes.debug
-			--initCamDebug()
-		end
-	end
-
 	local function zoomMap(scrollValue)
 		local zoomIn, zoomOut = 1, 2
 		local zoomDir = 0
@@ -62,18 +53,11 @@
 		end
 
 		local function doZoom()
-			print("do")
 			map:cameraZoom(zoomDir)
 		end
 
 		local zoomTimer = timer.performWithDelay( 1, doZoom, -1 ) --starts a timer once bg has faded in
 		cam:adjustZoom(zoomDir, zoomTimer) --updates the zoom value and bounds of camera
-	end
-
-	local function moveInput(direction)
-		if (game.char) then
-			game.char:move(direction)
-		end
 	end
 
 	local function generateGameMap()
@@ -90,7 +74,7 @@
 				loadMap("game_level", false)
 
 		
-				game.firstFrame() --spawns character and sets camera to follow
+				game.beginPlay() --spawns character and sets camera to follow
 
 				generatingMap = false
 			end
@@ -104,15 +88,14 @@
 	local function firstFrame()
 
 		debug.init(sceneGroup)
-		mouse.init() -- registers the mouse on frame event
+		mouse.init()
 		mouse.registerMouseScrollListener(zoomMap)
 		key.init()
-		key.registerMoveListener(moveInput)
-		key.registerDebugCamListener(toggleDebugCam)
 		map:init(sceneGroup, cam)
 		mapgen:init(sceneGroup)
 		cam.init()
-		game.init(cam, map, key)
+		hud.init(sceneGroup, map, game)
+		game.init(cam, map, key, hud)
 		print("calling game object create from scene")
 
 		entity:setGroup(sceneGroup) --passes group to entity which gets stored for all created entities

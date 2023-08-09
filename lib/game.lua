@@ -14,45 +14,48 @@
 
 	-- Define module
 	local game = {}
-	local cam, map, key --set on init()
+	local cam, map, key, hud --set on init()
+
 
 	function game.spawnChar()
-		
 		print("char getting spawn point from map: ")
 		local charParams = { 
 			name = "character", width = 128, height = 128,
-			moveSpeed = 200,
+			moveSpeed = 200, spellSlots = 5,
 			spawnPos = map:getSpawnPoint()
 		}
 		game.char = character:create(charParams)
 		
 		cam:setMode("follow", game.char)
-			
 	end
 
 	function game:onFrame()
-		
+
 		gameObject:clearMovement() --sets isMoving to false for all game objects, before being set by key input
 
 		key:onFrame() --processes key inputs
-
-		cam:onFrame() --processes camera movement (follow atm)
-		map:cameraMove(game.char.moveDirection) --calls func to move map tiles and destroy boundaries etc...
-		self.char:updateRectPos() --updates game char position on screen, game object function
+		cam:onFrame() --processes camera movement
+		map:cameraMove(game.char.moveDirection) --move map tiles, destroy boundaryTiles, create new tiles
 		
+		self.char:updateRectPos() --updates game char position on screen, game object function
 		game.char:updateAnimationFrames() --changes chars current frame based on animation timer
+	
 	end
 
-	function game.init(_cam, _map, _key)
+	function game.init(_cam, _map, _key, _hud)
 		print("setting cam and map for game library")
-		key = _key
-		cam = _cam
-		map = _map
+		key, cam, map, hud = _key, _cam, _map, _hud
 	end
 
-	function game.firstFrame()
-		game.spawnChar()
+	function game.beginPlay()
+		
+		local function moveInput(direction)
+			game.char:move(direction)
+		end
 
+		game.spawnChar()
+		hud:draw(game.char)
+		key.registerMoveListener(moveInput)
 	end
 
 	return game

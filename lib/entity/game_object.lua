@@ -73,7 +73,7 @@
         function gameObject:setFacingDirection(dir) --sets facing direction and re-creates rect
             self.facingDirection = dir
             self.texture = self.textures[dir]
-            self:updateRectImage(dir)
+            self:updateRectImage()
         end
 
         function gameObject:updateRectPos() --needs to be called after cam bounds has been updated on frame or jitters
@@ -81,20 +81,20 @@
         end
 
         function gameObject:updateRectImage() --called to update image of rect -frame = optional frame number, key of textures table
-            print(json.prettify(self.textures))
+            --print(json.prettify(self.textures))
             if (self.rect) then
                 if (self.isPuppet) then
                     print(self.facingDirection.image, self.state, self.currentFrame)
                     local tex = self.textures[self.facingDirection.image][self.state][self.currentFrame]
-                    print(tex.filename)
-                    print(tex.baseDir)
+                    --print(tex.filename)
+                    --print(tex.baseDir)
                     self.rect.fill = {
                         type = "image",
                         filename = self.textures[self.facingDirection.image][self.state][self.currentFrame].filename,     -- "filename" property required
                         baseDir = self.textures[self.facingDirection.image][self.state][self.currentFrame].baseDir       -- "baseDir" property required
                     }
                 elseif (self.directional) then
-                    print(self.facingDirection.image)
+                    --print(self.facingDirection.image)
                     self.rect.fill = {
                         type = "image",
                         filename = self.textures[self.facingDirection.image].filename,     -- "filename" property required
@@ -107,7 +107,7 @@
                     baseDir = self.texture.baseDir                 -- "baseDir" property required
                     }
                 end
-            print("updated rect image")
+            --print("updated rect image")
             else
                 print("rect doesn't exist")
             end
