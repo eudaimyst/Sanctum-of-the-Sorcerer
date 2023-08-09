@@ -73,7 +73,7 @@
         function gameObject:setFacingDirection(dir) --sets facing direction and re-creates rect
             self.facingDirection = dir
             self.texture = self.textures[dir]
-            self:updateRectImage(dir)
+            self:updateRectImage()
         end
 
         function gameObject:updateRectPos() --needs to be called after cam bounds has been updated on frame or jitters

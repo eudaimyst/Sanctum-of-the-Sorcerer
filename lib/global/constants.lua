@@ -18,16 +18,16 @@
 		left = {x = -1,y = 0, angle = 180, image = "left"},
 		upLeft = {x = -.666,y = -.666, angle = 225, image = "up_left"},
 	}
-
-	--strings used when leading images, part of filenames
-	M.imageUp = "back"
-	M.imageUpRight = "backright"
-	M.imageUpLeft = "backleft"
-	M.imageDown = "front"
-	M.imageDownRight = "frontright"
-	M.imageDownLeft = "frontleft"
-	M.imageRight = "right"
-	M.imageLeft = "left"
+	
+    M.elements = {
+        fire = { c = { r=1, g=0.2, b=0.2, a=1 } },
+        water = { c = { r=0.2, g=0.2, b=1, a=1 } },
+        earth = { c = { r=0.6, g=0.5, b=0.3, a=1 } },
+        air = { c = { r=0.7, g=0.9, b=1, a=1 } },
+        arcane = { c = { r=0.6, g=0.2, b=1, a=1 } },
+        dark = { c = { r=0.3, g=0.1, b=0.3, a=1 } },
+		physical = { c = { r=0.5, g=0.5, b=0.5, a=1 } },
+    }
 
 	--xpamounts needed for leveling up
 	M.xpAmount = {}

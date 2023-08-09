@@ -21,7 +21,7 @@
 		print("char getting spawn point from map: ")
 		local charParams = { 
 			name = "character", width = 128, height = 128,
-			moveSpeed = 200,
+			moveSpeed = 200, spellSlots = 5,
 			spawnPos = map:getSpawnPoint()
 		}
 		game.char = character:create(charParams)

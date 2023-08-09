@@ -128,10 +128,10 @@
 				self.state = "walk"
 			else
 				self.state = "idle"
-				--check to make sure current frame is not past animation state frames
-				if (self.currentFrame > self.animations[self.state].frames - 1) then
-					self.currentFrame = self.animations[self.state].frames - 1  --minus one as frames are zero indexed
-				end
+			end
+			--check to make sure current frame is not past animation state frames
+			if (self.currentFrame > self.animations[self.state].frames - 1) then
+				self.currentFrame = self.animations[self.state].frames - 1  --minus one as frames are zero indexed
 			end
 			if (self.animations[self.state].frames > 0) then --if theres more than one frame in the anim data
 				self.frameTimer = self.frameTimer + gv.frame.dts --add frame delta to timer
