@@ -7,7 +7,7 @@
 	--common modules
 	local puppet = require("lib.entity.game_object.puppet")
 	local attack = require("lib.entity.game_object.puppet.attack")
-
+	local spellParams = require("lib.global.spell_params")
 	local hud --set on create
 
 	-- Define module
@@ -32,7 +32,7 @@
 		char:loadTextures()
 		char:makeRect() --creates rect on creation
 
-		char.spells = { attack:new() }
+		char.spells = { attack:new(spellParams.fireball), attack:new(spellParams.firewall) }
 
 		return char
 	end
