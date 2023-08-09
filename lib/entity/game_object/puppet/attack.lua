@@ -13,6 +13,8 @@
         emitter = { fPath = ""},
     }
 
+    local basePath = "content/spells"
+
     local defaultParams = {
         name = "default_fireball",
         displayType = "image", --"image", "emitter"
@@ -55,6 +57,8 @@
                 attack[k] = v
             end
         end
+        attack.params.displayType = util.deepcopy(displayTypes[attack.params.displayType]) --set display type table from string name for key
+        attack.params.icon = basePath.."/"..attack.params.name.."/icon.png"
         return attack
     end
 

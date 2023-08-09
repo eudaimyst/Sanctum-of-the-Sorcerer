@@ -8,11 +8,12 @@
 	local g = require("lib.global.constants")
 	local util = require("lib.global.utilities")
 
-	local game, map, sceneGroup
+	local game, map, sceneGroup, char
 
 	-- Define module
 	local hud = {}
 		hud.group = display.newGroup()
+		hud.spellButtons = {}
 
 		function hud.makeButton(x, y, w, _h)
 			local h = _h or w --if height not specified, make it a square
@@ -51,8 +52,15 @@
 			return frame
 		end
 
-		function hud:draw()
-			
+		function hud.assignSpells()
+			print ("assigning "..#hud.spellButtons.." spells")
+			for i = 1, #hud.spellButtons do
+				hud.spellButtons[i]:assignSpell(game.char.spells[i])
+			end
+		end
+
+		function hud:draw(_char)
+			char = _char
 			local function drawGameOverlay()
 				hud.gameOverlay = display.newRect(hud.group, 0,0, display.actualContentWidth, display.actualContentHeight)
 				util.zeroAnchors(hud.gameOverlay)
@@ -61,12 +69,22 @@
 
 			local function drawSpellButtonFrame(numButtons, buttonSize, buttonPadding)
 
-				local spellButtons = {}
 
 				local function drawSpellButton(frameRect, pos)
+					
 					local x = frameRect.x + buttonPadding + (pos - 1) * (buttonSize + buttonPadding*2)
 					local y = frameRect.y + buttonPadding
-					return hud.makeButton( x, y, buttonSize)
+					
+					local spellButton = hud.makeButton( x, y, buttonSize)
+					
+					function spellButton:assignSpell(spell)
+						print(spell.params.name, spell.params.icon)
+						self.icon = display.newImageRect(hud.group, spell.params.icon, buttonSize, buttonSize)
+						util.zeroAnchors(self.icon)
+						self.icon.x = self.rect.x
+						self.icon.y = self.rect.y
+					end
+					return spellButton
 				end
 
 				hud.spellButtonFrame = hud.makeFrame()
@@ -77,12 +95,13 @@
 				local y = display.actualContentHeight - hud.spellButtonFrame.rect.height
 				hud.spellButtonFrame:move(x, y)
 				for i = 1, numButtons do
-					spellButtons[i] = drawSpellButton(hud.spellButtonFrame.rect, i)
+					hud.spellButtons[i] = drawSpellButton(hud.spellButtonFrame.rect, i)
 				end
 			end
 			print("drawing hud")
 			drawGameOverlay()
-			drawSpellButtonFrame(5, 48, 10)
+			drawSpellButtonFrame(#char.spells, 48, 10)
+			self.assignSpells()
 		end
 
 		function hud.init(_sceneGroup, _map, _game )
