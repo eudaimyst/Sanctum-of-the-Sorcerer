@@ -119,10 +119,15 @@
 							self.textures[dir.image][animName][subAnimName] = {}
 							for i = 0, subAnimData.frames - 1 do --zero indexed animation file names
 								print("adding textures for frame: "..i)
-								self.textures[dir.image][animName][subAnimName][i] = graphics.newTexture( {
+								local texture = graphics.newTexture( {
 									type="image", baseDir=system.ResourceDirectory, 
 									filename=self.path..self.name.."/"..animName.."/"..dir.image.."/"..subAnimName.."_"..i..".png"
 								} )
+								if (texture) then
+									print(texture.filename)
+									self.textures[dir.image][animName][subAnimName][i] = texture
+									print(dir.image, animName, subAnimName, i)
+								end
 							end
 						end
 					end
@@ -154,6 +159,7 @@
 			if (self.currentAnim.frames > 0) then --if theres more than one frame in the anim data
 				self.frameTimer = self.frameTimer + gv.frame.dts --add frame delta to timer
 			end
+			print(self.state, self.frameTimer, self.currentAnim.rate)
 			if self.frameTimer >= 1 / self.currentAnim.rate then --timer is greater than the animations rate
 				self:nextAnimFrame()
 				self.frameTimer = 0
@@ -162,6 +168,9 @@
 
 		function puppet:beginAttackAnim(attack)
 			puppet.currentAttack = attack
+			print("start attack for "..self.currentAttack.params.name)
+			self.currentFrame = 0
+			self.frameTimer = 0
 		end
 	end
 

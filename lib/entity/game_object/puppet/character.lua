@@ -51,6 +51,7 @@
 							self.activeSpell.target = target
 							self.activeSpell.delta = { x = target.x - self.world.x, y = target.y - self.world.y }
 						end
+						print("start attack for "..self.activeSpell.params.name)
 						self:beginAttackAnim(self.activeSpell) --defined in puppet, shared with enemies
 					end
 				end
