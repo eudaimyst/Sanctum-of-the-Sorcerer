@@ -14,6 +14,7 @@
 
 	local moveListeners = {} --functions to be called when movement is processed, registered by scene
 	local debugCamListener = nil --setfenv by sc_level_editor to pass a function to debug the camera movement in the editor
+	local spellSelectListener = nil --used for selecting spell with number keys in game
 
 	key.moveDirection = nil --set by combination of movement keys pressed
 
@@ -24,7 +25,7 @@
 
 	local activeInputField = nil
 
-	local numberKeys = { keyName = {"0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "-", "."} }
+	local numberKeys = { keyName = {"0", "1", "2", "3", "4", "5", "6", "7", "8", "9"} }
 	local numpadKeys = { --[[numpad key names go here]] keyName = { }, value = { } }
 	local charKeys = { 	keyName = { "q", "w", "e", "r", "t", "y", "u", "i", "o", "p",
 						"a", "s", "d", "f", "g", "h", "j", "k", "l",
@@ -103,6 +104,17 @@
 			if (event.keyName == "deleteBack" and event.phase == "down") then activeInputField:inputDelete() end
 		end
 
+		if (spellSelectListener) then 
+			for i = 1, #numberKeys.keyName do
+				if (event.keyName == numberKeys.keyName[i] and event.phase == "down") then
+					print("key "..numberKeys.keyName[i].." pressed")
+					local selectedSlot = tonumber(numberKeys.keyName[i])
+					print("")
+					spellSelectListener(selectedSlot)
+					selectedSlot = nil
+				end
+			end
+		end
 
 	    if ((event.keyName == "w" or event.keyName == "up") and event.phase == "down") then upPressed = true end
 	    if ((event.keyName == "w" or event.keyName == "up")  and event.phase == "up") then upPressed = false end
@@ -156,6 +168,10 @@
 	end
 	function key.registerDebugCamListener(func)
 		debugCamListener = func
+	end
+
+	function key.registerSpellSelectListener(func)
+		spellSelectListener = func
 	end
 
 	function key.init()

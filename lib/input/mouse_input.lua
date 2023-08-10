@@ -25,6 +25,8 @@
 
 	local mouseScrollListener --function to call when mouse is scrolled (set by scene)
 
+	local clickListener --used to pass click position to game for spell casting
+
 	local function checkCollisionPoint()
 		queryHit = physics.queryRegion( M.x, M.y, M.x - 1, M.y - 1 )
 
@@ -149,10 +151,13 @@
 		end
 	end
 
-
 	local function mouseScrollComplete(  ) --called by timer after mouse scroll to reset value to 0
 		M.scroll = false
 		M.scrollValue = 0
+	end
+
+	function M.registerClickListener(func)
+		clickListener = func
 	end
 
 	-- Called when a mouse event has been received.
@@ -183,6 +188,12 @@
 				if (M.pressed == false) then --only if mouse not held down
 					M.pressed = true --set to true so don't register mouse being held down
 					print("mouse clicked at pos: "..event.x..", "..event.y)
+					--call listeners
+					if (clickListener) then
+						clickListener(event.x, event.y)
+					end
+
+					--------TODO: Cleanup - editor mouse clicks
 					local loseFocusObject = nil
 					if (M.clickedObject) then --an object has been clicked previously
 						if (M.clickedObject.lostFocusListener) then --prev clicked object has a lost focus listener

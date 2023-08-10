@@ -74,7 +74,7 @@
 				loadMap("game_level", false)
 
 		
-				game.beginPlay() --spawns character and sets camera to follow
+				game:beginPlay() --spawns character and sets camera to follow
 
 				generatingMap = false
 			end
@@ -95,7 +95,7 @@
 		mapgen:init(sceneGroup)
 		cam.init()
 		hud.init(sceneGroup, map, game)
-		game.init(cam, map, key, hud)
+		game.init(cam, map, key, mouse, hud)
 		print("calling game object create from scene")
 
 		entity:setGroup(sceneGroup) --passes group to entity which gets stored for all created entities

@@ -14,7 +14,7 @@
 
 	-- Define module
 	local game = {}
-	local cam, map, key, hud --set on init()
+	local cam, map, key, mouse, hud --set on init()
 
 
 	function game.spawnChar()
@@ -24,7 +24,7 @@
 			moveSpeed = 200, spellSlots = 5,
 			spawnPos = map:getSpawnPoint()
 		}
-		game.char = character:create(charParams)
+		game.char = character:create(charParams, hud)
 		
 		cam:setMode("follow", game.char)
 	end
@@ -42,20 +42,31 @@
 	
 	end
 
-	function game.init(_cam, _map, _key, _hud)
+	function game.init(_cam, _map, _key, _mouse, _hud)
 		print("setting cam and map for game library")
-		key, cam, map, hud = _key, _cam, _map, _hud
+		key, cam, map, hud, mouse = _key, _cam, _map, _hud, _mouse
 	end
 
-	function game.beginPlay()
+	function game.mouseClick(x, y) --mouseClick called from mouse input listener, can't pass self
+		if (game.char.activeSpell) then
+			if (game.char.activeSpell.params.targetType == "point") then
+				local target = { x = cam.bounds.x1 + x, y = cam.bounds.y1 + y}
+				game.char:beginCast( target )
+			end
+		end
+	end
+
+	function game:beginPlay()
 		
 		local function moveInput(direction)
-			game.char:move(direction)
+			self.char:move(direction)
 		end
 
-		game.spawnChar()
-		hud:draw(game.char)
+		self.spawnChar()
+		hud:draw(self.char)
 		key.registerMoveListener(moveInput)
+		key.registerSpellSelectListener(self.char.setActiveSpell)
+		mouse.registerClickListener(self.mouseClick)
 	end
 
 	return game

@@ -38,20 +38,22 @@
 		sprint = { frames = 1, rate = 10, loop = true, duration = .5 },
 		death = {
 			pre = { frames = 1, rate = 10, loop = false, duration = .5 },
-			main = { frames = 1, rate = 3, loop = true, duration = .5 },
+			main = { frames = 1, rate = 3, loop = false, duration = .5 },
 			post = { frames = 1, rate = 10, loop = false, duration = .5 }, },
 		attack = {
-			pre = { frames = 1, rate = 10, loop = true, duration = .5 },
-			main = { frames = 1, rate = 10, loop = false, duration = .5 },
-			post = { frames = 1, rate = 10, loop = false, duration = .5 },
+			pre = { frames = 3, rate = 10, loop = false, duration = .5 },
+			windup = { frames = 4, rate = 10, loop = true, duration = .5 },
+			main = { frames = 3, rate = 10, loop = false, duration = .5 },
+			post = { frames = 2, rate = 10, loop = false, duration = .5 },
 		}
 	}
 
     local defaultParams = { isPuppet = true,
 		attackList = {}, animations = {},
-		isAttacking = false, isDead = false,
-		state = "idle", currentFrame = 0, frameTimer = 0,
-		width = 64, height = 128
+		currentAttack = nil, isDead = false,
+		state = "idle", attackState = 1, currentFrame = 0, frameTimer = 0,
+		width = 64, height = 128,
+		attackStates = {"pre", "windup", "main", "post"}
 	}
 
 	function lib_puppet.setParams(puppet, _params)
@@ -82,8 +84,14 @@
 
 		function puppet:nextAnimFrame() --called to set next frame of animation
 			self.currentFrame = self.currentFrame + 1
-			if self.currentFrame > self.animations[self.state].frames - 1 then --reset current frame once reached anim's frame count
-				self.currentFrame = 0
+			if self.currentFrame > self.currentAnim.frames - 1 then --reset current frame once reached anim's frame count
+				if (self.currentAnim.loop == true) then
+					self.currentFrame = 0
+				else
+					if (self.state == "attack") then --attack sub state has finished and not looping anim
+						self.attackState = self.attackState + 1
+					end
+				end
 			end
             self:updateRectImage()
 		end
@@ -100,8 +108,9 @@
 					if (animData.frames) then --if no sub animations (walk, spring, etc...)
 						for i = 0, animData.frames - 1 do --zero indexed animation file names
 							print("adding textures for frame: "..i)
-							self.textures[dir.image][animName][i] = graphics.newTexture( { type="image", baseDir=system.ResourceDirectory, 
-							filename=self.path..self.name.."/"..animName.."/"..dir.image.."/"..i..".png"
+							self.textures[dir.image][animName][i] = graphics.newTexture( {
+								type="image", baseDir=system.ResourceDirectory, 
+								filename=self.path..self.name.."/"..animName.."/"..dir.image.."/"..i..".png"
 							} )
 						end
 					else
@@ -112,7 +121,7 @@
 								print("adding textures for frame: "..i)
 								self.textures[dir.image][animName][subAnimName][i] = graphics.newTexture( {
 									type="image", baseDir=system.ResourceDirectory, 
-									filename=self.path..self.name.."/"..animName.."/"..subAnimName.."/"..dir.image.."/"..i..".png"
+									filename=self.path..self.name.."/"..animName.."/"..dir.image.."/"..subAnimName.."_"..i..".png"
 								} )
 							end
 						end
@@ -124,22 +133,35 @@
 		end
 
 		function puppet:updateAnimationFrames() --called on each game render frame
-			if (self.isMoving) then --set the state to walk if moving (set in game object)
+			
+			if (self.currentAttack) then --begin attack has been called
+				self.state = "attack"
+				self.currentAnim = self.animations[self.state][self.attackStates[self.attackState]]
+				if (self.attackState == 2) then --windup state
+					print("windup")
+				end
+			elseif (self.isMoving) then --set the state to walk if moving (set in game object)
 				self.state = "walk"
+				self.currentAnim = self.animations[self.state]
 			else
 				self.state = "idle"
+				self.currentAnim = self.animations[self.state]
 			end
 			--check to make sure current frame is not past animation state frames
-			if (self.currentFrame > self.animations[self.state].frames - 1) then
-				self.currentFrame = self.animations[self.state].frames - 1  --minus one as frames are zero indexed
+			if (self.currentFrame > self.currentAnim.frames - 1) then
+				self.currentFrame = self.currentAnim.frames - 1  --minus one as frames are zero indexed
 			end
-			if (self.animations[self.state].frames > 0) then --if theres more than one frame in the anim data
+			if (self.currentAnim.frames > 0) then --if theres more than one frame in the anim data
 				self.frameTimer = self.frameTimer + gv.frame.dts --add frame delta to timer
 			end
-			if self.frameTimer >= 1 / self.animations[self.state].rate then --timer is greater than the animations rate
+			if self.frameTimer >= 1 / self.currentAnim.rate then --timer is greater than the animations rate
 				self:nextAnimFrame()
 				self.frameTimer = 0
 			end
+		end
+
+		function puppet:beginAttackAnim(attack)
+			puppet.currentAttack = attack
 		end
 	end
 
@@ -153,6 +175,8 @@
 
 		lib_puppet.setParams(puppet, _params) --sets puppet params
 		lib_puppet.puppetFactory(puppet) --adds functions to puppet
+
+		puppet:loadTextures()
 
 		lib_puppet:storeObject(puppet)
         print("puppet created with puppet id: " .. puppet.puppetID)

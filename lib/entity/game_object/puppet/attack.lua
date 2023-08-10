@@ -28,15 +28,23 @@
 	local lib_attack = { }
 
     function lib_attack:new(_params)
+
         local attack = util.deepcopy(data)
         attack.params = util.deepcopy(attackParams.default)
+        
         if _params then
             for k,v in pairs(_params) do
                 attack.params[k] = v
             end
         end
+        
         attack.params.displayType = util.deepcopy(displayTypes[attack.params.displayType]) --set display type table from string name for key
         attack.params.icon = basePath.."/"..attack.params.name.."/icon.png"
+
+        function attack:activate()
+            print("attack "..attack.params.name.." set to active")
+        end
+
         return attack
     end
 

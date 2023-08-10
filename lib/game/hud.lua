@@ -23,7 +23,7 @@
 				util.zeroAnchors(self.rect)
 				self.rect:setFillColor(0, 0, 0,.3)
 				self.rect:setStrokeColor(0)
-				self.rect.strokeWidth = 1
+				self.rect.strokeWidth = 2
 				self.rect.x = x
 				self.rect.y = y
 			end
@@ -59,6 +59,10 @@
 			end
 		end
 
+		function hud.setActiveSpell(slot, b)
+			hud.spellButtons[slot]:setActive(b)
+		end
+
 		function hud:draw(_char)
 			char = _char
 			local function drawGameOverlay()
@@ -76,6 +80,14 @@
 					local y = frameRect.y + buttonPadding
 					
 					local spellButton = hud.makeButton( x, y, buttonSize)
+
+					function spellButton:setActive(b) --b = bool; true = active, false = inactive 
+						if (b) then
+							self.rect:setStrokeColor(1, 1, 0, 1)
+						else
+							self.rect:setStrokeColor(0)
+						end
+					end
 					
 					function spellButton:assignSpell(spell)
 						print(spell.params.name, spell.params.icon)

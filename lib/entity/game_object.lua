@@ -83,30 +83,27 @@
         function gameObject:updateRectImage() --called to update image of rect -frame = optional frame number, key of textures table
             --print(json.prettify(self.textures))
             if (self.rect) then
+                local texture
                 if (self.isPuppet) then
-                    print(self.facingDirection.image, self.state, self.currentFrame)
-                    local tex = self.textures[self.facingDirection.image][self.state][self.currentFrame]
-                    --print(tex.filename)
-                    --print(tex.baseDir)
-                    self.rect.fill = {
-                        type = "image",
-                        filename = self.textures[self.facingDirection.image][self.state][self.currentFrame].filename,     -- "filename" property required
-                        baseDir = self.textures[self.facingDirection.image][self.state][self.currentFrame].baseDir       -- "baseDir" property required
-                    }
+                    if (self.currentAttack) then
+                        print(self.attackState)
+                        print(self.facingDirection.image, self.state, self.currentFrame, self.attackStates[self.attackState])
+                        texture = self.textures[self.facingDirection.image][self.state][self.attackStates[self.attackStates]][self.currentFrame]
+                    else
+                        print(self.facingDirection.image, self.state, self.currentFrame)
+                        texture = self.textures[self.facingDirection.image][self.state][self.currentFrame]
+                    end   
                 elseif (self.directional) then
                     --print(self.facingDirection.image)
-                    self.rect.fill = {
-                        type = "image",
-                        filename = self.textures[self.facingDirection.image].filename,     -- "filename" property required
-                        baseDir = self.textures[self.facingDirection.image].baseDir       -- "baseDir" property required
-                    }
+                    texture = self.textures[self.facingDirection.image]
                 else
-                    self.rect.fill = {
-                    type = "image",
-                    filename = self.texture.filename,     -- "filename" property required
-                    baseDir = self.texture.baseDir                 -- "baseDir" property required
-                    }
+                    texture = self.texture
                 end
+                self.rect.fill = {
+                    type = "image",
+                    filename = texture.filename,     -- "filename" property required
+                    baseDir = texture.baseDir       -- "baseDir" property required
+                }
             --print("updated rect image")
             else
                 print("rect doesn't exist")
@@ -115,9 +112,6 @@
 
 		function gameObject:makeRect() --makes game objects rect if doesn't exist
             print("making gameObject rect, isPuppet = " .. tostring(self.isPuppet))
-            if (self.texture == nil) then
-                self:loadTextures()
-            end
             if (self.rect) then
                 print("rect already created")
                 return
