@@ -85,15 +85,13 @@
             if (self.rect) then
                 local texture
                 if (self.isPuppet) then
-                    if (self.currentAttack) then
-                        if (self.state == "attack") then
-                            --print(self.attackState)
-                            --print(self.facingDirection.image, self.state, self.attackStates[self.attackState], self.currentFrame)
-                            --print(json.prettify(self.textures))
-                            texture = self.textures[self.facingDirection.image][self.state][self.attackStates[self.attackState]][self.currentFrame]
-                        end
+                    if (self.state == "attack") then
+                        print(self.facingDirection.image, self.state, self.attackStates[self.attackState], self.currentFrame)
+                        --print(json.prettify(self.textures))
+                        texture = self.textures[self.facingDirection.image][self.state][self.attackStates[self.attackState]][self.currentFrame]
+                        print(texture.filename)
                     else
-                        --print(self.facingDirection.image, self.state, self.currentFrame)
+                        print(self.facingDirection.image, self.state, self.currentFrame)
                         texture = self.textures[self.facingDirection.image][self.state][self.currentFrame]
                     end   
                 elseif (self.directional) then

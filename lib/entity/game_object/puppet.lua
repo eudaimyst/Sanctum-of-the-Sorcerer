@@ -24,13 +24,6 @@
 	local lib_puppet = {}
     lib_puppet.store = {}
 
-	local defaultAttackAnimation = {
-		pre = { frames = 1, rate = 10, loop = true, duration = .5 },
-		windup = { frames = 1, rate = 10, loop = true, duration = .5 },
-		main = { frames = 1, rate = 10, loop = false, duration = .5 },
-		post = { frames = 1, rate = 10, loop = false, duration = .5 },
-	}
-
 	local defaultAnimations = {
 		idle = { frames = 4, rate = .8, loop = true, duration = .5 },
 		walk = { frames = 4, rate = 6, loop = true, duration = .5 },
@@ -41,9 +34,9 @@
 			main = { frames = 1, rate = 3, loop = false, duration = .5 },
 			post = { frames = 1, rate = 10, loop = false, duration = .5 }, },
 		attack = {
-			pre = { frames = 3, rate = 10, loop = false, duration = .5 },
+			pre = { frames = 3, rate = 5, loop = false, duration = .5 },
 			windup = { frames = 4, rate = 10, loop = true, duration = .5 },
-			main = { frames = 3, rate = 10, loop = false, duration = .5 },
+			main = { frames = 3, rate = 4, loop = false, duration = .5 },
 			post = { frames = 2, rate = 10, loop = false, duration = .5 },
 		}
 	}
@@ -51,7 +44,8 @@
     local defaultParams = { isPuppet = true,
 		attackList = {}, animations = {},
 		currentAttack = nil, isDead = false,
-		state = "idle", attackState = 1, currentFrame = 0, frameTimer = 0,
+		state = "idle", previousState = "",
+		attackState = 1, currentFrame = 0, frameTimer = 0, attackTimer = 0,
 		width = 64, height = 128,
 		attackStates = {"pre", "windup", "main", "post"}
 	}
@@ -82,32 +76,18 @@
 			self.fName = self.path..self.name.."/"..self.state.."/"..self.facingDirection.image.."/"..self.currentFrame..".png"
 		end
 
-		function puppet:nextAnimFrame() --called to set next frame of animation
-			self.currentFrame = self.currentFrame + 1
-			if self.currentFrame > self.currentAnim.frames - 1 then --reset current frame once reached anim's frame count
-				if (self.currentAnim.loop == true) then
-					self.currentFrame = 0
-				else
-					if (self.state == "attack") then --attack sub state has finished and not looping anim
-						self.attackState = self.attackState + 1
-					end
-				end
-			end
-            self:updateRectImage()
-		end
-
 		function puppet:loadTextures() --overrides gameObject function
 			print("loading puppet textures")
 			self.textures = {}
 			for _, dir in pairs(gc.move) do --for each direction
-				print("adding textures for direction: "..dir.image)
+				--print("adding textures for direction: "..dir.image)
 				self.textures[dir.image] = {}
 				for animName, animData in pairs(self.animations) do --for each animation
-					print("adding textures for animName: "..animName)
+					--print("adding textures for animName: "..animName)
 					self.textures[dir.image][animName] = {}
 					if (animData.frames) then --if no sub animations (walk, spring, etc...)
 						for i = 0, animData.frames - 1 do --zero indexed animation file names
-							print("adding textures for frame: "..i)
+							--print("adding textures for frame: "..i)
 							self.textures[dir.image][animName][i] = graphics.newTexture( {
 								type="image", baseDir=system.ResourceDirectory, 
 								filename=self.path..self.name.."/"..animName.."/"..dir.image.."/"..i..".png"
@@ -115,18 +95,18 @@
 						end
 					else
 						for subAnimName, subAnimData in pairs(animData) do --for each sub animation (pre, main, post... etc)
-							print("adding textures for subAnimName: "..subAnimName)
+							--print("adding textures for subAnimName: "..subAnimName)
 							self.textures[dir.image][animName][subAnimName] = {}
 							for i = 0, subAnimData.frames - 1 do --zero indexed animation file names
-								print("adding textures for frame: "..i)
+								--print("adding textures for frame: "..i)
 								local texture = graphics.newTexture( {
 									type="image", baseDir=system.ResourceDirectory, 
 									filename=self.path..self.name.."/"..animName.."/"..dir.image.."/"..subAnimName.."_"..i..".png"
 								} )
 								if (texture) then
-									print(texture.filename)
+									--print(texture.filename)
 									self.textures[dir.image][animName][subAnimName][i] = texture
-									print(dir.image, animName, subAnimName, i)
+									--print(dir.image, animName, subAnimName, i)
 								end
 							end
 						end
@@ -137,40 +117,92 @@
 			self.texture = self.textures[self.facingDirection.image][self.state][self.currentFrame]
 		end
 
-		function puppet:updateAnimationFrames() --called on each game render frame
+		function puppet:nextAnimFrame() --called to set next frame of animation	
+			print("self.currentFrame: "..self.currentFrame.." / "..self.currentAnim.frames - 1)		
+			if self.currentFrame >= self.currentAnim.frames - 1 then --reset current frame once reached anim's frame count
+				print("looping: "..self.currentAnim.loop)
+				if (self.currentAnim.loop == true) then --if animation is looping
+					self.currentFrame = 0
+					if (self.state == "attack") then --attack sub state has finished and looping anim
+						--print(self.attackTimer.. " / "..self.currentAttack.params.phase.windup.duration)
+						if self.attackTimer >= self.currentAttack.params.phase.windup.duration then --timer is greater than the animations rate
+							self.attackState = self.attackState + 1
+						end
+					end
+				else
+					if (self.state == "attack") then --attack sub state has finished and not looping anim
+						print("attack state: "..self.attackState.." / "..#self.attackStates)
+						self.attackState = self.attackState + 1
+						self.currentFrame = 0
+						if (self.attackState == #self.attackStates) then --post has finished
+							self.currentAttack = nil --set current attack to nil, picked up by setState on next loop
+							self.attackState = 1
+						end
+					end
+				end
+			end
 			
+			self:updateRectImage()
+			self.currentFrame = self.currentFrame + 1
+		end
+
+		function puppet:updateState()
 			if (self.currentAttack) then --begin attack has been called
 				self.state = "attack"
-				self.currentAnim = self.animations[self.state][self.attackStates[self.attackState]]
-				if (self.attackState == 2) then --windup state
-					print("windup")
-				end
 			elseif (self.isMoving) then --set the state to walk if moving (set in game object)
 				self.state = "walk"
-				self.currentAnim = self.animations[self.state]
 			else
 				self.state = "idle"
-				self.currentAnim = self.animations[self.state]
+			end
+			--print("state updated to: "..self.state)
+		end
+
+		function puppet:firstAnimFrame()
+			print("first anim frame")
+			self.currentAnim = self.animations[self.state] --set current animation
+			if (self.state == "attack") then --begin attack has been called
+				self.currentAnim = self.animations[self.state][self.attackStates[self.attackState]] --override current anim
+			end
+            self:updateRectImage()
+		end
+
+		function puppet:animUpdateLoop() --called on each game render frame
+			self:updateState() --update character state
+			--if the animation state has changed
+			if (self.state ~= self.previousState) then 
+				print("char state changed to "..self.state.." from "..self.previousState)
+				--self.currentFrame = 0 --reset frame
+				--self.frameTimer = 0 --reset frame timer
+				self:firstAnimFrame()
+			end
+			--increase attack timer
+			if (self.currentAttack) then --begin attack has been called
+				self.attackTimer = self.attackTimer + gv.frame.dts --add frame delta to timer
 			end
 			--check to make sure current frame is not past animation state frames
 			if (self.currentFrame > self.currentAnim.frames - 1) then
-				self.currentFrame = self.currentAnim.frames - 1  --minus one as frames are zero indexed
+				self.currentFrame = 0  --minus one as frames are zero indexed
 			end
+			--
 			if (self.currentAnim.frames > 0) then --if theres more than one frame in the anim data
 				self.frameTimer = self.frameTimer + gv.frame.dts --add frame delta to timer
 			end
-			print(self.state, self.frameTimer, self.currentAnim.rate)
+			--print(self.state, self.frameTimer, self.currentAnim.rate)
 			if self.frameTimer >= 1 / self.currentAnim.rate then --timer is greater than the animations rate
 				self:nextAnimFrame()
 				self.frameTimer = 0
 			end
+			self.previousState = self.state --used for checking when animation changes
 		end
 
 		function puppet:beginAttackAnim(attack)
+            self:updateRectImage()
 			puppet.currentAttack = attack
 			print("start attack for "..self.currentAttack.params.name)
 			self.currentFrame = 0
 			self.frameTimer = 0
+			self.attackTimer = 0
+			self.attackState = 1
 		end
 	end
 

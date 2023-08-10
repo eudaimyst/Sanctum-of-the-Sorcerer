@@ -38,7 +38,7 @@
 		map:cameraMove(game.char.moveDirection) --move map tiles, destroy boundaryTiles, create new tiles
 		
 		self.char:updateRectPos() --updates game char position on screen, game object function
-		game.char:updateAnimationFrames() --changes chars current frame based on animation timer
+		game.char:animUpdateLoop() --changes chars current frame based on animation timer
 	
 	end
 
