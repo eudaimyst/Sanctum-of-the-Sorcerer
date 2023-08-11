@@ -26,12 +26,8 @@
         cooldown = 3, --time before attack can be cast again
         range = -1, --maximum distance for attack target
         channelTime = -1, --sticks between main and post for the channel duration until cancelled
-        phase = {
-            pre = {duration = 0.2}, --plays anim to move to windup pose
-            windup = {duration = 1}, --sticks at windup until attack is ready to fire
-            main = {duration = 0.2}, --animation to fire attack when complete
-            post = {duration = 0.2}, --after attack is fired before returning to idle
-        },
+        windupTime = 0.5, --how long before the attack is fired
+        windupGlow = false, --whether or not to display a glowing emitter during windup 
     }
 
 	return params

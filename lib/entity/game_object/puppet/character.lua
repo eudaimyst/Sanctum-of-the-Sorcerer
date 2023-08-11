@@ -21,10 +21,11 @@
 		--print("CHARACTER PARAMS:--------\n" .. json.prettify(char) .. "\n----------------------")
         
 		function char:addSpell(spell, slot) --adds spell with passed params to the slot
+			print("adding spell: "..spell.name)
 			if (slot) then
-				char.spells[slot] = attack:new(spell or nil)
+				char.spells[slot] = attack:new(spell)
 			else
-				char.spells[#char.spells+1] = attack:new(spell or nil)
+				char.spells[#char.spells+1] = attack:new(spell)
 			end
 		end
 
@@ -51,8 +52,8 @@
 							self.activeSpell.target = target
 							self.activeSpell.delta = { x = target.x - self.world.x, y = target.y - self.world.y }
 						end
-						print("start attack for "..self.activeSpell.params.name)
 						self:beginAttackAnim(self.activeSpell) --defined in puppet, shared with enemies
+						
 					end
 				end
 			end
@@ -60,7 +61,12 @@
 		--char:updateFileName()
 		char:loadTextures()
 		char:makeRect() --creates rect on creation
-		char.spells = { attack:new(spellParams.fireball), attack:new(spellParams.firewall) } --set initial spells for testing, TODO: use addSpell from spells in char params
+		char.spells = {}
+		--char.spells = { attack:new(spellParams.fireball), attack:new(spellParams.firewall) } --set initial spells for testing, TODO: use addSpell from spells in char params
+		for _, v in pairs(spellParams) do
+			char:addSpell(v)
+		end
+		--char:addSpell(spellParams.fireBolt)
 		--char.setActiveSpell(1)
 
 		return char

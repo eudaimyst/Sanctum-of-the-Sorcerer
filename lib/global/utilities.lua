@@ -57,6 +57,14 @@
 		return x - cam.coords.x1, y - cam.coords.y1
 	end
 	--]]
+	function M.setEmitterColors(params, color)
+		params.startColorRed = color.r
+		params.startColorGreen = color.g
+		params.startColorBlue = color.b
+		params.finishColorRed = color.r
+		params.finishColorGreen = color.g
+		params.finishColorBlue = color.b
+	end
 
 
 	function M.getDistance(pos1x, pos1y, pos2x, pos2y)

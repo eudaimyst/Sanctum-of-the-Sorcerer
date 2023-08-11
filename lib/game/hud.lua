@@ -92,6 +92,8 @@
 					function spellButton:assignSpell(spell)
 						print(spell.params.name, spell.params.icon)
 						self.icon = display.newImageRect(hud.group, spell.params.icon, buttonSize, buttonSize)
+						local c = spell.params.element.c
+						self.icon:setFillColor(c.r, c.g, c.b)
 						util.zeroAnchors(self.icon)
 						self.icon.x = self.rect.x
 						self.icon.y = self.rect.y

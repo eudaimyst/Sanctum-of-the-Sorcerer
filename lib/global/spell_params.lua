@@ -11,6 +11,7 @@
 	local params = {}
 
 	---------- THESE ARE FOR REFERENCE ONLY, DEFAULT VALUES FOR ATTACK.LUA TAKEN FROM ATTACK_PARAMS.LUA ------------------
+    --[[
 	params.default = { --default params, these are overriden when specified in params
         name = "default_attack", --checks this folder name for images/emitter
         displayType = "image", --"image", "emitter"
@@ -27,20 +28,44 @@
         cooldown = 3, --time before attack can be cast again
         range = -1, --maximum distance for attack target
         channelTime = -1, --sticks between main and post for the channel duration until cancelled
-        phase = {
-            pre = {duration = 0.2}, --plays anim to move to windup pose
-            windup = {duration = 0.2}, --sticks at windup until attack is ready to fire
-            main = {duration = 0.2}, --animation to fire attack when complete
-            post = {duration = 0.2}, --after attack is fired before returning to idle
-        },
-    }
+        windupTime = 0.5, --how long before the attack is fired
+        windupGlow = true, --whether or not to display a glowing emitter during windup
+    }]]
 
-    params.fireball = {
-        name = "fireball"
+    params.fireBolt = {
+        name = "fireBolt",
+        windupGlow = true,
+        element = gc.elements.fire
     }
-
-    params.firewall = {
-        name = "firewall"
+    params.iceBolt = {
+        name = "iceBolt",
+        windupGlow = true,
+        element = gc.elements.ice
+    }
+    params.earthBolt = {
+        name = "earthBolt",
+        windupGlow = true,
+        element = gc.elements.earth
+    }
+    params.lightningBolt = {
+        name = "lightningBolt",
+        windupGlow = true,
+        element = gc.elements.lightning
+    }
+    params.airBolt = {
+        name = "airBolt",
+        windupGlow = true,
+        element = gc.elements.air
+    }
+    params.arcaneBolt = {
+        name = "arcaneBolt",
+        windupGlow = true,
+        element = gc.elements.arcane
+    }
+    params.shadowBolt = {
+        name = "shadowBolt",
+        windupGlow = true,
+        element = gc.elements.shadow
     }
 
 	

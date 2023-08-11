@@ -43,6 +43,10 @@
 		print("adding gameObject functions")
 
         function gameObject:move(dir) --called each frame from key_input by scene
+            if (self.currentAttack) then --puppets use this logic for movement
+                print("can't move while attacking")
+                return
+            end
             self.isMoving = true
             if ( self.moveDirection ~= dir ) then --if not already moving or moving in a different direction
                 self:setMoveDirection(dir)
@@ -89,12 +93,12 @@
                 local texture
                 if (self.isPuppet) then
                     if (self.state == "attack") then
-                        print(self.facingDirection.image, self.state, self.attackStates[self.attackState], self.currentFrame)
+                        --print(self.facingDirection.image, self.state, self.attackStates[self.attackState], self.currentFrame)
                         --print(json.prettify(self.textures))
                         texture = self.textures[self.facingDirection.image][self.state][self.attackStates[self.attackState]][self.currentFrame]
-                        print(texture.filename)
+                        --print(texture.filename)
                     else
-                        print(self.facingDirection.image, self.state, self.currentFrame)
+                        --print(self.facingDirection.image, self.state, self.currentFrame)
                         texture = self.textures[self.facingDirection.image][self.state][self.currentFrame]
                     end   
                 elseif (self.directional) then
