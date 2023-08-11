@@ -25,19 +25,19 @@
     lib_puppet.store = {}
 
 	local defaultAnimations = {
-		idle = { frames = 4, rate = .8, loop = true, duration = .5 },
-		walk = { frames = 4, rate = 6, loop = true, duration = .5 },
-		sneak = { frames = 1, rate = 5, loop = true, duration = .5 },
-		sprint = { frames = 1, rate = 10, loop = true, duration = .5 },
+		idle = { frames = 4, rate = .8, loop = true },
+		walk = { frames = 4, rate = 6, loop = true },
+		sneak = { frames = 1, rate = 5, loop = true },
+		sprint = { frames = 1, rate = 10, loop = true },
 		death = {
 			pre = { frames = 1, rate = 10, loop = false, duration = .5 },
 			main = { frames = 1, rate = 3, loop = false, duration = .5 },
 			post = { frames = 1, rate = 10, loop = false, duration = .5 }, },
 		attack = {
-			pre = { frames = 3, rate = 5, loop = false, duration = .5 },
-			windup = { frames = 4, rate = 10, loop = true, duration = .5 },
-			main = { frames = 3, rate = 4, loop = false, duration = .5 },
-			post = { frames = 2, rate = 10, loop = false, duration = .5 },
+			pre = { frames = 3, rate = 20, loop = false },
+			windup = { frames = 4, rate = 20, loop = true },
+			main = { frames = 3, rate = 8, loop = false },
+			post = { frames = 2, rate = 10, loop = false },
 		}
 	}
 
@@ -118,29 +118,34 @@
 		end
 
 		function puppet:nextAnimFrame() --called to set next frame of animation	
-			print("self.currentFrame: "..self.currentFrame.." / "..self.currentAnim.frames - 1)		
-			if self.currentFrame >= self.currentAnim.frames - 1 then --reset current frame once reached anim's frame count
-				print("looping: "..self.currentAnim.loop)
+			print("self.currentFrame: "..self.currentFrame.." / "..self.currentAnim.frames)		
+			
+ 			if self.currentFrame == self.currentAnim.frames then --reset current frame once reached anim's frame count
+				print("looping: "..tostring(self.currentAnim.loop))
 				if (self.currentAnim.loop == true) then --if animation is looping
+					print("anim state looping")
 					self.currentFrame = 0
 					if (self.state == "attack") then --attack sub state has finished and looping anim
-						--print(self.attackTimer.. " / "..self.currentAttack.params.phase.windup.duration)
-						if self.attackTimer >= self.currentAttack.params.phase.windup.duration then --timer is greater than the animations rate
+						print(self.attackTimer.. " / "..self.currentAttack.params.phase.windup.duration)
+						if (self.attackTimer >= self.currentAttack.params.phase.windup.duration) then --timer is greater than the spells cast time
 							self.attackState = self.attackState + 1
+							self.currentAnim = self.animations[self.state][self.attackStates[self.attackState]] --update the anim to the new state
 						end
 					end
 				else
 					if (self.state == "attack") then --attack sub state has finished and not looping anim
 						print("attack state: "..self.attackState.." / "..#self.attackStates)
-						self.attackState = self.attackState + 1
 						self.currentFrame = 0
 						if (self.attackState == #self.attackStates) then --post has finished
 							self.currentAttack = nil --set current attack to nil, picked up by setState on next loop
 							self.attackState = 1
+							return
 						end
+						self.attackState = self.attackState + 1
+						self.currentAnim = self.animations[self.state][self.attackStates[self.attackState]] --update the anim to the new state
 					end
 				end
-			end
+			end 
 			
 			self:updateRectImage()
 			self.currentFrame = self.currentFrame + 1
@@ -148,6 +153,7 @@
 
 		function puppet:updateState()
 			if (self.currentAttack) then --begin attack has been called
+				print("attacking: "..self.currentAttack.params.name)
 				self.state = "attack"
 			elseif (self.isMoving) then --set the state to walk if moving (set in game object)
 				self.state = "walk"
@@ -158,21 +164,27 @@
 		end
 
 		function puppet:firstAnimFrame()
-			print("first anim frame")
+			print("first anim frame of new anim state "..self.state)
 			self.currentAnim = self.animations[self.state] --set current animation
+
 			if (self.state == "attack") then --begin attack has been called
-				self.currentAnim = self.animations[self.state][self.attackStates[self.attackState]] --override current anim
+				self.currentAnim = self.currentAnim[self.attackStates[self.attackState]] --override current anim
+			elseif (self.currentFrame >= self.currentAnim.frames) then
+				self.currentFrame = 0  --minus one as frames are zero indexed
 			end
             self:updateRectImage()
 		end
 
+		function puppet:animDirChanged() --called by game object function when direction is updated
+			if (self.currentFrame >= self.currentAnim.frames) then
+				self.currentFrame = 0  --minus one as frames are zero indexed
+			end
+		end
 		function puppet:animUpdateLoop() --called on each game render frame
 			self:updateState() --update character state
 			--if the animation state has changed
 			if (self.state ~= self.previousState) then 
 				print("char state changed to "..self.state.." from "..self.previousState)
-				--self.currentFrame = 0 --reset frame
-				--self.frameTimer = 0 --reset frame timer
 				self:firstAnimFrame()
 			end
 			--increase attack timer
@@ -180,10 +192,6 @@
 				self.attackTimer = self.attackTimer + gv.frame.dts --add frame delta to timer
 			end
 			--check to make sure current frame is not past animation state frames
-			if (self.currentFrame > self.currentAnim.frames - 1) then
-				self.currentFrame = 0  --minus one as frames are zero indexed
-			end
-			--
 			if (self.currentAnim.frames > 0) then --if theres more than one frame in the anim data
 				self.frameTimer = self.frameTimer + gv.frame.dts --add frame delta to timer
 			end
@@ -196,7 +204,6 @@
 		end
 
 		function puppet:beginAttackAnim(attack)
-            self:updateRectImage()
 			puppet.currentAttack = attack
 			print("start attack for "..self.currentAttack.params.name)
 			self.currentFrame = 0

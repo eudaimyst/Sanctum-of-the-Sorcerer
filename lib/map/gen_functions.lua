@@ -440,12 +440,12 @@
 										self.connectedRooms[direction][#self.connectedRooms[direction] + 1] = neighbour --so we can check if neighbour already has hallway
 										--set hallway wall tiles
 										if (direction == "up" or direction == "down") then
-											if (j == x1 or j == x2) then doorWallTiles[#doorWallTiles+1] = tile; print("dx") end
+											if (j == x1 or j == x2) then doorWallTiles[#doorWallTiles+1] = tile end
 										end
 										if (direction == "left" or direction == "right") then
-											if (k == y1 or k == y2) then doorWallTiles[#doorWallTiles+1] = tile; print("dy") end
+											if (k == y1 or k == y2) then doorWallTiles[#doorWallTiles+1] = tile end
 										end
-										print(j, k)
+										--print(j, k)
 									end
 								end
 								setColor(doorTiles[direction], "room", room.id)

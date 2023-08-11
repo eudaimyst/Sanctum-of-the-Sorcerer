@@ -73,6 +73,9 @@
         function gameObject:setFacingDirection(dir) --sets facing direction and re-creates rect
             self.facingDirection = dir
             self.texture = self.textures[dir]
+            if (self.isPuppet) then
+                self:animDirChanged()
+            end
             self:updateRectImage()
         end
 
