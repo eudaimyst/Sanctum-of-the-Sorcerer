@@ -156,6 +156,7 @@ function lib_puppet.puppetFactory(puppet)
 					print("attack state: " .. self.attackState .. " / " .. #self.attackStates)
 					self.currentFrame = 0
 					if (self.attackState == #self.attackStates) then --post has finished
+						self.currentAttack:fire()
 						self.currentAttack = nil      --set current attack to nil, picked up by setState on next loop
 						self.attackState = 1
 						return
@@ -280,16 +281,16 @@ function lib_puppet.puppetFactory(puppet)
 			emitter:removeSelf()
 		end
 		local function glowOver()
-			transition.fadeOut(glow, { time = mainTime * 1000, onComplete = destroyGlow})
-			transition.moveTo( glow, { x = castPos.x, y = castPos.y, time = mainTime * 1000 } )
-			transition.moveTo( emitter, { x = castPos.x, y = castPos.y, time = mainTime * 1000 } )
+			--transition.fadeOut(glow, { time = mainTime * 1000, })
+			transition.moveTo( glow, { x = castPos.x, y = castPos.y, time = mainTime *.75 * 1000, onComplete = destroyGlow } )
+			transition.moveTo( emitter, { x = castPos.x, y = castPos.y, time = mainTime *.75 * 1000 } )
 			transition.scaleTo( glow, { xScale=.5, yScale=.5, time = mainTime * 1000 } )
 		end
 		print(glow.x, glow.y)
 		glow.alpha = 0
 		glow.xScale = .2
 		glow.yScale = .2
-		glow.blendMode = "add"
+		--glow.blendMode = "add"
 		print("time for attack glow = "..glowTime)
 		transition.to(glow, { time = glowTime * 1000, alpha = .8, onComplete = glowOver })
 		transition.scaleTo( glow, { xScale=1, yScale=1, time= glowTime * 1000 } )

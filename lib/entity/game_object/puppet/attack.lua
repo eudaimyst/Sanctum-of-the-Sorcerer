@@ -8,6 +8,7 @@
 	local gc = require("lib.global.constants")
 	local util = require("lib.global.utilities")
     local attackParams = require("lib.global.attack_params")
+    local json = require("json")
 
     local displayTypes = {
         image = { fPath = "", width = 64, height = 64, rotates = false },
@@ -42,7 +43,13 @@
         attack.params.icon = basePath.."/"..attack.params.name.."/icon.png"
 
         function attack:activate()
-            print("attack "..attack.params.name.." set to active")
+            print("attack "..self.params.name.." set to active")
+        end
+
+        function attack:fire()
+            print("attack "..self.params.name.." fired")
+            print(json.prettify(self))
+             
         end
 
         return attack

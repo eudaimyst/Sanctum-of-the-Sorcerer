@@ -124,22 +124,4 @@
 	    return copy
 	end
 
-	--function to remove objects from an array (numbered table) based on another table of indexes to remove
-	function M.arrayRemove(table, remove)
-		local j = 0 --iterator for when have removed an object
-		local l = #table --for testing
-		for i = 0, #table, 1 do --iterate through passed table with i for index
-			if (i == remove[j]) then --index are at matches index to remove
-				j = j + 1 --removed an object so increase iterator to find next index
-			end
-			print("setting value in table at position "..i.."to value at i+j"..i+j)
-			table[i] = table[i+j] --depending on how many indexes in table match remove array, move items in table to left 
-			if (i > #table - j) then --nil last items of array depending on how many were iterated
-				table[i] = nil
-			end
-		end
-		print("removed "..j.." tiles from table... before: "..l.." after: "..#table)
-
-	end
-
 	return M
