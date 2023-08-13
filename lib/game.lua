@@ -49,7 +49,7 @@
 
 	function game.mouseClick(x, y) --mouseClick called from mouse input listener, can't pass self
 		if (game.char.activeSpell) then
-			if (game.char.activeSpell.params.targetType == "point") then
+			if (game.char.activeSpell.targetType == "point") then
 				local target = { x = cam.bounds.x1 + x, y = cam.bounds.y1 + y}
 				game.char:beginCast( target )
 			end

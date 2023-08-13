@@ -144,8 +144,8 @@ function lib_puppet.puppetFactory(puppet)
 				print("anim state looping")
 				self.currentFrame = 0
 				if (self.state == "attack") then                        --attack sub state has finished and looping anim
-					print(self.attackTimer .. " / " .. self.currentAttack.params.windupTime)
-					if (self.attackTimer >= self.currentAttack.params.windupTime) then --timer is greater than the spells cast time
+					print(self.attackTimer .. " / " .. self.currentAttack.windupTime)
+					if (self.attackTimer >= self.currentAttack.windupTime) then --timer is greater than the spells cast time
 						self.attackState = self.attackState + 1
 						self.currentAnim = self.animations[self.state]
 							[self.attackStates[self.attackState]] --update the anim to the new state
@@ -174,7 +174,7 @@ function lib_puppet.puppetFactory(puppet)
 
 	function puppet:updateState() --called by anim loop at top of each loop --controls state of puppet whether moving or attacking
 		if (self.currentAttack) then --begin attack has been called
-			--print("attacking: "..self.currentAttack.params.name)
+			--print("attacking: "..self.currentAttack.name)
 			self.state = "attack"
 		elseif (self.isMoving) then --set the state to walk if moving (set in game object)
 			self.state = "walk"
@@ -258,7 +258,7 @@ function lib_puppet.puppetFactory(puppet)
 		-- Decode the string
 		local emitterParams = json.decode( emitterData )
 		emitterParams.duration = glowTime + mainTime --override the loaded duration to the glow time (set earlier)
-		util.setEmitterColors(emitterParams, self.currentAttack.params.element.c)
+		util.setEmitterColors(emitterParams, self.currentAttack.element.c)
 		
 		-- Create the emitter with the decoded parameters
 		local emitter = display.newEmitter( emitterParams )
@@ -273,7 +273,7 @@ function lib_puppet.puppetFactory(puppet)
 		--
 		-----------------------------------------------------------------------------------------
 		local glow = display.newImageRect(self.group, "content/particles/32_0h.png", 64, 64)
-		local c = self.currentAttack.params.element.c
+		local c = self.currentAttack.element.c
 		glow:setFillColor(c.r, c.g, c.b)
 		glow.x, glow.y = pos.x, pos.y
 		local function destroyGlow()
@@ -299,9 +299,9 @@ function lib_puppet.puppetFactory(puppet)
 
 	function puppet:beginAttackAnim(attack)
 		puppet.currentAttack = attack --set to nil once attack is complete, used to determin whether puppet is in attacking state
-		print("start attack for " .. self.currentAttack.params.name)
-		if (attack.params.windupGlow) then
-			self:makeWindupGlow(defaultAnimations.attack, attack.params.windupTime)
+		print("start attack for " .. self.currentAttack.name)
+		if (attack.windupGlow) then
+			self:makeWindupGlow(defaultAnimations.attack, attack.windupTime)
 		end
 		self.currentFrame = 0
 		self.frameTimer = 0

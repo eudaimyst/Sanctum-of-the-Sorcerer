@@ -9,10 +9,12 @@
 	local util = require("lib.global.utilities")
     local attackParams = require("lib.global.attack_params")
     local json = require("json")
+    local entity = require("lib.entity")
 
-    local displayTypes = {
-        image = { fPath = "", width = 64, height = 64, rotates = false },
-        emitter = { fPath = ""},
+    local displayData = { --the display of each attack is broken up into 3 parts
+        start = {textures = {}, emitters = {}}, --when the attack entity is created
+        middle = {textures = {}, emitters = {}}, --while the attack exists
+        finish = {textures = {}, emitters = {}}, --when the attack timer has reached its duration
     }
 
     local basePath = "content/spells"
@@ -30,27 +32,26 @@
 
     function lib_attack:new(_params)
 
-        local attack = util.deepcopy(data)
-        attack.params = util.deepcopy(attackParams.default)
+        local attack = entity:create()
+        attack:setParams(attackParams.default, _params)
         
-        if _params then
-            for k,v in pairs(_params) do
-                attack.params[k] = v
-            end
+        function attack:loadDisplay()
+
         end
-        
-        attack.params.displayType = util.deepcopy(displayTypes[attack.params.displayType]) --set display type table from string name for key
-        attack.params.icon = basePath.."/"..attack.params.name.."/icon.png"
 
         function attack:activate()
-            print("attack "..self.params.name.." set to active")
+            print("attack "..self.name.." set to active")
         end
 
         function attack:fire()
-            print("attack "..self.params.name.." fired")
-            print(json.prettify(self))
+            print("attack "..self.name.." fired")
+            --print(json.prettify(self))
              
         end
+        print(json.prettify(attack))
+        attack.displayData = attack:loadDisplay() --set display type table from string name for key
+        attack.icon = basePath.."/"..attack.name.."/icon.png"
+
 
         return attack
     end

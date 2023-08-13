@@ -64,7 +64,7 @@
 
         entity.world = {x = 0, y = 0}
         entity.group = display.newGroup() --create a new display group for this entity that will be used for all display objects
-        entity.isGameObject, entity.isPuppet = false, false --set to true by game_object.lua and puppet.lua
+        entity.isGameObject, entity.isPuppet, entity.isAttack = false, false, false --set to true by game_object.lua and puppet.lua
 
         if (self.parentGroup == nil) then
             print("ERROR: parentGroup is nil, set parentGroup with lib_entity:setGroup(group) from scene")

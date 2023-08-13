@@ -43,7 +43,7 @@
 			end
 		end
 
-		function char:beginCast( target )
+		function char:beginCast( target ) --called from game.lua on mouseclick from mouse listener
 			if (self.activeSpell) then
 				if (not self.currentAttack) then
 					if (not self.activeSpell.onCooldown) then
