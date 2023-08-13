@@ -98,7 +98,7 @@
 		game.init(cam, map, key, mouse, hud)
 		print("calling game object create from scene")
 
-		entity:setGroup(sceneGroup) --passes group to entity which gets stored for all created entities
+		entity:init(sceneGroup) --passes group to entity which gets stored for all created entities
 
 		generateGameMap()
 	end

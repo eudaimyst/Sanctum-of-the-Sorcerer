@@ -10,7 +10,8 @@
 	-- Define module
 	local params = {}
 
-    params.displayTypes = {
+
+    local displayTypes = {
         beam = { [1] = {segments = 1, segmentOffset = 0} },
         projectile = { [1] = {speed = 1, rotates = false, endScale = 1} },
         aoe = { [1] = {imageCount = 1, radiates = false} }
@@ -18,6 +19,7 @@
     params.default = { --default params, these are overriden when specified in params
         name = "default_attack", --checks this folder name for images/emitter
         displayType = "projectile", --"image", "emitter"
+        displayParams = { [1] = {speed = 600, spins = false, endScale = 1} }, --number of images/emitters to display and their properties
         displayScale = 1, --size of attack display normalised to 64 pixels
         element = gc.elements.fire,
         duration = 1, --lifetime of the attack

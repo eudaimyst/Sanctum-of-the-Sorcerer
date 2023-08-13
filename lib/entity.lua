@@ -13,6 +13,8 @@
 
 	-----------------------------------------------------------------------------------------
 	
+    local cam = require("lib.camera")
+
     -- Define module
 	local lib_entity = {}
     lib_entity.store = {}
@@ -22,9 +24,9 @@
 		print("adding entity functions")
 
         function entity:destroySelf() --called to remove the entity, its group and reference to it
-            self.displayGroup:removeSelf()
-            self.displayGroup = nil
-            entity.store[self.id] = nil
+            self.group:removeSelf()
+            self.group = nil
+            lib_entity.store[self.id] = nil
 
             if ( self.onDestroy ) then
                 self:onDestroy()
@@ -49,27 +51,36 @@
             end
         end
 
+        function entity:entityOnFrame() --this function Must have a unique name for any module that creates an entity
+            self.screen.x, self.screen.y = self.world.x - cam.bounds.x1, self.world.y - cam.bounds.y1 --calculate the entities position on the screen based off its world coords
+        end
+
+        function entity:addOnFrameMethod(method) --adds a function to the onFrameFuncs table which is called each frame
+            self.onFrameMethods[#self.onFrameMethods+1] = method
+        end
+
+        entity:addOnFrameMethod(entity.entityOnFrame)
+
     end
 
     function lib_entity:storeObject(entity)
-
         entity.id = #self.store + 1 --creates the object id --NOTE: Different to entity id
         self.store[entity.id] = entity --stores the object in this modules store of object
-
     end
 
-    function lib_entity:create() --store = any store be it gameObjects, enemies etc...
+    function lib_entity:create(_x, _y) --store = any store be it gameObjects, enemies etc...
         print("creating entity")
-        local entity = {}
 
-        entity.world = {x = 0, y = 0}
+        local entity = { isPuppet = false, isGameObject = false,
+            world = {x = _x or 0, y = _y or 0}, screen = {x = 0, y = 0},
+            group = nil, attack = nil, onFrameMethods = {} }
+
         entity.group = display.newGroup() --create a new display group for this entity that will be used for all display objects
-        entity.isGameObject, entity.isPuppet, entity.isAttack = false, false, false --set to true by game_object.lua and puppet.lua
 
-        if (self.parentGroup == nil) then
+        if (self.sceneGroup == nil) then
             print("ERROR: parentGroup is nil, set parentGroup with lib_entity:setGroup(group) from scene")
         else
-            self.parentGroup:insert(entity.group)
+            self.sceneGroup:insert(entity.group)
         end
 
         lib_entity.entityFactory(entity) --adds functions to entity
@@ -79,8 +90,8 @@
         return entity
     end
 
-    function lib_entity:setGroup(group) --sets the group for the entity (all modules that extend the entity class will use this)
-        lib_entity.parentGroup = group
+    function lib_entity:init(sceneGroup) --sets the group for the entity (all modules that extend the entity class will use this)
+        lib_entity.sceneGroup = sceneGroup
     end
 
 	return lib_entity

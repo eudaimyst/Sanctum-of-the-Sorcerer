@@ -44,6 +44,12 @@
 		end
 
 		function char:beginCast( target ) --called from game.lua on mouseclick from mouse listener
+			local function animCompleteListener() --called when animation is complete
+				self.currentAttack:fire(self)
+				self.activeSpell:deactivate()
+				self.currentAttack = nil
+			end
+
 			if (self.activeSpell) then
 				if (not self.currentAttack) then
 					if (not self.activeSpell.onCooldown) then
@@ -52,12 +58,14 @@
 							self.activeSpell.target = target
 							self.activeSpell.delta = { x = target.x - self.world.x, y = target.y - self.world.y }
 						end
-						self:beginAttackAnim(self.activeSpell) --defined in puppet, shared with enemies
+						self:beginAttackAnim(self.activeSpell, animCompleteListener) --defined in puppet, shared with enemies
 						
 					end
 				end
 			end
 		end
+
+
 		--char:updateFileName()
 		char:loadTextures()
 		char:makeRect() --creates rect on creation

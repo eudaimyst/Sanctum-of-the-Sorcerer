@@ -10,11 +10,13 @@
 	local gameObject = require("lib.entity.game_object")
 	local puppet = require("lib.entity.game_object.puppet")
 	local character = require("lib.entity.game_object.puppet.character")
+	local entity = require("lib.entity")
 
 
 	-- Define module
 	local game = {}
 	local cam, map, key, mouse, hud --set on init()
+	local e, onFrameMethod --for calling entity onFrame functions
 
 
 	function game.spawnChar()
@@ -37,6 +39,14 @@
 		cam:onFrame() --processes camera movement
 		map:cameraMove(game.char.moveDirection) --move map tiles, destroy boundaryTiles, create new tiles
 		
+		for i = 1, #entity.store do
+			e = entity.store[i]
+			for j = 1, #e.onFrameMethods do
+				onFrameMethod = e.onFrameMethods[j]
+				onFrameMethod(e) --passes entity to onFrame function
+			end
+		end
+
 		self.char:updateRectPos() --updates game char position on screen, game object function
 		game.char:animUpdateLoop() --changes chars current frame based on animation timer
 	

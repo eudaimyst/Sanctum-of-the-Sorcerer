@@ -148,7 +148,7 @@ function lib_puppet.puppetFactory(puppet)
 					if (self.attackTimer >= self.currentAttack.windupTime) then --timer is greater than the spells cast time
 						self.attackState = self.attackState + 1
 						self.currentAnim = self.animations[self.state]
-							[self.attackStates[self.attackState]] --update the anim to the new state
+						[self.attackStates[self.attackState]] --update the anim to the new state
 					end
 				end
 			else
@@ -156,14 +156,16 @@ function lib_puppet.puppetFactory(puppet)
 					print("attack state: " .. self.attackState .. " / " .. #self.attackStates)
 					self.currentFrame = 0
 					if (self.attackState == #self.attackStates) then --post has finished
-						self.currentAttack:fire()
+						self.animCompleteListener()
+						self.animCompleteListener = nil
+						
 						self.currentAttack = nil      --set current attack to nil, picked up by setState on next loop
 						self.attackState = 1
-						return
+						return --return out of function as we don't want to update the rect image
 					end
 					self.attackState = self.attackState + 1
 					self.currentAnim = self.animations[self.state]
-						[self.attackStates[self.attackState]] --update the anim to the new state
+					[self.attackStates[self.attackState]] --update the anim to the new state
 				end
 			end
 		end
@@ -233,10 +235,10 @@ function lib_puppet.puppetFactory(puppet)
 		local mainTime = ((1 / a.main.rate) * (a.main.frames+1)) --we need to move the rect/emitter to the cast point in the char image over this time
 		print("windup, glow, main = "..wt..", "..glowTime..", "..mainTime)
 
-		local pos = { 	x = self.rect.x - gc.charHandsWindup[self.facingDirection.image].x,
-						y = self.rect.y - gc.charHandsWindup[self.facingDirection.image].y } 
-		local castPos = { 	x = self.rect.x - gc.charHandsCast[self.facingDirection.image].x,
-						y = self.rect.y - gc.charHandsCast[self.facingDirection.image].y } 
+		self.startWindupAttackOffset = { x = gc.charHandsWindup[self.facingDirection.image].x, y = gc.charHandsWindup[self.facingDirection.image].y }
+		self.finishWindupAttackOffset = { x = gc.charHandsCast[self.facingDirection.image].x, y = gc.charHandsCast[self.facingDirection.image].y }
+		local pos = { x = self.rect.x - self.startWindupAttackOffset.x, y = self.rect.y - self.startWindupAttackOffset.y } 
+		local castPos = { x = self.rect.x - self.finishWindupAttackOffset.x, y = self.rect.y - self.finishWindupAttackOffset.y } 
 		
 
 		-----------------------------------------------------------------------------------------
@@ -297,8 +299,9 @@ function lib_puppet.puppetFactory(puppet)
 		
 	end
 
-	function puppet:beginAttackAnim(attack)
-		puppet.currentAttack = attack --set to nil once attack is complete, used to determin whether puppet is in attacking state
+	function puppet:beginAttackAnim(attack, animCompleteListener)
+		self.currentAttack = attack --set to nil once attack is complete, used to determin whether puppet is in attacking state
+		self.animCompleteListener = animCompleteListener --called once animation is complete
 		print("start attack for " .. self.currentAttack.name)
 		if (attack.windupGlow) then
 			self:makeWindupGlow(defaultAnimations.attack, attack.windupTime)
@@ -326,12 +329,6 @@ function lib_puppet:create(_params) --creates the game object
 	lib_puppet:storeObject(puppet)
 	print("puppet created with puppet id: " .. puppet.puppetID)
 	return puppet
-end
-
-function lib_puppet:onFrame()
-	for _, puppet in pairs(self.store) do
-		puppet:onFrame()
-	end
 end
 
 return lib_puppet

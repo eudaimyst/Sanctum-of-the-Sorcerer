@@ -134,6 +134,11 @@
                 self.rect = nil
             end
 		end
+
+        function gameObject:gameObjectOnFrame()
+
+        end
+        gameObject:addOnFrameMethod(gameObject.gameObjectOnFrame)
     end
 
     function lib_gameObject:storeObject(gameObject) --stores gameObject
