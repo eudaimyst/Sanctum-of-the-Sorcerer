@@ -88,6 +88,8 @@
             print("creating attack projectile")
             local projectile = entity:create(origin.x, origin.y)
             attack.projectile = projectile
+            projectile.speed = attack.displayParams[1].speed
+            projectile.normal = attack.normal
 
             function projectile:updateDisplayPos()
                 for i = 1, #self.rects do
@@ -101,6 +103,8 @@
 
             function projectile:projectile_onFrame()
                 attack.durationTimer = attack.durationTimer + gv.frame.dts
+                self.world.x = self.world.x + self.normal.x * self.speed * gv.frame.dts
+                self.world.y = self.world.y + self.normal.y * self.speed * gv.frame.dts
                 if (attack.durationTimer > attack.duration) then
                     attack.durationTimer = 0
                     self:destroySelf() --calls entity destroy method
@@ -128,7 +132,6 @@
                     emitter:start()
                     self.emitters[#self.emitters+1] = emitter
                 end
-
             end
             projectile:createDisplay(origin)
 

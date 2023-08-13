@@ -5,28 +5,26 @@
 	-----------------------------------------------------------------------------------------\
 
 	--common modules
-	local g = require("lib.global.constants")
+	local gc = require("lib.global.constants")
 
 	--shared modules --all can call each other
 
 	-- Define module
-	local M = {}
+	local util = {}
 
-	M.frameDeltaTime = 0
-
-	function M.removeObject ( o ) --called by transitions to remove object on complete
+	function util.removeObject ( o ) --called by transitions to remove object on complete
 		if (o) then --if object still exists
 		    o:removeSelf()
 		end
 	end
 
-	function M.zeroAnchors(rect) --takes a display object and sets anchors to 0
+	function util.zeroAnchors(rect) --takes a display object and sets anchors to 0
 		rect.anchorX = 0
 		rect.anchorY = 0
 		return rect
 	end
 
-	function M.printkv(table)
+	function util.printkv(table)
 		if (table) then
 			for k, v in pairs(table) do
 				print(tostring(table), k, v)
@@ -36,28 +34,40 @@
 		end
 	end
 
-	function M.angleToDirection(a)
-		for k,v in pairs( g.move ) do
-			--print(k, v)
-			--print("is "..a.." between "..v.facing - 22.5 .." and "..v.facing + 22.5)
-			if (a >= v.facing - 22.5 and a < v.facing) then
-				--print("true")
-				return v
-			elseif (a >= v.facing and a < v.facing + 22.5) then
-				--print("true")
-				return v
-			elseif (v.facing == 0 and a >= 337.5) then --special case for right which is 0 OR 360
-				--print("true")
-				return v
+	--This function takes an angle and returns the direction that is closest to that angle.
+	--It is used by the movePlayer() function to determine which direction the
+	--player should move in. The angle is in degrees.
+	function util.angleToDirection(a)
+		--special case for right
+		if (a >= 337.5 or a < 22.5) then
+			return gc.move.right
+		end
+		for _,direction in pairs( gc.move ) do
+			if (a >= direction.angle - 22.5 and a < direction.angle + 22.5) then
+				return direction
 			end
 		end
+		--if we get here then the angle is not in the move table
+		--so we need to do some error handling
+		print("Error: angleToDirection() could not find direction for angle: ",a)
+		return nil
 	end
-	--[[
-	function M.worldtoscreen (x, y, cam)
-		return x - cam.coords.x1, y - cam.coords.y1
+
+	-- This code converts a delta position (the difference between two points in space) to an angle, 
+	-- which is useful for determining where a player is facing when moving from one point to another.
+	function util.deltaPosToAngle(pos1, pos2)
+		if not pos1 or not pos2 then
+			print("ERROR: deltaPosToAngle() called with invalid parameters")
+			return nil
+		end
+		local angle = math.atan2(pos2.y - pos1.y, pos2.x - pos1.x) * 180 / math.pi
+		if (angle < 0) then
+			angle = angle + 360
+		end
+		return angle
 	end
-	--]]
-	function M.setEmitterColors(params, color)
+
+	function util.setEmitterColors(params, color)
 		params.startColorRed = color.r
 		params.startColorGreen = color.g
 		params.startColorBlue = color.b
@@ -67,61 +77,41 @@
 	end
 
 
-	function M.getDistance(pos1x, pos1y, pos2x, pos2y)
-		return math.sqrt( math.pow(pos1x - pos2x, 2) + math.pow( pos1y - pos2y, 2 ) )
+	-- This function will calculate the distance between two points.
+	-- @return Returns the distance between the two points.
+	function util.getDistance(pos1x, pos1y, pos2x, pos2y)
+		local distance = math.sqrt( math.pow(pos1x - pos2x, 2) + math.pow(pos1y - pos2y, 2) )
+		return distance
 	end
 
-	--loads images from file, passes character/data table as entity and animation type ie walk, cast etc...
-	function M.loadImages(entity, animType)
-		--create tables for each direction that will hold images
-		animType.images.up = { }
-		animType.images.upRight = { }
-		animType.images.upLeft = { }
-		animType.images.down = { }
-		animType.images.downRight = { }
-		animType.images.downLeft = { }
-		animType.images.right = { }
-		animType.images.left = { }
-
-		--loads each image, iterates for frame number
-		for i = 0, animType.frameCount - 1, 1 do
-			print("image loaded: ".."content/"..entity.imageFolder..animType.prefix..g.imageUp..i..".png")
-			animType.images.up[i] =  "content/"..entity.imageFolder..animType.prefix..g.imageUp..i..".png"
-			animType.images.upRight[i] =  "content/"..entity.imageFolder..animType.prefix..g.imageUpRight..i..".png"
-			animType.images.upLeft[i] =  "content/"..entity.imageFolder..animType.prefix..g.imageUpLeft..i..".png"
-			animType.images.down[i] =  "content/"..entity.imageFolder..animType.prefix..g.imageDown..i..".png"
-			animType.images.downRight[i] =  "content/"..entity.imageFolder..animType.prefix..g.imageDownRight..i..".png"
-			animType.images.downLeft[i] =  "content/"..entity.imageFolder..animType.prefix..g.imageDownLeft..i..".png"
-			animType.images.right[i] =  "content/"..entity.imageFolder..animType.prefix..g.imageRight..i..".png"
-			animType.images.left[i] =  "content/"..entity.imageFolder..animType.prefix..g.imageLeft..i..".png"
-		end
+	function util.normalizeXY(pos)
+		local magnitude = math.sqrt(math.pow(pos.x, 2) + math.pow( pos.y, 2 ))
+		return { x = pos.x / magnitude, y = pos.y / magnitude }
 	end
 
-	function M.normalizeXY(x, y) --takes x y and returns x y normalised so highest value on either side is 1 and other value is relative to 1
-		local magnitude = math.sqrt(math.pow(x, 2) + math.pow( y, 2 ))
-		return x / magnitude, y / magnitude
+	function util.deltaPos(pos1, pos2)
+		return { x = pos2.x - pos1.x, y = pos2.y - pos1.y }
 	end
 
-	function M.moveSetDirection(e, d)
-		e.moveDirection = d --set entities direction to passed direction
-		e.facingDirection = d.facing --set entity facing direction in degrees to passed direction
+	function util.factorPos(pos, factor)
+		return { x = pos.x * factor, y = pos.y * factor }
 	end
 
 	--https://copyprogramming.com/howto/how-to-get-an-actual-copy-of-a-table-in-lua#how-to-get-an-actual-copy-of-a-table-in-lua
 	--deepcopy function to copy enemydata to a new variable
-	function M.deepcopy(orig)
+	function util.deepcopy(orig)
 	    local orig_type = type(orig)
 	    local copy
 	    if orig_type == 'table' then
 	        copy = {}
 	        for orig_key, orig_value in next, orig, nil do
-	            copy[M.deepcopy(orig_key)] = M.deepcopy(orig_value)
+	            copy[util.deepcopy(orig_key)] = util.deepcopy(orig_value)
 	        end
-	        setmetatable(copy, M.deepcopy(getmetatable(orig)))
+	        setmetatable(copy, util.deepcopy(getmetatable(orig)))
 	    else -- number, string, boolean, etc
 	        copy = orig
 	    end
 	    return copy
 	end
 
-	return M
+	return util

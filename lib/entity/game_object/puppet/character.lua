@@ -8,6 +8,8 @@
 	local puppet = require("lib.entity.game_object.puppet")
 	local attack = require("lib.entity.game_object.puppet.attack")
 	local spellParams = require("lib.global.spell_params")
+	local util = require("lib.global.utilities")
+
 	local hud --set on create
 
 	-- Define module
@@ -44,22 +46,31 @@
 		end
 
 		function char:beginCast( target ) --called from game.lua on mouseclick from mouse listener
+			local spell = self.activeSpell
+			local delta = util.deltaPos(self.world, target) --gets the difference between the characters position and the target position
+
 			local function animCompleteListener() --called when animation is complete
 				self.currentAttack:fire(self)
-				self.activeSpell:deactivate()
+				spell:deactivate()
 				self.currentAttack = nil
 			end
 
-			if (self.activeSpell) then
+			local angle = util.deltaPosToAngle( self.world, target ) --sets the angle of the character to the target
+			local dir = util.angleToDirection(angle)
+			self:setFacingDirection( dir ) --sets the direction of the character to the angle direction
+			
+			if (spell) then
 				if (not self.currentAttack) then
-					if (not self.activeSpell.onCooldown) then
-						self.activeSpell.origin = self.world --set origin to characters position
+					if (not spell.onCooldown) then
+						spell.origin = self.world --set origin to characters position
 						if (target) then
-							self.activeSpell.target = target
-							self.activeSpell.delta = { x = target.x - self.world.x, y = target.y - self.world.y }
+							if (spell.displayType == "projectile") then
+								local n = util.normalizeXY(delta)
+								spell.normal = n --sets the normal of the spell to the normalized delta
+								spell.target = util.factorPos(n, spell.maxDistance) --sets the target to the max distance of the spell
+							end
 						end
-						self:beginAttackAnim(self.activeSpell, animCompleteListener) --defined in puppet, shared with enemies
-						
+						self:beginAttackAnim(spell, animCompleteListener) --defined in puppet, shared with enemies
 					end
 				end
 			end

@@ -13,7 +13,7 @@
   "startParticleSize":16,
   "angleVariance":180,
   "particleLifespan":0.2,
-  "absolutePosition":true,
+  "absolutePosition":false,
   "textureFileName":"content/particles/fire.png",
   "name":"default_fireball",
   "finishParticleSizeVariance":0,
