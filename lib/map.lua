@@ -33,8 +33,6 @@
 
 	local mapImageFolder = "content/map/"
 
-	
-
 	local function worldPointToTileCoords(_x, _y) --takes x y in world coords and returns tile coords
 		--print("map width/height: "..map.worldWidth..", "..map.worldHeight)
 		local x, y = math.floor(_x / map.tileSize), math.floor( _y / map.tileSize)
@@ -110,6 +108,15 @@
 		return x, y
 	end
 
+	function map:getTileAtPoint(pos) --takes pos table with x, y and returns tile at that world pos
+		if (pos) then
+			local x, y = worldPointToTileCoords(pos.x, pos.y)
+			return self.tileStore.tileCols[x][y]
+		else
+			print("no point passed, can not get tile")
+		end
+	end
+
 	function map:getTilesBetweenWorldBounds(x1, y1, x2, y2) --takes bounds in world position and returns table of tiles
 		local cMin, cMax = {x = 0, y = 0}, {x = 0, y = 0} --bounds of the cam
 		cMin.x, cMin.y = worldPointToTileCoords(x1, y1)
@@ -147,8 +154,7 @@
 		return tileList, boundaryTiles
 	end
 
-	function map:createTexturesFromTileset(tileset)
-		
+	function map:createTexturesFromTileset(tileset)--preloads the tile textures
 		for k, tileData in pairs(self.params.tileset) do
 			print("creating tileset for texture: "..k)
 			local fName = mapImageFolder.."default_tileset/"..tileset[k].image
@@ -156,7 +162,13 @@
 			print(fName)
 			tileData.texture = graphics.newTexture( { type = "image", filename = fName, baseDir = system.ResourceDirectory } )
 		end
-
+	end
+	
+	function map:createSavestringLookup(defaultTileset) --takes a tileset and makes a lookup table from savestring to tile type
+		map.saveStringLookup = {}
+		for k, v in pairs(defaultTileset) do
+			map.saveStringLookup[v.savestring] = k
+		end
 	end
 
 	function map:createMapTiles(_tileData) --called by editor/map, creates all tile objects for maps, tileData = optional map data, tileSize = optional force tile size in pixels
@@ -182,24 +194,20 @@
 		local width, height, tileset = self.width, self.height, self.tileset --set local vars for readability
 		local halfTileSize = tileSize/2
 
-		self:createTexturesFromTileset(defaultTileset)
+		self:createSavestringLookup(defaultTileset) --takes a tileset and makes a lookup table from savestring to tile type
+		self:createTexturesFromTileset(defaultTileset) --preloads the tile textures
 
-		local function createTile(x, y, i) --new tile constructor
+		local function createTile(x, y, i, s, c) --new tile constructor
 			local tile = {}
 			tile.id, tile.x, tile.y = i, x, y --tile.x = tile column, tile.y = tile row
+			tile.col = c
 			--tile screen pos is exclusively accessed through its rect
 			tile.world = { x = x * tileSize, y = y * tileSize }
 			
-			function tile.setTypeFromTileSet(tileset)
-				for k, v in pairs(tileset) do
-					if tileData[i].s == v.savestring then
-						--print("setting type for tile id: "..i.." to "..k)
-						tile.type = k --sets the tile type string to the key name of the matching tileset entry
-					end
-				end
-			end
-			tile.setTypeFromTileSet(tileset)
-			tile.imageTexture = defaultTileset[tile.type].texture --imageFileLocation for this tile
+			local stringLookup = map.saveStringLookup
+			local type = stringLookup[s]
+			tile.type = type --sets the tile type string to the key name of the matching tileset entry
+			tile.imageTexture = defaultTileset[type].texture --imageFileLocation for this tile
 			--print("tile image file: "..tile.imageFile)
 
 			function tile:setWallSubType() --look at neighbouring tiles to set a subtype for this tile
@@ -273,7 +281,7 @@
 			end
 
 			function tile:createRect()
-				if (tile.type == "wall") then --if tile is a wall then we need to make a group for the subtiles
+				if (self.type == "wall") then --if tile is a wall then we need to make a group for the subtiles
 					self.rect = display.newGroup()
 					map.group:insert(self.rect)
 					self.rect.anchorChildren = true
@@ -302,7 +310,8 @@
 		local x, y = 1, 1
 		for i = 1, #tileData do --for each tile in the tileData taken from the map file
 			--print(x, y)
-			local tile = createTile(x, y, i)
+			local data = tileData[i]
+			local tile = createTile(x, y, i, data.s, data.c)
 			if y == 1 then self.tileStore.tileCols[x] = {} end --create the tileCols 
 			if x == 1 then self.tileStore.tileRows[y] = {} end --create the tileRows 
 			self.tileStore.tileCols[x][y] = tile --store the tile in the correct position in tileCols

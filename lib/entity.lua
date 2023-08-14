@@ -72,9 +72,12 @@
         print("creating entity")
 
         local entity = { isPuppet = false, isGameObject = false,
-            world = {x = _x or 0, y = _y or 0}, screen = {x = 0, y = 0},
-            group = nil, attack = nil, onFrameMethods = {} }
-
+            world = {x = 0, y = 0}, screen = {x = 0, y = 0},
+            group = nil, attack = nil, onFrameMethods = {}
+        }
+        if _x then entity.world.x = _x end
+        if _y then entity.world.y = _y end 
+        
         entity.group = display.newGroup() --create a new display group for this entity that will be used for all display objects
 
         if (self.sceneGroup == nil) then

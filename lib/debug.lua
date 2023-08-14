@@ -8,6 +8,7 @@
 
 	--common modules
 	local util = require("lib.global.utilities")
+	local gv = require("lib.global.variables")
 	local cam = require("lib.camera")
 
 	-- Define module
@@ -24,13 +25,13 @@
 
 	local function updateLines() --called from onFrame if debug enabled
 
-		lineTimer = lineTimer + util.frameDeltaTime --increase local timer
+		lineTimer = lineTimer + gv.frame.dt --increase local timer
 
 		for k, debugLine in pairs ( debug.lineStore ) do --for each line in store
 			--print(k, debugLine)
 
 			if ( debugLine.displayLine ) then --check if line has been drawn
-				debugLine.timer = debugLine.timer + util.frameDeltaTime --increase lines 
+				debugLine.timer = debugLine.timer + gv.frame.dt --increase lines 
 				if (cam ~= {}) then
 					debugLine.displayLine.x = debugLine.displayLine.x - cam.moveDelta.x
 					debugLine.displayLine.y = debugLine.displayLine.y - cam.moveDelta.y
@@ -217,13 +218,13 @@
 	function debug.hideUI() --called from toggleUI
 		print(debugGroup.numChildren.." debug group children remove")
 
-		for k, debugLine in pairs(debug.lineStore) do
+		for _, debugLine in pairs(debug.lineStore) do
 			display.remove(debugLine.displayLine)
 			debugLine.displayLine = nil
 			debug.lineStore[debugLine.id] = nil
 		end
 
-		for k, debugText in pairs(debug.debugTextStore) do
+		for _, debugText in pairs(debug.debugTextStore) do
 			display.remove(debugText.group)
 			debugText.group = nil
 			debug.debugTextStore[debugText.id] = nil

@@ -22,6 +22,7 @@
 	--local util = require("lib.global.utilities")
     local entity = require("lib.entity")
     local cam = require("lib.camera")
+    local map = require("lib.map")
     local json = require("json")
 
 	-- Define module
@@ -43,18 +44,22 @@
 		print("adding gameObject functions")
 
         function gameObject:move(dir) --called each frame from key_input by scene
+            
             if (self.currentAttack) then --puppets use this logic for movement
                 print("can't move while attacking")
                 return
             end
             self.isMoving = true
-            if ( self.moveDirection ~= dir ) then --if not already moving or moving in a different direction
-                self:setMoveDirection(dir)
+            if ( self.moveDirection ~= dir ) then --movement direction has changed
+                self:setMoveDirection(dir) --sets move direction and updates the facing direction
             end
-
-            self.world.x = self.world.x + (self.moveDirection.x * self.moveSpeed * gv.frame.dts)
-            self.world.y = self.world.y + (self.moveDirection.y * self.moveSpeed * gv.frame.dts)
-
+            local posDelta = { x = self.moveDirection.x * self.moveSpeed * gv.frame.dts, y = self.moveDirection.y * self.moveSpeed * gv.frame.dts }
+            local newPos = { x = self.world.x + posDelta.x, y = self.world.y + posDelta.y }
+            local newTileX = map:getTileAtPoint( { x = newPos.x, y = self.world.y  } )
+            local newTileY = map:getTileAtPoint( { x = self.world.x, y = newPos.y  } )
+            if newTileX.col == 1 then newPos.x = self.world.x end
+            if newTileY.col == 1 then newPos.y = self.world.y end
+            self.world.x, self.world.y = newPos.x, newPos.y
         end
 
         function gameObject:loadTextures() --called when created
@@ -67,6 +72,7 @@
             else
                 self.texture = graphics.newTexture({type="image", filename=self.path..self.name..".png", baseDir=system.ResourceDirectory}) --set initial texture
             end
+            
         end
 
         function gameObject:setMoveDirection(dir) --sets move direction and forces updating facing direction

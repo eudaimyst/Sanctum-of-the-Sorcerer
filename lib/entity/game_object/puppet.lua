@@ -143,12 +143,12 @@ function lib_puppet.puppetFactory(puppet)
 			if (self.currentAnim.loop == true) then    --if animation is looping
 				print("anim state looping")
 				self.currentFrame = 0
-				if (self.state == "attack") then                        --attack sub state has finished and looping anim
+				if (self.state == "attack") then --attack sub state has finished and looping anim
 					print(self.attackTimer .. " / " .. self.currentAttack.windupTime)
 					if (self.attackTimer >= self.currentAttack.windupTime) then --timer is greater than the spells cast time
 						self.attackState = self.attackState + 1
-						self.currentAnim = self.animations[self.state]
-						[self.attackStates[self.attackState]] --update the anim to the new state
+						local attackAnim = self.attackStates[self.attackState] --store the attack states locally for readability
+						self.currentAnim = self.animations[self.state][attackAnim] --update the anim to the new state
 					end
 				end
 			else
@@ -164,8 +164,8 @@ function lib_puppet.puppetFactory(puppet)
 						return --return out of function as we don't want to update the rect image
 					end
 					self.attackState = self.attackState + 1
-					self.currentAnim = self.animations[self.state]
-					[self.attackStates[self.attackState]] --update the anim to the new state
+					local attackAnim = self.attackStates[self.attackState] --store the attack states locally for readability
+					self.currentAnim = self.animations[self.state][attackAnim] --update the anim to the new state
 				end
 			end
 		end

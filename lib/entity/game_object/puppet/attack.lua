@@ -12,7 +12,7 @@
     local json = require("json")
     local entity = require("lib.entity")
     local lfs = require("lfs")
-    local cam = require("lib.camera")
+    local map = require("lib.map")
 
     local basePath = "content/spells"
 
@@ -105,6 +105,13 @@
                 attack.durationTimer = attack.durationTimer + gv.frame.dts
                 self.world.x = self.world.x + self.normal.x * self.speed * gv.frame.dts
                 self.world.y = self.world.y + self.normal.y * self.speed * gv.frame.dts
+                if (map:getTileAtPoint(self.world).col == 1) then
+                    attack.durationTimer = 0
+                    self:destroySelf()
+                    for i = 1, #self.emitters do
+                        self.emitters[i]:stop()
+                    end
+                end
                 if (attack.durationTimer > attack.duration) then
                     attack.durationTimer = 0
                     self:destroySelf() --calls entity destroy method
@@ -140,7 +147,7 @@
         end
 
         function attack:fire(puppet) --called from puppet when attack anim is complete
-            local origin = { x = self.origin.x - puppet.finishWindupAttackOffset.x, y = self.origin.y - puppet.finishWindupAttackOffset.y }
+            local origin = { x = self.origin.x - puppet.finishWindupAttackOffset.x + puppet.xOffset, y = self.origin.y - puppet.finishWindupAttackOffset.y + puppet.yOffset}
             local target = { x = self.target.x, y = self.target.y }
             print(origin, target)
             if (self.displayType == "projectile") then
