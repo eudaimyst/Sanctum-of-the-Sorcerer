@@ -178,6 +178,8 @@
 			self:setFinalMapColours()
 		elseif (self.frame == 9) then
 			self:setSpawnPoint()
+		elseif (self.frame == 10) then
+			self:setEnemyTiles()
 		else
 			if (self.completeListener) then
 				self.completeListener()
