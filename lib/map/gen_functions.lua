@@ -176,11 +176,29 @@
 			end
 		elseif (self.frame == 8) then
 			self:setFinalMapColours()
-		elseif (self.frame == 9) then
-			self:setSpawnPoint()
-		elseif (self.frame == 10) then
-			self:setEnemyTiles()
 		else
+			local directions = { "up", "down", "left", "right" }
+			for i = 1, #self.roomStore do
+				local room = self.roomStore[i]
+				local tileSize = mapgen.params.tileSize
+				local x1, y1 = room.bounds.x1 * tileSize + tileSize, room.bounds.y1 * tileSize + tileSize
+				local x2, y2 = room.bounds.x2 * tileSize - tileSize, room.bounds.y2 * tileSize - tileSize
+				local edges = {}
+				for j = 1, #directions do
+					local dir = directions[j]
+					if (room.neighbours[dir][1] == "map") then
+						edges[#edges + 1] = dir
+					end
+				end
+				if #edges > 0 then
+					for j = 1, #edges do
+						mapgen:createRoom(room.id, x1 , y1, x2, y2, edges[j]) --passes relevant room data to mapgen
+					end
+				else
+					mapgen:createRoom(room.id, x1, y1, x2, y2)
+				end
+			end
+				
 			if (self.completeListener) then
 				self.completeListener()
 			end
@@ -189,14 +207,6 @@
 		if (doNextFrame) then
 			self.frame = self.frame + 1 --iterate frame counters
 		end
-	end
-
-	function pointsExpand:setSpawnPoint()
-		local randroom = self.roomStore[math.random(1, #self.roomStore)]
-		local roomMidPoint = randroom:getMidPoint()
-		mapgen.spawnPoint = { x = roomMidPoint.x, y = roomMidPoint.y }
-		local tile = self.tileStore.tileColumns[roomMidPoint.x][roomMidPoint.y]
-		tile.rect:setFillColor(1, 1, 0)
 	end
 
 	function pointsExpand:setFinalMapColours()
