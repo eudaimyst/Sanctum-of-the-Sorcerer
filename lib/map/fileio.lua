@@ -9,25 +9,50 @@
 	-- Define module
 	local fileio = {}
 
-	function fileio.save(width, height, indexedTileStore, spawnPoint, level, _fileName)
-		print("-----------------map save begin -------------------")
-		local fileName = _fileName or "level"
-		local tileSet = level.tileset
-		local mapSaveData = { [1] = width, [2] = height, [3] = spawnPoint, [4] = level.name }
-
-		local filePath = system.pathForFile( fileName..".json", system.DocumentsDirectory )
-
-		for i = 1, #indexedTileStore do
+	local function stripTileData(_tileStore, tileSet)
+		local tileStore = {}
+		for i = 1, #_tileStore do
 			local tileSaveData = {}
-			local tile = indexedTileStore[i] --stores the data for each tile
+			local tile = _tileStore[i] --stores the data for each tile
 			for j = 1, #tileSet do
 				if tile.typeName == tileSet[j].name then
 					tileSaveData.s = tileSet[j].savestring
 					tileSaveData.c = tileSet[j].collision 
-					mapSaveData[#mapSaveData+1] = tileSaveData --adds the tile to the map save data
+					tileStore[#tileStore+1] = tileSaveData --adds the tile to the map save data
 				end
 			end
 		end
+		return tileStore
+	end
+
+	local function stripRoomData(_rooms, tileSize)
+		local rooms = {}
+		for i = 1, #_rooms do
+			local room = _rooms[i]
+			local roomData = {}
+			roomData.bounds = { min = { x = {room.worldBounds.min.x / tileSize}, y = {room.worldBounds.min.y / tileSize} },
+								max = { x = {room.worldBounds.max.x / tileSize}, y = {room.worldBounds.max.y / tileSize} } }
+			rooms[i] = roomData
+		end
+		return rooms
+	end
+	local numberParams = {"width", "height"}
+	--[[ params = width, height, tiles, saveTileSize, rooms, startRoom, endRoom, treasureRoom, startPoint, endPoint, level ]]
+	function fileio.save(params, _fileName)
+		print("-----------------map save begin -------------------")
+		local fileName = _fileName or "noFileNameSet_level"
+		--local tileSet = level.tileset
+		params.tileset = params.level.tileset
+		params.name = params.level.name
+		params.tiles = stripTileData(params.tiles, params.tileset)
+		params.rooms = stripRoomData(params.rooms, params.saveTileSize)
+		params.level = nil --we don't need to save all the level data so we destroy the reference
+		params.saveTileSize = nil
+		params.tileset = nil
+		local mapSaveData = params
+
+		local filePath = system.pathForFile( fileName..".json", system.DocumentsDirectory )
+
 
 		--print("mapSaveData:\n-----------------\n"..json.prettify(mapSaveData))
 

@@ -76,6 +76,15 @@
 		self.rooms[#self.rooms+1] = room
 	end
 
+	--[[ params = width, height, tiles, saveTileSize, rooms, startRoom, endRoom, treasureRoom, startPoint, endPoint, level ]]
+	function mapgen:getSaveParams()
+		local saveParams = {width = self.params.width, height = self.params.height,
+		tiles = self.tileStore.indexedTiles, saveTileSize = self.params.tileSize,
+		rooms = self.rooms, startRoom = self.startRoom.id, endRoom = self.endRoom.id, treasureRoom = self.treasureRoom.id,
+		startPoint = self.startPoint, endPoint = self.endPoint, level = self.params.level}
+		return saveParams
+	end
+
 	--Creates a start and end point for the map, returns them and the rooms
 
 	function mapgen:setStartEnd()

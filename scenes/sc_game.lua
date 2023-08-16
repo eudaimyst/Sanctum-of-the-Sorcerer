@@ -65,9 +65,10 @@
 		local function tilesComplete() --called when tiles have finished creating
 			local function genFuncComplete() --called when tile gen function has finished
 				print("gen function finished")
-				---same map to file
-				mapIO.save(mapgen.params.width, mapgen.params.height, mapgen.tileStore.indexedTiles,
-				mapgen.spawnPoint, mapgen.params.level, "game_level")
+				--
+				mapgen:generateEnemies()
+				---save map to file
+				mapIO.save(mapgen:getSaveParams(), "game_level")
 				--clear the generated map
 				mapgen:deleteMap()
 				--load the map

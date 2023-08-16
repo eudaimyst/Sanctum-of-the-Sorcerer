@@ -359,15 +359,16 @@
 			filePath = system.pathForFile( _fName..".json", system.DocumentsDirectory )
 		end
 
-		local width, height, spawnPoint, level, tileData = fileio.load(filePath)
+		local saveData = fileio.load(filePath)
+		--[[ saveData = width, height, tiles, saveTileSize, rooms, startRoom, endRoom, treasureRoom, startPoint, endPoint, level ]]
 
-		self.params.width, self.params.height = width, height --width and height in tiles
-		self.spawnPoint = {x = spawnPoint.x * self.params.tileSize, y = spawnPoint.y * self.params.tileSize}
+		self.params.width, self.params.height = saveData.width, saveData.height --width and height in tiles
+		self.spawnPoint = {x = saveData.startPoint.x / saveData.saveTileSize * self.params.tileSize, y = saveData.spawnPoint.y . saveData.saveTileSize * self.params.tileSize}
 		print("spawnPoint set to map: "..self.spawnPoint.x..", "..self.spawnPoint.y)
-		self.worldWidth, self.worldHeight = self.params.width * self.params.tileSize, self.params.height * self.params.tileSize --width and height in pixels
+		self.worldWidth, self.worldHeight = saveData.width * self.params.tileSize, saveData.height * self.params.tileSize --width and height in pixels
 		
-		self:createMapTiles(tileData) --call function to create tiles
-		self.tileData = tileData --store tileData to redraw map without reloading
+		self:createMapTiles(saveData.tiles) --call function to create tiles
+		self.tileData = saveData.tiles --store tileData to redraw map without reloading
 		print("-----load map complete-----")
 		return true
 	end

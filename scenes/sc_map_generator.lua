@@ -81,12 +81,8 @@
 
 		end
 
-		local function loadMap()
-		end
-
 		local function saveMap()
-			fileio.save(mapgen.params.width, mapgen.params.height, mapgen.tileStore.indexedTiles,
-			mapgen.spawnPoint, mapgen.params.level, "level+spawnPoint")
+			fileio.save( mapgen:getSaveParams(), "default_generated_level")
 		end
 
 		--[[
@@ -104,8 +100,8 @@
 			} },
 			[2] = { label = "Save / Load", collapsable = true, elements = {
 					[1] = { {param = "filename", label = "File Name:", eType = t.inputField, inputListener = updateFilename } },
-					[2] = { { label = "io", eType = t.toggleButtons, amount = 2,
-					texts = { "save", "load" }, clickListener = {saveMap, loadMap} } }
+					[2] = { { label = "io", eType = t.toggleButtons, amount = 1,
+					texts = { "save" }, clickListener = {saveMap} } }
 			} },
 			[3] = { label = "Map settings", collapsable = true, elements = {
 					[1] = { {param = "width", label = "Map width:", eType = t.inputField, inputListener = updateParam }, {param = "height", label = "Height:", eType = t.inputField, inputListener = updateParam } },
