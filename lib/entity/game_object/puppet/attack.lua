@@ -28,7 +28,7 @@
 	-- Define module
 	local lib_attack = { } 
 
-    function lib_attack:new(_params)
+    function lib_attack:new(_params, _puppet) --takes params for the new attack and the puppet that is casting it (puppet used for loading anims)
 
         local attack = {}
         for k, v in pairs(data) do
@@ -42,7 +42,7 @@
             end
         end
         
-        function attack:loadDisplay()
+        function attack:loadDisplay() --called from end of new() - loads display for spell, whether image or emitter
             print("---------------loading display for "..self.name)
             -- Get raw path to the app documents directory
             local path = system.pathForFile( "content/spells/"..self.name, system.ResourceDirectory )
@@ -76,15 +76,15 @@
             end
         end
 
-        function attack:activate()
+        function attack:activate() --TODO: called by ? for ?
             print("attack "..self.name.." set to active")
         end
 
-        function attack:deactivate()
+        function attack:deactivate() --TODO: called by ? for ?
             print("attack "..self.name.." set to inactive")
         end
 
-        function attack:createProjectile(origin, target)
+        function attack:createProjectile(origin, target) --called by attack:fire() for projectile attacks
             print("creating attack projectile")
             local projectile = entity:create(origin.x, origin.y)
             attack.projectile = projectile
@@ -155,9 +155,12 @@
             end
             print("---------------------attack "..self.name.." fired")
         end
+
+        print("loading animation data for attack "..attack.name)
+        _puppet:loadAnimData(attack.animData, attack.animation) --load anim data from params
+
         attack.displayData = attack:loadDisplay() --set display type table from string name for key
         attack.icon = basePath.."/"..attack.name.."/icon.png"
-
 
         return attack
     end

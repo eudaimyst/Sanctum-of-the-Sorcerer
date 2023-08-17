@@ -101,7 +101,7 @@
                     if (self.state == "attack") then
                         --print(self.facingDirection.image, self.state, self.attackStates[self.attackState], self.currentFrame)
                         --print(json.prettify(self.textures))
-                        texture = self.textures[self.facingDirection.image][self.state][self.attackStates[self.attackState]][self.currentFrame]
+                        texture = self.textures[self.facingDirection.image][self.currentAttack.animation][self.attackStates[self.attackState]][self.currentFrame]
                         --print(texture.filename)
                     else
                         --print(self.facingDirection.image, self.state, self.currentFrame)

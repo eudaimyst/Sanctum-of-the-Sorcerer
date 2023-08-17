@@ -55,11 +55,6 @@
         windupGlow = true,
         element = gc.elements.fire
     }
-    params.iceBolt = {
-        name = "iceBolt",
-        windupGlow = true,
-        element = gc.elements.ice
-    }
     params.iceStorm = {
         animation = "cast_raise",
         animData = castRaise,
@@ -68,26 +63,36 @@
         element = gc.elements.ice
     }
     params.earthBolt = {
+        animation = "cast_proj", --name of animation to play, images stored in puppets content folder
+        animData = castProj,
         name = "earthBolt",
         windupGlow = true,
         element = gc.elements.earth
     }
     params.lightningBolt = {
+        animation = "cast_proj", --name of animation to play, images stored in puppets content folder
+        animData = castProj,
         name = "lightningBolt",
         windupGlow = true,
         element = gc.elements.lightning
     }
     params.airBolt = {
+        animation = "cast_proj", --name of animation to play, images stored in puppets content folder
+        animData = castProj,
         name = "airBolt",
         windupGlow = true,
         element = gc.elements.air
     }
     params.arcaneBolt = {
+        animation = "cast_proj", --name of animation to play, images stored in puppets content folder
+        animData = castProj,
         name = "arcaneBolt",
         windupGlow = true,
         element = gc.elements.arcane
     }
     params.shadowBolt = {
+        animation = "cast_proj", --name of animation to play, images stored in puppets content folder
+        animData = castProj,
         name = "shadowBolt",
         windupGlow = true,
         element = gc.elements.shadow

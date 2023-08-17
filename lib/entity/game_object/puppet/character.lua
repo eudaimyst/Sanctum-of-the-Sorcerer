@@ -24,10 +24,11 @@
         
 		function char:addSpell(spell, slot) --adds spell with passed params to the slot
 			print("adding spell: "..spell.name)
+			self.animations[spell.animation] = spell.animData
 			if (slot) then
-				char.spells[slot] = attack:new(spell)
+				self.spells[slot] = attack:new(spell, self)
 			else
-				char.spells[#char.spells+1] = attack:new(spell)
+				self.spells[#char.spells+1] = attack:new(spell, self)
 			end
 		end
 

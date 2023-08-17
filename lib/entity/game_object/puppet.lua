@@ -89,7 +89,9 @@ function lib_puppet.puppetFactory(puppet)
 			self.name .. "/" .. self.state .. "/" .. self.facingDirection.image .. "/" .. self.currentFrame .. ".png"
 	end
 
-	function puppet:loadAnimData(animData, animName, tex) --takes the string of the direction, the animdata and the animName to load to puppets texture store
+	function puppet:loadAnimData(animData, animName) --takes the string of the direction, the animdata and the animName to load to puppets texture store
+		print("loading textures for "..animName)
+		local tex = self.textures
 		for _, dir in pairs(gc.move) do --for each direction
 			local s_dir = dir.image --local string representation of direction
 			--print("adding textures for direction: "..dir.image)
@@ -97,7 +99,7 @@ function lib_puppet.puppetFactory(puppet)
 				tex[s_dir] = {} --create a new table for the direction if it doesn't exist
 			end
 			tex[s_dir][animName] = {} --create a table for the animation name to told the frames 
-			--print("adding textures for animName: "..animName)
+			print("adding textures for animName: "..animName)
 			if (animData.frames) then --if no sub animations in the anim data
 				for i = 0, animData.frames - 1 do --zero indexed animation file names
 					--print("adding textures for frame: "..i)
@@ -109,10 +111,10 @@ function lib_puppet.puppetFactory(puppet)
 				end
 			else
 				for subAnimName, subAnimData in pairs(animData) do --for each sub animation (pre, main, post... etc)
-					--print("adding textures for subAnimName: "..subAnimName)
+					print("adding textures for subAnimName: "..subAnimName)
 					tex[s_dir][animName][subAnimName] = {}
 					for i = 0, subAnimData.frames - 1 do --zero indexed animation file names
-						--print("adding textures for frame: "..i)
+						print("adding textures for frame: "..i)
 						local texture = graphics.newTexture({
 							type = "image",
 							baseDir = system.ResourceDirectory,
@@ -127,13 +129,14 @@ function lib_puppet.puppetFactory(puppet)
 				end
 			end
 		end
+		self.textures = tex --re-force the reference, should ensure textures are loaded correctly
 	end
 
 	function puppet:loadTextures() --overrides gameObject function
 		print("loading puppet textures")
 		self.textures = {}
 		for animName, animData in pairs(self.animations) do --for each animation
-			self:loadAnimData( animData, animName, self.textures )
+			self:loadAnimData( animData, animName )
 		end
 		print("setting texture to ", self.facingDirection.image, self.state, self.currentFrame) --sets initial texture
 		print(json.prettify(self.textures))
@@ -153,7 +156,7 @@ function lib_puppet.puppetFactory(puppet)
 					if (self.attackTimer >= self.currentAttack.windupTime) then --timer is greater than the spells cast time
 						self.attackState = self.attackState + 1
 						local attackAnim = self.attackStates[self.attackState] --store the attack states locally for readability
-						self.currentAnim = self.animations[self.state][attackAnim] --update the anim to the new state
+						self.currentAnim = self.animations[self.currentAttack.animation][attackAnim] --update the anim to the new state
 					end
 				end
 			else
@@ -170,7 +173,7 @@ function lib_puppet.puppetFactory(puppet)
 					end
 					self.attackState = self.attackState + 1
 					local attackAnim = self.attackStates[self.attackState] --store the attack states locally for readability
-					self.currentAnim = self.animations[self.state][attackAnim] --update the anim to the new state
+					self.currentAnim = self.animations[self.currentAttack.animation][attackAnim] --update the anim to the new state
 				end
 			end
 		end
@@ -193,10 +196,11 @@ function lib_puppet.puppetFactory(puppet)
 
 	function puppet:firstAnimFrame()                                        --called by anim loop on first frame of new anim state
 		print("first anim frame of new anim state " .. self.state)
-		self.currentAnim = self.animations[self.state]                      --set current animation
-
+		self.currentAnim = self.animations[self.state]                      --set current animation, defaults to just the name of the state
 		if (self.state == "attack") then                                    --begin attack has been called
-			self.currentAnim = self.currentAnim[self.attackStates[self.attackState]] --override current anim
+			--print("setting currentAnim to: "..self.currentAttack.animation, self.attackStates[self.attackState])
+			--print(json.prettify(self.animations))
+			self.currentAnim = self.animations[self.currentAttack.animation][self.attackStates[self.attackState]] --override current anim
 		elseif (self.currentFrame >= self.currentAnim.frames) then
 			self.currentFrame = 0                                           --minus one as frames are zero indexed
 		end
