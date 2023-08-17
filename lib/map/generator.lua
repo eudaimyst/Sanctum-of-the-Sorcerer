@@ -147,8 +147,8 @@
 				local enemy = {}
 				enemy.spawnPoint = { x = math.random(bounds.min.x, bounds.max.x),
 									 y = math.random(bounds.min.y, bounds.max.y) }
-				display.newRect( self.group, enemy.spawnPoint.x, enemy.spawnPoint.y, enemySize, enemySize )
-				enemy:setFillColor( 1, 0, 0 )
+				local d = display.newRect( self.group, enemy.spawnPoint.x, enemy.spawnPoint.y, enemySize, enemySize )
+				d:setFillColor( 1, 0, 0 )
 				enemies[#enemies+1] = enemy
 			end
 		end
