@@ -363,7 +363,7 @@
 		--[[ saveData = width, height, tiles, saveTileSize, rooms, startRoom, endRoom, treasureRoom, startPoint, endPoint, level ]]
 
 		self.params.width, self.params.height = saveData.width, saveData.height --width and height in tiles
-		self.spawnPoint = {x = saveData.startPoint.x / saveData.saveTileSize * self.params.tileSize, y = saveData.spawnPoint.y . saveData.saveTileSize * self.params.tileSize}
+		self.spawnPoint = {x = saveData.startPoint.x / saveData.saveTileSize * self.params.tileSize, y = saveData.startPoint.y / saveData.saveTileSize * self.params.tileSize}
 		print("spawnPoint set to map: "..self.spawnPoint.x..", "..self.spawnPoint.y)
 		self.worldWidth, self.worldHeight = saveData.width * self.params.tileSize, saveData.height * self.params.tileSize --width and height in pixels
 		

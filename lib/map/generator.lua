@@ -144,9 +144,10 @@
 			
 			room.area = (bounds.max.x - bounds.min.x) * (bounds.max.y - bounds.min.y)
 			for j = 1, math.floor(room.area/1000 * room.difficulty * 2) do
-				local randPoint = {	x = math.random(bounds.min.x, bounds.max.x),
-									y = math.random(bounds.min.y, bounds.max.y) }
-				local enemy = display.newRect( self.group, randPoint.x, randPoint.y, enemySize, enemySize )
+				local enemy = {}
+				enemy.spawnPoint = { x = math.random(bounds.min.x, bounds.max.x),
+									 y = math.random(bounds.min.y, bounds.max.y) }
+				display.newRect( self.group, enemy.spawnPoint.x, enemy.spawnPoint.y, enemySize, enemySize )
 				enemy:setFillColor( 1, 0, 0 )
 				enemies[#enemies+1] = enemy
 			end

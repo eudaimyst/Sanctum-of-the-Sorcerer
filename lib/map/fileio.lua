@@ -47,7 +47,6 @@
 		params.tiles = stripTileData(params.tiles, params.tileset)
 		params.rooms = stripRoomData(params.rooms, params.saveTileSize)
 		params.level = nil --we don't need to save all the level data so we destroy the reference
-		params.saveTileSize = nil
 		params.tileset = nil
 		local mapSaveData = params
 
@@ -69,7 +68,7 @@
 	function fileio.load(filePath)
 		print("-----------------map load begin -------------------")
 		print("filepath: "..filePath)
-		local saveData
+		local saveData, pos, msg
 
 		local file = io.open( filePath, "r" ) --open file for reading
 		if file then
@@ -77,18 +76,17 @@
 
 	        local contents = file:read( "*a" ) --store contents in a local variable
 			io.close( file )
-	        saveData = json.decode( contents ) --decode json contents and store in a local table
+	        saveData, pos, msg = json.decode( contents, 1, nil ) --decode json contents and store in a local table
+			if not saveData then
+				print( "Decode failed at "..tostring(pos)..": "..tostring(msg) )
+			else
+				print(json.prettify(saveData))
+			end
 	        --print(json.prettify(saveData)) confirms file is loading by printing contents of data
 	    end
-	    local width, height, level = tonumber(saveData[1]), tonumber(saveData[2]), saveData[4]
-		local spawnPoint = { x = tonumber(saveData[3].x), y = tonumber(saveData[3].y) }
-		print("spawnpoint x, y = "..spawnPoint.x..", "..spawnPoint.y)
-	    local tileSaveData = {}
-	    for i = 1, #saveData-3 do
-	    	tileSaveData[i] = saveData[i+4]
-	    end
+		
 		print("-----------------map load complete -------------------")
-	    return width, height, spawnPoint, level, tileSaveData
+	    return saveData
 	end
 
 	return fileio
