@@ -89,39 +89,38 @@ function lib_puppet.puppetFactory(puppet)
 			self.name .. "/" .. self.state .. "/" .. self.facingDirection.image .. "/" .. self.currentFrame .. ".png"
 	end
 
-	function puppet:loadAnimData(animData, animName) --takes the string of the direction, the animdata and the animName to load to puppets texture store
+	function puppet:loadAnimData(animData, animName, tex) --takes the string of the direction, the animdata and the animName to load to puppets texture store
 		for _, dir in pairs(gc.move) do --for each direction
-			local s_dir = dir.image --loca string representation of direction
+			local s_dir = dir.image --local string representation of direction
 			--print("adding textures for direction: "..dir.image)
-			self.textures[s_dir] = {}
+			if not tex[s_dir] then
+				tex[s_dir] = {} --create a new table for the direction if it doesn't exist
+			end
+			tex[s_dir][animName] = {} --create a table for the animation name to told the frames 
 			--print("adding textures for animName: "..animName)
-			self.textures[s_dir][animName] = {}
 			if (animData.frames) then --if no sub animations in the anim data
 				for i = 0, animData.frames - 1 do --zero indexed animation file names
 					--print("adding textures for frame: "..i)
-					self.textures[s_dir][animName][i] = graphics.newTexture({
+					tex[s_dir][animName][i] = graphics.newTexture({
 						type = "image",
 						baseDir = system.ResourceDirectory,
-						filename = self.path .. self.name .. "/" .. animName .. "/" .. s_dir.image .. "/" .. i ..
-							".png"
+						filename = self.path..self.name.."/"..animName.."/"..s_dir.."/"..i..".png"
 					})
 				end
 			else
 				for subAnimName, subAnimData in pairs(animData) do --for each sub animation (pre, main, post... etc)
 					--print("adding textures for subAnimName: "..subAnimName)
-					self.textures[s_dir.image][animName][subAnimName] = {}
+					tex[s_dir][animName][subAnimName] = {}
 					for i = 0, subAnimData.frames - 1 do --zero indexed animation file names
 						--print("adding textures for frame: "..i)
 						local texture = graphics.newTexture({
 							type = "image",
 							baseDir = system.ResourceDirectory,
-							filename = self.path ..
-								self.name .. "/" .. animName .. "/" .. s_dir.image .. "/" .. subAnimName .. "_" ..
-								i .. ".png"
+							filename = self.path..self.name.."/"..animName.."/"..s_dir.."/"..subAnimName.."_"..i..".png"
 						})
 						if (texture) then
 							--print(texture.filename)
-							self.textures[s_dir.image][animName][subAnimName][i] = texture
+							tex[s_dir][animName][subAnimName][i] = texture
 							--print(dir.image, animName, subAnimName, i)
 						end
 					end
@@ -134,9 +133,10 @@ function lib_puppet.puppetFactory(puppet)
 		print("loading puppet textures")
 		self.textures = {}
 		for animName, animData in pairs(self.animations) do --for each animation
-			self:loadTexFromAnimData( animName, animData)
+			self:loadAnimData( animData, animName, self.textures )
 		end
 		print("setting texture to ", self.facingDirection.image, self.state, self.currentFrame) --sets initial texture
+		print(json.prettify(self.textures))
 		self.texture = self.textures[self.facingDirection.image][self.state][self.currentFrame]
 	end
 

@@ -80,7 +80,7 @@
 			if not saveData then
 				print( "Decode failed at "..tostring(pos)..": "..tostring(msg) )
 			else
-				print(json.prettify(saveData))
+				--print(json.prettify(saveData))
 			end
 	        --print(json.prettify(saveData)) confirms file is loading by printing contents of data
 	    end
