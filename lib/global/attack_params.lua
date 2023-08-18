@@ -16,7 +16,7 @@
         main = { frames = 3, rate = 8, loop = false },
         post = { frames = 2, rate = 10, loop = false },
     }
-    local displayTypes = {
+    local displayTypes = { --unused, instead use these examples to set displayParams
         beam = { [1] = {segments = 1, segmentOffset = 0} },
         projectile = { [1] = {speed = 1, rotates = false, endScale = 1} },
         aoe = { [1] = {imageCount = 1, radiates = false} }

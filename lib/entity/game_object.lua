@@ -97,7 +97,7 @@
             self.rect.x, self.rect.y = self.world.x + self.xOffset - cam.bounds.x1, self.world.y + self.yOffset - cam.bounds.y1
         end
 
-        function gameObject:updateRectImage() --called to update image of rect
+        function gameObject:updateRectImage() --called to update image of rect, override by puppets
             --print(json.prettify(self.textures))
             if (self.rect) then
                 local texture

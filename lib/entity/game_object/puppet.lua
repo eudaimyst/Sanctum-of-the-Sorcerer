@@ -19,49 +19,30 @@ local gc = require("lib.global.constants")
 local gv = require("lib.global.variables")
 local util = require("lib.global.utilities")
 local gameObject = require("lib.entity.game_object")
-local cam = require("lib.camera")
-local lfs = require("lfs")
-
--- Define module
-local lib_puppet = {}
-lib_puppet.store = {}
-lib_puppet.textureStore = {}
 
 local defaultAnimations = {
-	idle = { frames = 4, rate = .8, loop = true },
-	walk = { frames = 4, rate = 6, loop = true },
+	idle = { frames = 4, rate = .8 },
+	walk = { frames = 4, rate = 6 },
 	--sneak = { frames = 1, rate = 5, loop = true },
 	--sprint = { frames = 1, rate = 10, loop = true },
 }
 
 local defaultParams = {
 	isPuppet = true,
-	attackList = {},
-	animations = {},
-	currentAttack = nil,
+	attackList = {}, animations = defaultAnimations,
+	currentAttack = nil, --set when an attack is fired
+	currentFrame = 0, frameTimer = 0,  --animation system logic
+	attackWindup = false, windupTimer = 0,
+	attackChannel = false, channelTimer = 0,
 	isDead = false,
 	state = "idle",
-	previousState = "",
-	attackState = 1,
-	currentFrame = 0,
-	frameTimer = 0,
-	attackTimer = 0,
-	width = 64,
-	height = 128,
-	attackStates = { "pre", "windup", "main", "post" }
+	collisionSize = nil
 }
 
-function lib_puppet.setParams(puppet, _params)
-	print("setting puppet params")
-
-	if (not _params) then             --if no params passed use default anaimations
-		defaultParams.animations = util.deepcopy(defaultAnimations)
-	elseif (not _params.animations) then --params passed but no animations defined in params
-		defaultParams.animations = util.deepcopy(defaultAnimations)
-	end
-	puppet:setParams(defaultParams, _params) --adds puppet params
-	--print("PUPPET PARAMS:--------\n" .. json.prettify(puppet) .. "\n----------------------")
-end
+-- Define module
+local lib_puppet = {}
+lib_puppet.store = {}
+lib_puppet.textureStore = {}
 
 function lib_puppet:storePuppet(puppet)
 	puppet.puppetID = #self.store + 1 --creates the object id --NOTE: Different to entity id
@@ -75,120 +56,52 @@ end
 function lib_puppet.puppetFactory(puppet)
 	print("adding puppet functions")
 
-	---@diagnostic disable-next-line: duplicate-set-field (deliberately overriding updateFileName for puppet)
-	function puppet:updateFileName() --sets file name referred to by display object
-		print("updating puppets file name")
-		self.fName = self.path ..
-			self.name .. "/" .. self.state .. "/" .. self.facingDirection.image .. "/" .. self.currentFrame .. ".png"
+	function puppet:makeRect() --makes game objects rect if doesn't exist
+		print("making gameObject rect, isPuppet = " .. tostring(self.isPuppet))
+		if (self.rect) then
+			print("rect already created")
+			return
+		end
+		local texture = lib_puppet.textureStore[self.name][self.facingDirection.image][self.state][self.currentFrame]
+		self.rect = display.newImageRect(self.group, texture.filename, texture.baseDir, self.width, self.height)
+		self.rect.x, self.rect.y = self.world.x + self.xOffset, self.world.y + self.yOffset
+
 	end
 
 	function puppet:updateRectImage() --called to update image of rect
 		--print(json.prettify(self.textures))
 		if (self.rect) then
-			local texture
 			local s_dir = self.facingDirection.image
-			local dirTex = self.textures[s_dir]
-			local stateTex = dirTex[self.state]
-			if (self.state == "attack") then
-				print(self.facingDirection.image, self.state, self.currentAttack.animation, self.attackStates[self.attackState], self.currentFrame)
-				--print(json.prettify(self.textures))
-				if (self.currentAttack) then --TODO: find out why this is being cleared before state is being set
-					texture = dirTex[self.currentAttack.animation][self.attackStates[self.attackState]][self.currentFrame]
-				else
-					texture = stateTex[self.currentFrame]
-				end
-				--print(texture.filename)
-			else
-				print(s_dir, self.state, self.currentFrame)
-				texture = stateTex[self.currentFrame]
-			end
+			print(s_dir, self.state, self.currentFrame)
+			local texture = lib_puppet.textureStore[self.name][s_dir][self.state][self.currentFrame]
 			self.rect.fill = {
 				type = "image",
 				filename = texture.filename,     -- "filename" property required
 				baseDir = texture.baseDir       -- "baseDir" property required
 			}
-		--print("updated rect image")
 		else
 			print("rect doesn't exist")
 		end
 	end
 
-	local function loadTextureFrames(i, path, table)
-		if table then
-			local texture = graphics.newTexture({
-				type = "image",
-				baseDir = system.ResourceDirectory,
-				filename = path
-			})
-			if (texture) then
-				print (texture.filename, i, "created")
-				table[i] = texture
-			else
-				print("ERROR: no texture created")
-			end
-			return table[i]
-		else
-			print("ERROR: no table pased")
+	function puppet:nextAttackAnimFrame()
+		print(self.attackTimer .. " / " .. self.currentAttack.windupTime)
+		if (self.attackTimer >= self.currentAttack.windupTime) then --timer is greater than the spells cast time
+			self.currentAnim = self.animations[self.currentAttack.animation] --update the anim to the new state
 		end
-	end
 
-	function puppet:loadTexturesFromAnimData(animData, animName) --the animdata and the animName to load to puppets texture store
-		--!!!! lfs.attributes(filepath)[request_name] - TODO: check folder exists for directory
-		print("loading textures for "..animName)
-		local tex = self.textures
-		local path = self.path..self.name.."/"
-		local systemPath = system.pathForFile(path, system.ResourceDirectory)
-		print("checking for folder: "..systemPath..animName)
-		if lfs.attributes(systemPath..animName, "mode") == "directory" then -- TODO: check folder exists for directory
-			print("loading textures for "..animName)
-			for _, dir in pairs(gc.move) do --for each direction
-				local s_dir = dir.image --local string representation of direction
-				--print("adding textures for direction: "..dir.image)
-				if not tex[s_dir] then
-					tex[s_dir] = {} --create a new table for the direction if it doesn't exist
-				end
-				if not (tex[s_dir][animName]) then --check to see if animName already exists in puppets textures
-					tex[s_dir][animName] = {}
-					local animTextures = tex[s_dir][animName]
-					local animString = path..animName.."/"..s_dir.."/" --file location based off anim name
-					print("adding textures for",s_dir, animName)
-					if (animData.frames) then --if no sub animations in the anim data
-						for i = 0, animData.frames - 1 do --zero indexed animation file names
-							--print("adding textures for frame: "..i)
-							tex[s_dir][animName][i] = loadTextureFrames( i, animString..i..".png", animTextures)
-						end
-					else
-						for subAnimName, subAnimData in pairs(animData) do --for each sub animation (pre, main, post... etc)
-							print("adding textures for",s_dir, animName, subAnimName)
-							local subAnimString = animString..subAnimName.."_" --file location based off anim name and sub anim name
-
-							tex[s_dir][animName][subAnimName] = {}
-							local subAnimTextures = tex[s_dir][animName][subAnimName] --create a table for the sub animations to told the frames
-							for i = 0, subAnimData.frames - 1 do --zero indexed animation file names
-								print("adding textures for frame: "..i)
-								tex[s_dir][animName][subAnimName][i] = loadTextureFrames( i, subAnimString..i..".png", subAnimTextures )
-							end
-						end
-					end
-				else
-					print("textures already exist for animName, not loading")
-				end
-			end
-		else
-			print("could not find animation folder for "..animName)
+		print("attack state: " .. self.attackState .. " / " .. #self.attackStates)
+		if (self.attackState == #self.attackStates) then --post has finished
+			self.animCompleteListener()
+			self.animCompleteListener = nil
+			
+			self.currentAttack = nil      --set current attack to nil, picked up by setState on next loop
+			self.attackState = 1
+			return --return out of function as we don't want to update the rect image
 		end
-	end
-
-	function puppet:loadTextures() --overrides gameObject function
-		print("loading puppet textures")
-		if (lib_puppet.)
-		self.textures = {}
-		for animName, animData in pairs(self.animations) do --for each animation
-			self:loadTexturesFromAnimData( animData, animName )
-		end
-		print("setting texture to ", self.facingDirection.image, self.state, self.currentFrame) --sets initial texture
-		print(json.prettify(self.textures))
-		self.texture = self.textures[self.facingDirection.image][self.state][self.currentFrame]
+		self.attackState = self.attackState + 1
+		local attackAnim = self.attackStates[self.attackState] --store the attack states locally for readability
+		self.currentAnim = self.animations[self.currentAttack.animation][attackAnim] --update the anim to the new state
 	end
 
 	function puppet:nextAnimFrame() --called to set next frame of animation	
@@ -197,31 +110,9 @@ function lib_puppet.puppetFactory(puppet)
 		if self.currentFrame == self.currentAnim.frames then --reset current frame once reached anim's frame count
 			self.currentFrame = 0
 			print("looping: " .. tostring(self.currentAnim.loop))
-			if (self.currentAnim.loop == true) then    --if animation is looping
-				print("anim state looping")
-				if (self.state == "attack") then --attack sub state has finished and looping anim
-					print(self.attackTimer .. " / " .. self.currentAttack.windupTime)
-					if (self.attackTimer >= self.currentAttack.windupTime) then --timer is greater than the spells cast time
-						self.attackState = self.attackState + 1
-						local attackAnim = self.attackStates[self.attackState] --store the attack states locally for readability
-						self.currentAnim = self.animations[self.currentAttack.animation][attackAnim] --update the anim to the new state
-					end
-				end
-			else
-				if (self.state == "attack") then --attack sub state has finished and not looping anim
-					print("attack state: " .. self.attackState .. " / " .. #self.attackStates)
-					if (self.attackState == #self.attackStates) then --post has finished
-						self.animCompleteListener()
-						self.animCompleteListener = nil
-						
-						self.currentAttack = nil      --set current attack to nil, picked up by setState on next loop
-						self.attackState = 1
-						return --return out of function as we don't want to update the rect image
-					end
-					self.attackState = self.attackState + 1
-					local attackAnim = self.attackStates[self.attackState] --store the attack states locally for readability
-					self.currentAnim = self.animations[self.currentAttack.animation][attackAnim] --update the anim to the new state
-				end
+
+			if (self.state == "attack") then --attack sub state has finished and looping anim
+				self:nextAttackAnimFrame()
 			end
 		end
 
@@ -232,19 +123,16 @@ function lib_puppet.puppetFactory(puppet)
 
 	function puppet:updateState() --called by anim loop at top of each loop --controls state of puppet whether moving or attacking
 		if (self.currentAttack) then --begin attack has been called
-			--print("attacking: "..self.currentAttack.name)
 			self.state = "attack"
 		elseif (self.isMoving) then --set the state to walk if moving (set in game object)
 			self.state = "walk"
 		else
 			self.state = "idle"
 		end
-		--print("state updated to: "..self.state)
 	end
 
 	function puppet:firstAnimFrame()                                        --called by anim loop on first frame of new anim state
 		print("first anim frame of new anim state " .. self.state)
-		self.currentAnim = self.animations[self.state]                      --set current animation, defaults to just the name of the state
 		if (self.state == "attack") then                                    --begin attack has been called
 			--print("setting currentAnim to: "..self.currentAttack.animation, self.attackStates[self.attackState])
 			--print(json.prettify(self.animations))
@@ -264,11 +152,7 @@ function lib_puppet.puppetFactory(puppet)
 
 	function puppet:animUpdateLoop() --called on each game render frame
 		self:updateState()        --update character state
-		--if the animation state has changed
-		if (self.state ~= self.previousState) then
-			print("char state changed to " .. self.state .. " from " .. self.previousState)
-			self:firstAnimFrame()
-		end
+		self.currentAnim = self.animations[self.state]                      --set current animation, defaults to just the name of the state
 		--increase attack timer
 		if (self.currentAttack) then                  --begin attack has been called
 			self.attackTimer = self.attackTimer + gv.frame.dts --add frame delta to timer
@@ -282,7 +166,6 @@ function lib_puppet.puppetFactory(puppet)
 			self:nextAnimFrame()
 			self.frameTimer = 0
 		end
-		self.previousState = self.state --used for ch657ecking when animation changes
 	end
 
 	function puppet:makeWindupGlow(a, wt) -- a = attack anims to get pre/main/post time, wt = windup time
@@ -371,6 +254,7 @@ function lib_puppet.puppetFactory(puppet)
 	end
 
 	function puppet:puppetOnFrame()
+		self:updateState()
 		self:animUpdateLoop() --changes puppets current frame based on animation timer
 	end
 	puppet:addOnFrameMethod(puppet.puppetOnFrame)
@@ -384,10 +268,8 @@ function lib_puppet:create(_params) --creates the game object
 	puppet.directional = true --all puppets are directional
 	puppet.path = "content/game_objects/puppets/" --path for puppets
 
-	lib_puppet.setParams(puppet, _params) --sets puppet params
+	puppet:setParams(defaultParams, _params) --adds puppet params
 	lib_puppet.puppetFactory(puppet) --adds functions to puppet
-
-	puppet:loadTextures()
 
 	lib_puppet:storePuppet(puppet)
 	print("puppet created with puppet id: " .. puppet.puppetID)

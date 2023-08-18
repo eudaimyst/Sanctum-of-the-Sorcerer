@@ -15,10 +15,16 @@
 	-- Define module
 	local lib_character = {}
 
+	lib_character.animations = { --used for loading textures
+		idle = { frames = 4, rate = .8 },
+		walk = { frames = 4, rate = 6 },
+	}
+
 	function lib_character:create(_params, _hud)
 		hud = _hud
 		print("creating character entity")
-		
+		_params.animations = self.animations --adds the modules defined in the character.lua file to the params to be loaded by puppet module
+
 		local char = puppet:create(_params)
 		--print("CHARACTER PARAMS:--------\n" .. json.prettify(char) .. "\n----------------------")
         
@@ -90,8 +96,10 @@
 		char:makeRect() --creates rect on creation
 		char.spells = {}
 		--char.spells = { attack:new(spellParams.fireball), attack:new(spellParams.firewall) } --set initial spells for testing, TODO: use addSpell from spells in char params
-		for _, v in pairs(spellParams) do
-			char:addSpell(v)
+		for _, v in pairs(spellParams) do --temp function to add all spells from spell params
+			if v.name then
+				char:addSpell(v)
+			end
 		end
 		--char:addSpell(spellParams.fireBolt)
 		--char.setActiveSpell(1)

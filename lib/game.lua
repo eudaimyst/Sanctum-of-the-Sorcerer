@@ -13,6 +13,7 @@
 	local entity = require("lib.entity")
 	local enemies = require("lib.global.enemy_params")
 	local lfs = require("lfs")
+	local spellParams = require("lib.global.spell_params")
 
 
 	-- Define module
@@ -123,11 +124,26 @@
 	end
 
 	function game.preloadTextures() --called from scene after map loaded but before beginPlay
+		-------- Enemies --------
+		print("loading enemy textures")
 		local puppetTextureStore = {}
 		local enemyContent = "content/game_objects/puppets/enemies/"
 		for _, enemy in pairs (enemies) do
-			puppetTextureStore[enemy.name] = loadTexturesFromAnimData( enemyContent..enemy.name, enemy.animData)
+			--puppetTextureStore[enemy.name] = loadTexturesFromAnimData( enemyContent..enemy.name, enemy.animData)
 		end
+		-------- Character --------
+		print("loading character textures")
+		local charContent = "content/game_objects/puppets/character/"
+		local charAnims = {}
+		for animName, animData in pairs(character.animations) do --add the character animations to the list of animations to load
+			charAnims[animName] = animData
+		end
+		for animName, animData in pairs(spellParams.animations) do --add the spell animations to the list of animations to load
+			charAnims[animName] = animData
+		end
+		puppetTextureStore["character"] = loadTexturesFromAnimData( charContent, charAnims)
+		
+		--set the textures store for the puppet module
 		puppet.textureStore = puppetTextureStore
 
 	end
