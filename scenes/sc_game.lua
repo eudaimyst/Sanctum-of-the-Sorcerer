@@ -102,6 +102,7 @@
 		entity:init(sceneGroup) --passes group to entity which gets stored for all created entities
 
 		generateGameMap()
+		game.preloadTextures()
 	end
 
 	local function onFrame()

@@ -18,6 +18,9 @@
 		left = {x = -1,y = 0, angle = 180, image = "left"},
 		upLeft = {x = -.666,y = -.666, angle = 225, image = "up_left"},
 	}
+	M.dirFileStrings = { --for fast iteration through direction strings when loading textures
+		"up", "up_right", "right", "down_right", "down", "down_left", "left", "up_left"
+	}
 
 	M.charHandsWindup = { --used to determine hands position for character when casting spells, access using movedir image string as key
 		down = { x = 73, y = 72 },

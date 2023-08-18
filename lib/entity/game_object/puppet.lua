@@ -25,23 +25,13 @@ local lfs = require("lfs")
 -- Define module
 local lib_puppet = {}
 lib_puppet.store = {}
+lib_puppet.textureStore = {}
 
 local defaultAnimations = {
 	idle = { frames = 4, rate = .8, loop = true },
 	walk = { frames = 4, rate = 6, loop = true },
-	sneak = { frames = 1, rate = 5, loop = true },
-	sprint = { frames = 1, rate = 10, loop = true },
-	death = {
-		pre = { frames = 1, rate = 10, loop = false, duration = .5 },
-		main = { frames = 1, rate = 3, loop = false, duration = .5 },
-		post = { frames = 1, rate = 10, loop = false, duration = .5 },
-	},
-	attack = {
-		pre = { frames = 3, rate = 20, loop = false },
-		windup = { frames = 4, rate = 12, loop = true },
-		main = { frames = 3, rate = 8, loop = false },
-		post = { frames = 2, rate = 10, loop = false },
-	}
+	--sneak = { frames = 1, rate = 5, loop = true },
+	--sprint = { frames = 1, rate = 10, loop = true },
 }
 
 local defaultParams = {
@@ -73,9 +63,13 @@ function lib_puppet.setParams(puppet, _params)
 	--print("PUPPET PARAMS:--------\n" .. json.prettify(puppet) .. "\n----------------------")
 end
 
-function lib_puppet:storeObject(puppet)
+function lib_puppet:storePuppet(puppet)
 	puppet.puppetID = #self.store + 1 --creates the object id --NOTE: Different to entity id
 	self.store[puppet.puppetID] = puppet --stores the object in this modules store of object
+end
+
+function lib_puppet:preloadAnimTextures()
+
 end
 
 function lib_puppet.puppetFactory(puppet)
@@ -86,6 +80,37 @@ function lib_puppet.puppetFactory(puppet)
 		print("updating puppets file name")
 		self.fName = self.path ..
 			self.name .. "/" .. self.state .. "/" .. self.facingDirection.image .. "/" .. self.currentFrame .. ".png"
+	end
+
+	function puppet:updateRectImage() --called to update image of rect
+		--print(json.prettify(self.textures))
+		if (self.rect) then
+			local texture
+			local s_dir = self.facingDirection.image
+			local dirTex = self.textures[s_dir]
+			local stateTex = dirTex[self.state]
+			if (self.state == "attack") then
+				print(self.facingDirection.image, self.state, self.currentAttack.animation, self.attackStates[self.attackState], self.currentFrame)
+				--print(json.prettify(self.textures))
+				if (self.currentAttack) then --TODO: find out why this is being cleared before state is being set
+					texture = dirTex[self.currentAttack.animation][self.attackStates[self.attackState]][self.currentFrame]
+				else
+					texture = stateTex[self.currentFrame]
+				end
+				--print(texture.filename)
+			else
+				print(s_dir, self.state, self.currentFrame)
+				texture = stateTex[self.currentFrame]
+			end
+			self.rect.fill = {
+				type = "image",
+				filename = texture.filename,     -- "filename" property required
+				baseDir = texture.baseDir       -- "baseDir" property required
+			}
+		--print("updated rect image")
+		else
+			print("rect doesn't exist")
+		end
 	end
 
 	local function loadTextureFrames(i, path, table)
@@ -107,7 +132,7 @@ function lib_puppet.puppetFactory(puppet)
 		end
 	end
 
-	function puppet:loadTexturesFromAnimData(animData, animName) --takes the string of the direction, the animdata and the animName to load to puppets texture store
+	function puppet:loadTexturesFromAnimData(animData, animName) --the animdata and the animName to load to puppets texture store
 		--!!!! lfs.attributes(filepath)[request_name] - TODO: check folder exists for directory
 		print("loading textures for "..animName)
 		local tex = self.textures
@@ -156,6 +181,7 @@ function lib_puppet.puppetFactory(puppet)
 
 	function puppet:loadTextures() --overrides gameObject function
 		print("loading puppet textures")
+		if (lib_puppet.)
 		self.textures = {}
 		for animName, animData in pairs(self.animations) do --for each animation
 			self:loadTexturesFromAnimData( animData, animName )
@@ -355,15 +381,15 @@ function lib_puppet:create(_params) --creates the game object
 
 	local puppet = gameObject:create(_params)  --creates game object for puppet
 
-	puppet.directional = true                  --all puppets are directional
+	puppet.directional = true --all puppets are directional
 	puppet.path = "content/game_objects/puppets/" --path for puppets
 
-	lib_puppet.setParams(puppet, _params)      --sets puppet params
-	lib_puppet.puppetFactory(puppet)           --adds functions to puppet
+	lib_puppet.setParams(puppet, _params) --sets puppet params
+	lib_puppet.puppetFactory(puppet) --adds functions to puppet
 
 	puppet:loadTextures()
 
-	lib_puppet:storeObject(puppet)
+	lib_puppet:storePuppet(puppet)
 	print("puppet created with puppet id: " .. puppet.puppetID)
 	return puppet
 end

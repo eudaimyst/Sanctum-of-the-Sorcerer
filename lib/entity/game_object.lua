@@ -103,22 +103,7 @@
                 local texture
                 local s_dir = self.facingDirection.image
                 local dirTex = self.textures[s_dir]
-                if (self.isPuppet) then
-                    local stateTex = dirTex[self.state]
-                    if (self.state == "attack") then
-                        print(self.facingDirection.image, self.state, self.currentAttack.animation, self.attackStates[self.attackState], self.currentFrame)
-                        --print(json.prettify(self.textures))
-                        if (self.currentAttack) then --TODO: find out why this is being cleared before state is being set
-                            texture = dirTex[self.currentAttack.animation][self.attackStates[self.attackState]][self.currentFrame]
-                        else
-                            texture = stateTex[self.currentFrame]
-                        end
-                        --print(texture.filename)
-                    else
-                        print(s_dir, self.state, self.currentFrame)
-                        texture = stateTex[self.currentFrame]
-                    end   
-                elseif (self.directional) then
+                if (self.directional) then
                     --print(self.facingDirection.image)
                     texture = dirTex
                     else
