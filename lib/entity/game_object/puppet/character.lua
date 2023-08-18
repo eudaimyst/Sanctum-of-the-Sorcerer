@@ -77,9 +77,16 @@
 			end
 		end
 
+		function char:charOnFrame()
+
+			self:updateRectPos() --updates game char position on screen, game object function
+	
+		end
+		char:addOnFrameMethod(char.charOnFrame)
+
 
 		--char:updateFileName()
-		char:loadTextures()
+		--char:loadTextures() (called when puppet is created)
 		char:makeRect() --creates rect on creation
 		char.spells = {}
 		--char.spells = { attack:new(spellParams.fireball), attack:new(spellParams.firewall) } --set initial spells for testing, TODO: use addSpell from spells in char params

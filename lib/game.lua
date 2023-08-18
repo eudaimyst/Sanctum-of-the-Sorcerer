@@ -47,9 +47,6 @@
 				onFrameMethod(e) --passes entity to onFrame function
 			end
 		end
-
-		self.char:updateRectPos() --updates game char position on screen, game object function
-		game.char:animUpdateLoop() --changes chars current frame based on animation timer
 	
 	end
 

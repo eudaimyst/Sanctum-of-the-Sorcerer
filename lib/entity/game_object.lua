@@ -24,6 +24,7 @@
     local cam = require("lib.camera")
     local map = require("lib.map")
     local json = require("json")
+    local lfs = require("lfs")
 
 	-- Define module
 	local lib_gameObject = {}
@@ -65,6 +66,7 @@
         function gameObject:loadTextures() --called when created
             if (self.directional) then
                 self.textures = {}
+                
                 for dir, _ in pairs(gc.move) do
                     self.textures[dir] = graphics.newTexture({type="image", filename=self.path..self.name.."/"..dir..".png", baseDir=system.ResourceDirectory})
                 end
@@ -85,32 +87,41 @@
             self.texture = self.textures[dir]
             if (self.isPuppet) then
                 self:animDirChanged()
+            else --let the puppet handle its own rect updates based on animation
+                print("updating rect from set facing direction") --debug
+                self:updateRectImage()
             end
-            self:updateRectImage()
         end
 
         function gameObject:updateRectPos() --needs to be called after cam bounds has been updated on frame or jitters
             self.rect.x, self.rect.y = self.world.x + self.xOffset - cam.bounds.x1, self.world.y + self.yOffset - cam.bounds.y1
         end
 
-        function gameObject:updateRectImage() --called to update image of rect -frame = optional frame number, key of textures table
+        function gameObject:updateRectImage() --called to update image of rect
             --print(json.prettify(self.textures))
             if (self.rect) then
                 local texture
+                local s_dir = self.facingDirection.image
+                local dirTex = self.textures[s_dir]
                 if (self.isPuppet) then
+                    local stateTex = dirTex[self.state]
                     if (self.state == "attack") then
-                        --print(self.facingDirection.image, self.state, self.attackStates[self.attackState], self.currentFrame)
+                        print(self.facingDirection.image, self.state, self.currentAttack.animation, self.attackStates[self.attackState], self.currentFrame)
                         --print(json.prettify(self.textures))
-                        texture = self.textures[self.facingDirection.image][self.currentAttack.animation][self.attackStates[self.attackState]][self.currentFrame]
+                        if (self.currentAttack) then --TODO: find out why this is being cleared before state is being set
+                            texture = dirTex[self.currentAttack.animation][self.attackStates[self.attackState]][self.currentFrame]
+                        else
+                            texture = stateTex[self.currentFrame]
+                        end
                         --print(texture.filename)
                     else
-                        --print(self.facingDirection.image, self.state, self.currentFrame)
-                        texture = self.textures[self.facingDirection.image][self.state][self.currentFrame]
+                        print(s_dir, self.state, self.currentFrame)
+                        texture = stateTex[self.currentFrame]
                     end   
                 elseif (self.directional) then
                     --print(self.facingDirection.image)
-                    texture = self.textures[self.facingDirection.image]
-                else
+                    texture = dirTex
+                    else
                     texture = self.texture
                 end
                 self.rect.fill = {
@@ -132,6 +143,7 @@
             end
             self.rect = display.newImageRect(self.group, self.texture.filename, self.texture.baseDir, self.width, self.height)
             self.rect.x, self.rect.y = self.world.x + self.xOffset, self.world.y + self.yOffset
+
 		end
 
 		function gameObject:destroyRect() --destroys rect if exists

@@ -20,6 +20,7 @@ local gv = require("lib.global.variables")
 local util = require("lib.global.utilities")
 local gameObject = require("lib.entity.game_object")
 local cam = require("lib.camera")
+local lfs = require("lfs")
 
 -- Define module
 local lib_puppet = {}
@@ -42,8 +43,6 @@ local defaultAnimations = {
 		post = { frames = 2, rate = 10, loop = false },
 	}
 }
-
-
 
 local defaultParams = {
 	isPuppet = true,
@@ -89,54 +88,77 @@ function lib_puppet.puppetFactory(puppet)
 			self.name .. "/" .. self.state .. "/" .. self.facingDirection.image .. "/" .. self.currentFrame .. ".png"
 	end
 
-	function puppet:loadAnimData(animData, animName) --takes the string of the direction, the animdata and the animName to load to puppets texture store
+	local function loadTextureFrames(i, path, table)
+		if table then
+			local texture = graphics.newTexture({
+				type = "image",
+				baseDir = system.ResourceDirectory,
+				filename = path
+			})
+			if (texture) then
+				print (texture.filename, i, "created")
+				table[i] = texture
+			else
+				print("ERROR: no texture created")
+			end
+			return table[i]
+		else
+			print("ERROR: no table pased")
+		end
+	end
+
+	function puppet:loadTexturesFromAnimData(animData, animName) --takes the string of the direction, the animdata and the animName to load to puppets texture store
+		--!!!! lfs.attributes(filepath)[request_name] - TODO: check folder exists for directory
 		print("loading textures for "..animName)
 		local tex = self.textures
-		for _, dir in pairs(gc.move) do --for each direction
-			local s_dir = dir.image --local string representation of direction
-			--print("adding textures for direction: "..dir.image)
-			if not tex[s_dir] then
-				tex[s_dir] = {} --create a new table for the direction if it doesn't exist
-			end
-			tex[s_dir][animName] = {} --create a table for the animation name to told the frames 
-			print("adding textures for animName: "..animName)
-			if (animData.frames) then --if no sub animations in the anim data
-				for i = 0, animData.frames - 1 do --zero indexed animation file names
-					--print("adding textures for frame: "..i)
-					tex[s_dir][animName][i] = graphics.newTexture({
-						type = "image",
-						baseDir = system.ResourceDirectory,
-						filename = self.path..self.name.."/"..animName.."/"..s_dir.."/"..i..".png"
-					})
+		local path = self.path..self.name.."/"
+		local systemPath = system.pathForFile(path, system.ResourceDirectory)
+		print("checking for folder: "..systemPath..animName)
+		if lfs.attributes(systemPath..animName, "mode") == "directory" then -- TODO: check folder exists for directory
+			print("loading textures for "..animName)
+			for _, dir in pairs(gc.move) do --for each direction
+				local s_dir = dir.image --local string representation of direction
+				--print("adding textures for direction: "..dir.image)
+				if not tex[s_dir] then
+					tex[s_dir] = {} --create a new table for the direction if it doesn't exist
 				end
-			else
-				for subAnimName, subAnimData in pairs(animData) do --for each sub animation (pre, main, post... etc)
-					print("adding textures for subAnimName: "..subAnimName)
-					tex[s_dir][animName][subAnimName] = {}
-					for i = 0, subAnimData.frames - 1 do --zero indexed animation file names
-						print("adding textures for frame: "..i)
-						local texture = graphics.newTexture({
-							type = "image",
-							baseDir = system.ResourceDirectory,
-							filename = self.path..self.name.."/"..animName.."/"..s_dir.."/"..subAnimName.."_"..i..".png"
-						})
-						if (texture) then
-							--print(texture.filename)
-							tex[s_dir][animName][subAnimName][i] = texture
-							--print(dir.image, animName, subAnimName, i)
+				if not (tex[s_dir][animName]) then --check to see if animName already exists in puppets textures
+					tex[s_dir][animName] = {}
+					local animTextures = tex[s_dir][animName]
+					local animString = path..animName.."/"..s_dir.."/" --file location based off anim name
+					print("adding textures for",s_dir, animName)
+					if (animData.frames) then --if no sub animations in the anim data
+						for i = 0, animData.frames - 1 do --zero indexed animation file names
+							--print("adding textures for frame: "..i)
+							tex[s_dir][animName][i] = loadTextureFrames( i, animString..i..".png", animTextures)
+						end
+					else
+						for subAnimName, subAnimData in pairs(animData) do --for each sub animation (pre, main, post... etc)
+							print("adding textures for",s_dir, animName, subAnimName)
+							local subAnimString = animString..subAnimName.."_" --file location based off anim name and sub anim name
+
+							tex[s_dir][animName][subAnimName] = {}
+							local subAnimTextures = tex[s_dir][animName][subAnimName] --create a table for the sub animations to told the frames
+							for i = 0, subAnimData.frames - 1 do --zero indexed animation file names
+								print("adding textures for frame: "..i)
+								tex[s_dir][animName][subAnimName][i] = loadTextureFrames( i, subAnimString..i..".png", subAnimTextures )
+							end
 						end
 					end
+				else
+					print("textures already exist for animName, not loading")
 				end
 			end
+		else
+			print("could not find animation folder for "..animName)
 		end
-		self.textures = tex --re-force the reference, should ensure textures are loaded correctly
 	end
 
 	function puppet:loadTextures() --overrides gameObject function
 		print("loading puppet textures")
 		self.textures = {}
 		for animName, animData in pairs(self.animations) do --for each animation
-			self:loadAnimData( animData, animName )
+			self:loadTexturesFromAnimData( animData, animName )
 		end
 		print("setting texture to ", self.facingDirection.image, self.state, self.currentFrame) --sets initial texture
 		print(json.prettify(self.textures))
@@ -147,10 +169,10 @@ function lib_puppet.puppetFactory(puppet)
 		print("self.currentFrame: " .. self.currentFrame .. " / " .. self.currentAnim.frames)
 
 		if self.currentFrame == self.currentAnim.frames then --reset current frame once reached anim's frame count
+			self.currentFrame = 0
 			print("looping: " .. tostring(self.currentAnim.loop))
 			if (self.currentAnim.loop == true) then    --if animation is looping
 				print("anim state looping")
-				self.currentFrame = 0
 				if (self.state == "attack") then --attack sub state has finished and looping anim
 					print(self.attackTimer .. " / " .. self.currentAttack.windupTime)
 					if (self.attackTimer >= self.currentAttack.windupTime) then --timer is greater than the spells cast time
@@ -162,7 +184,6 @@ function lib_puppet.puppetFactory(puppet)
 			else
 				if (self.state == "attack") then --attack sub state has finished and not looping anim
 					print("attack state: " .. self.attackState .. " / " .. #self.attackStates)
-					self.currentFrame = 0
 					if (self.attackState == #self.attackStates) then --post has finished
 						self.animCompleteListener()
 						self.animCompleteListener = nil
@@ -178,6 +199,7 @@ function lib_puppet.puppetFactory(puppet)
 			end
 		end
 
+		print("updating rect from next image frame") --debug
 		self:updateRectImage()
 		self.currentFrame = self.currentFrame + 1
 	end
@@ -204,6 +226,7 @@ function lib_puppet.puppetFactory(puppet)
 		elseif (self.currentFrame >= self.currentAnim.frames) then
 			self.currentFrame = 0                                           --minus one as frames are zero indexed
 		end
+		print("updating rect from first image frame") --debug
 		self:updateRectImage()
 	end
 
@@ -233,7 +256,7 @@ function lib_puppet.puppetFactory(puppet)
 			self:nextAnimFrame()
 			self.frameTimer = 0
 		end
-		self.previousState = self.state --used for checking when animation changes
+		self.previousState = self.state --used for ch657ecking when animation changes
 	end
 
 	function puppet:makeWindupGlow(a, wt) -- a = attack anims to get pre/main/post time, wt = windup time
@@ -320,6 +343,11 @@ function lib_puppet.puppetFactory(puppet)
 		self.attackTimer = 0
 		self.attackState = 1
 	end
+
+	function puppet:puppetOnFrame()
+		self:animUpdateLoop() --changes puppets current frame based on animation timer
+	end
+	puppet:addOnFrameMethod(puppet.puppetOnFrame)
 end
 
 function lib_puppet:create(_params) --creates the game object

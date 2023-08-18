@@ -157,7 +157,7 @@
         end
 
         print("loading animation data for attack "..attack.name)
-        _puppet:loadAnimData(attack.animData, attack.animation) --load anim data from params
+        _puppet:loadTexturesFromAnimData(attack.animData, attack.animation) --load anim data from params
 
         attack.displayData = attack:loadDisplay() --set display type table from string name for key
         attack.icon = basePath.."/"..attack.name.."/icon.png"
