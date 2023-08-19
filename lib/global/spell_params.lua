@@ -47,9 +47,10 @@
             v.y = math.round(v.y * s.y)
             --print("scaled\n"..k..":  ".."x: "..v.x.." y: "..v.y)
         end
+        return t
     end
-    
-    local castProj = { frames = 12, windupStart = 4, windupEnd = 7, attackFrame = 10,
+
+    local castProj = { frames = 12, windupStartFrame = 4, windupEndFrame = 7, attackFrame = 10,
         windupPos = scaleTable({ 
             down = { x = 73, y = 72 },
             down_left = { x = 124, y = 85 },
@@ -71,7 +72,7 @@
             up_right = { x = 145, y = 70 }
         } ) }
 
-    local castRaise = { frames = 17, windupStart = 7, windupEnd = 9, castPoint = 12,
+    local castRaise = { frames = 17, windupStartFrame = 7, windupEndFrame = 8, attackFrame = 12,
         windupPos = scaleTable({ 
             down = { x = 90, y = 114 },
             down_left = { x = 68, y = 137 },
@@ -92,11 +93,15 @@
             up_left = { x = 94, y = 19 },
             up_right = { x = 105, y = 21 }
         } ) }
+
     params.animations = { cast_proj = castProj, cast_raise = castRaise } --this table is used for loading textures, the key names are the folder names for the animations
 
     params.fireBolt = {
         animation = "cast_proj",
         name = "fireBolt",
+        windupTime = 1,
+        duration = 100, --lifetime of the attack
+        displayParams = { [1] = {speed = 300, spins = false, endScale = 1} }, --number of images/emitters to display and their properties
         windupGlow = true,
         element = gc.elements.fire
     }
@@ -106,35 +111,12 @@
         windupGlow = true,
         element = gc.elements.ice
     }
-    params.earthBolt = {
-        animation = "cast_proj",
-        name = "earthBolt",
-        windupGlow = true,
-        element = gc.elements.earth
-    }
-    params.lightningBolt = {
-        animation = "cast_proj",
-        name = "lightningBolt",
-        windupGlow = true,
-        element = gc.elements.lightning
-    }
     params.airBolt = {
         animation = "cast_proj",
         name = "airBolt",
+        displayParams = { [1] = {speed = 600, spins = false, endScale = 1} }, --number of images/emitters to display and their properties
         windupGlow = true,
         element = gc.elements.air
-    }
-    params.arcaneBolt = {
-        animation = "cast_proj",
-        name = "arcaneBolt",
-        windupGlow = true,
-        element = gc.elements.arcane
-    }
-    params.shadowBolt = {
-        animation = "cast_proj",
-        name = "shadowBolt",
-        windupGlow = true,
-        element = gc.elements.shadow
     }
 
     for _, v in pairs(params) do --add the animData to each spell based off its animation name for easy access

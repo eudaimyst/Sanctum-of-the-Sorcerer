@@ -11,7 +11,8 @@
     ],
     "Lua.diagnostics.disable": [
         "deprecated",
-        "undefined-field"
+        "undefined-field",
+        "need-check-nil"
     ],
     "Lua.workspace.checkThirdParty": false,
     "codegraphy.connectionType": "Interaction",

@@ -28,15 +28,17 @@ local defaultAnimations = {
 }
 
 local defaultParams = {
+	name = "puppet", --should be overriden by whatever creates this puppet
 	isPuppet = true,
 	attackList = {}, animations = defaultAnimations,
 	currentAttack = nil, --set when an attack is fired
-	currentFrame = 0, frameTimer = 0,  --animation system logic
-	attackWindup = false, windupTimer = 0,
-	attackChannel = false, channelTimer = 0,
-	isDead = false,
-	state = "idle",
-	collisionSize = nil
+	attackSpeed = 1, --1 / this number is how long the attack anim takes to play
+	state = "idle", --current state of the puppet, used to determine which animation to play, set by updateState()
+	animFrame = 1, frameTimer = 0,  --animation system logic
+	attackWindup = false, windupTimer = 0, attackWindingUp = false, --anim system windup logic
+	attackChannel = false, channelTimer = 0, attackChanneling = false, --anim system channel logic
+	isDead = false, --marks if the puppet is dead
+	windupGlow = nil --stores display data for windup
 }
 
 -- Define module
@@ -49,10 +51,6 @@ function lib_puppet:storePuppet(puppet)
 	self.store[puppet.puppetID] = puppet --stores the object in this modules store of object
 end
 
-function lib_puppet:preloadAnimTextures()
-
-end
-
 function lib_puppet.puppetFactory(puppet)
 	print("adding puppet functions")
 
@@ -62,151 +60,171 @@ function lib_puppet.puppetFactory(puppet)
 			print("rect already created")
 			return
 		end
-		local texture = lib_puppet.textureStore[self.name][self.facingDirection.image][self.state][self.currentFrame]
+		local texture = lib_puppet.textureStore[self.name][self.facingDirection.image][self.state][self.animFrame]
 		self.rect = display.newImageRect(self.group, texture.filename, texture.baseDir, self.width, self.height)
 		self.rect.x, self.rect.y = self.world.x + self.xOffset, self.world.y + self.yOffset
 
 	end
 
-	function puppet:updateRectImage() --called to update image of rect
+	function puppet:updateRectImage() --overrides gameObject function - called to update image of rect
 		--print(json.prettify(self.textures))
 		if (self.rect) then
 			local s_dir = self.facingDirection.image
-			print(s_dir, self.state, self.currentFrame)
-			local texture = lib_puppet.textureStore[self.name][s_dir][self.state][self.currentFrame]
-			self.rect.fill = {
-				type = "image",
-				filename = texture.filename,     -- "filename" property required
-				baseDir = texture.baseDir       -- "baseDir" property required
-			}
-		else
-			print("rect doesn't exist")
-		end
-	end
-
-	function puppet:nextAttackAnimFrame()
-		print(self.attackTimer .. " / " .. self.currentAttack.windupTime)
-		if (self.attackTimer >= self.currentAttack.windupTime) then --timer is greater than the spells cast time
-			self.currentAnim = self.animations[self.currentAttack.animation] --update the anim to the new state
-		end
-
-		print("attack state: " .. self.attackState .. " / " .. #self.attackStates)
-		if (self.attackState == #self.attackStates) then --post has finished
-			self.animCompleteListener()
-			self.animCompleteListener = nil
-			
-			self.currentAttack = nil      --set current attack to nil, picked up by setState on next loop
-			self.attackState = 1
-			return --return out of function as we don't want to update the rect image
-		end
-		self.attackState = self.attackState + 1
-		local attackAnim = self.attackStates[self.attackState] --store the attack states locally for readability
-		self.currentAnim = self.animations[self.currentAttack.animation][attackAnim] --update the anim to the new state
-	end
-
-	function puppet:nextAnimFrame() --called to set next frame of animation	
-		print("self.currentFrame: " .. self.currentFrame .. " / " .. self.currentAnim.frames)
-
-		if self.currentFrame == self.currentAnim.frames then --reset current frame once reached anim's frame count
-			self.currentFrame = 0
-			print("looping: " .. tostring(self.currentAnim.loop))
-
-			if (self.state == "attack") then --attack sub state has finished and looping anim
-				self:nextAttackAnimFrame()
+			local anim = nil
+			if (self.state == "attack") then
+				if (self.currentAttack) then
+					anim = self.currentAttack.animation
+				end
+			else
+				anim = self.state
 			end
+			--print(s_dir, anim, self.animFrame)
+			if (anim) then
+				local texture = lib_puppet.textureStore[self.name][s_dir][anim][self.animFrame-1]
+				self.rect.fill = {
+					type = "image",
+					filename = texture.filename,     -- "filename" property required
+					baseDir = texture.baseDir       -- "baseDir" property required
+				}
+			end
+		else
+			print("rect for"..self.name.."doesn't exist")
 		end
-
-		print("updating rect from next image frame") --debug
-		self:updateRectImage()
-		self.currentFrame = self.currentFrame + 1
 	end
 
-	function puppet:updateState() --called by anim loop at top of each loop --controls state of puppet whether moving or attacking
+	function puppet:updateState() --called onFrame sets state of puppet logically
 		if (self.currentAttack) then --begin attack has been called
 			self.state = "attack"
-		elseif (self.isMoving) then --set the state to walk if moving (set in game object)
-			self.state = "walk"
+			self.currentAnim = self.currentAttack.animData --sets the appropriate animation data
 		else
-			self.state = "idle"
-		end
-	end
-
-	function puppet:firstAnimFrame()                                        --called by anim loop on first frame of new anim state
-		print("first anim frame of new anim state " .. self.state)
-		if (self.state == "attack") then                                    --begin attack has been called
-			--print("setting currentAnim to: "..self.currentAttack.animation, self.attackStates[self.attackState])
-			--print(json.prettify(self.animations))
-			self.currentAnim = self.animations[self.currentAttack.animation][self.attackStates[self.attackState]] --override current anim
-		elseif (self.currentFrame >= self.currentAnim.frames) then
-			self.currentFrame = 0                                           --minus one as frames are zero indexed
-		end
-		print("updating rect from first image frame") --debug
-		self:updateRectImage()
-	end
-
-	function puppet:animDirChanged() --called by game object function when direction is updated
-		if (self.currentFrame >= self.currentAnim.frames) then
-			self.currentFrame = 0 --minus one as frames are zero indexed
+			if (self.isMoving) then --set the state to walk if moving (set in game object)
+				self.state = "walk"
+			else
+				self.state = "idle"
+			end
+			self.currentAnim = self.animations[self.state]
 		end
 	end
 
 	function puppet:animUpdateLoop() --called on each game render frame
-		self:updateState()        --update character state
-		self.currentAnim = self.animations[self.state]                      --set current animation, defaults to just the name of the state
-		--increase attack timer
-		if (self.currentAttack) then                  --begin attack has been called
-			self.attackTimer = self.attackTimer + gv.frame.dts --add frame delta to timer
+		local anim = self.currentAnim
+		--update rect image on first render frame of loop
+		if (self.frameTimer == 0) then
+			self:updateRectImage()
 		end
-		--check to make sure current frame is not past animation state frames
-		if (self.currentAnim.frames > 0) then       --if theres more than one frame in the anim data
-			self.frameTimer = self.frameTimer + gv.frame.dts --add frame delta to timer
+		self.frameTimer = self.frameTimer + gv.frame.dts --add frame delta to timer
+
+		if (self.attackWindingUp) then --windup frame has been reached
+			self.windupTimer = self.windupTimer + gv.frame.dts --add frame delta to timer
+			if (self.windupTimer >= self.currentAttack.windupTime) then --timer is greater than the animations rate
+				self.attackWindingUp = false
+				self.windupTimer = 0 --reset windup timer for next windup
+				self.animFrame = anim.windupEndFrame --jump to the final frame of the windup
+				self:nextAnimFrame(anim)
+				return --return out of function to prevent nextAnimFrame from being called twice
+			end
 		end
 		--print(self.state, self.frameTimer, self.currentAnim.rate)
-		if self.frameTimer >= 1 / self.currentAnim.rate then --timer is greater than the animations rate
-			self:nextAnimFrame()
-			self.frameTimer = 0
+		if self.currentAttack then
+			if self.frameTimer >= 1 / self.attackSpeed / anim.frames then --timer is greater than the animations rate
+				self:nextAnimFrame(anim)
+			end
+		else
+			if self.frameTimer >= 1 / anim.rate then --timer is greater than the animations rate
+				self:nextAnimFrame(anim)
+			end
 		end
 	end
 
-	function puppet:makeWindupGlow(a, wt) -- a = attack anims to get pre/main/post time, wt = windup time
+	function puppet:nextAnimFrame(anim) --called to set next frame of animation	
+		print(self.name..".animFrame: " .. self.animFrame .. " / " .. anim.frames)
 
-		print("adding windup glow")
-		--local glowTime = wt + ( 1 / a.pre.rate * a.pre.frames) + (1 / a.main.rate * a.main.frames) + (1 / a.post.rate * a.post.frames)
-		local glowTime = wt + ( (1 / a.pre.rate) * (a.pre.frames+ 1))
-		local mainTime = ((1 / a.main.rate) * (a.main.frames+1)) --we need to move the rect/emitter to the cast point in the char image over this time
-		print("windup, glow, main = "..wt..", "..glowTime..", "..mainTime)
+		if (self.state == "attack") then --attack sub state has finished and looping anim
+			self:nextAttackAnimFrame(anim) --returns true if animation is complete
+		end
+		if (self.animFrame == anim.frames) then --animation is over
+			self.animFrame = 1 --resets the frame count for the next animation
+		else
+			self.animFrame = self.animFrame + 1 --animation not over, increment anim frame
+		end
+		self.frameTimer = 0 --reset the frame timer for the next animFrame
+	end
 
-		self.startWindupAttackOffset = { x = gc.charHandsWindup[self.facingDirection.image].x, y = gc.charHandsWindup[self.facingDirection.image].y }
-		self.finishWindupAttackOffset = { x = gc.charHandsCast[self.facingDirection.image].x, y = gc.charHandsCast[self.facingDirection.image].y }
-		local pos = { x = self.rect.x - self.startWindupAttackOffset.x, y = self.rect.y - self.startWindupAttackOffset.y } 
-		local castPos = { x = self.rect.x - self.finishWindupAttackOffset.x, y = self.rect.y - self.finishWindupAttackOffset.y } 
+	function puppet:nextAttackAnimFrame(anim) --called from nextAnimFrame when in attack state
+		if (self.animFrame == anim.windupStartFrame) then --reached windup start frame
+			self:startWindupGlow() --starts windup glow
+			self.attackWindingUp = true --sets attack winding up to true
+		end
+		if (self.animFrame == anim.windupEndFrame) then --reached attack frame
+			if (self.attackWindingUp == true) then
+				self.animFrame = anim.windupStartFrame --sets anim frame to windup start to loop
+			end
+		end
+		if (self.animFrame == anim.attackFrame) then
+			print("firing attack")
+			self.currentAttack:fire(self) --fires the attack
+		end
+		if (self.animFrame == anim.frames) then --post has finished
+			self.currentAttack = nil --set current attack to nil, picked up by updateState on next loop
+		end
+	end
+
+	function puppet:beginAttackAnim(attack, attackFrameListener) --called from entended objects to start attack animations
+		self.currentAttack = attack --set to nil once attack is complete, used to determin whether puppet is in attacking state
+		self.attackFrameListener = attackFrameListener --called once animation is complete
+		print("start attack for " .. self.currentAttack.name)
+		self.animFrame = 1
+		self.frameTimer = 0
+		self.attackTimer = 0
+	end
+
+	function puppet:loadWindupGlow() --called after puppet is created, loads windup data if present
 		
+		-- Set emitter file path
+		local filePath = system.pathForFile( "content/game_objects/puppets/"..self.name.."/windup/emitter.json")
+		-- Decode the file
+		local emitterParams, pos, msg = json.decodeFile( filePath )
+		if emitterParams then
+			print( "windup emitter loaded" )
+		else
+			print( "windup emitter load failed at "..tostring(pos)..": "..tostring(msg) )
+		end
+		-- Create the emitter with the decoded parameters
+		local emitter = display.newEmitter( emitterParams )
+		self.group:insert(emitter)
+		--create image
+		local image = display.newImageRect(self.group, "content/game_objects/puppets/"..self.name.."/windup/glow.png", 64, 64)
+		image.isVisible = false
+		--store the 
+		self.windupGlow = { emitter = emitter, image = image }
+	end
+
+	function puppet:startWindupGlow() -- a = attack anims to get pre/main/post time, wt = windup time
+		
+		local attack = self.currentAttack
+		local anim = attack.animData
+		local windupOffset = anim.windupPos[self.facingDirection.image]
+		local attackOffset = anim.attackPos[self.facingDirection.image]
+		
+		print("adding windup glow")
+		local windupTime = attack.windupTime
+		local windupToAttackTime = (anim.attackFrame - anim.windupEndFrame) * (1 / anim.frames / self.attackSpeed)
+
+		local pos = { x = self.rect.x - windupOffset.x, y = self.rect.y - windupOffset.y } 
+		local castPos = { x = self.rect.x - attackOffset.x, y = self.rect.y - attackOffset.y } 
+
 
 		-----------------------------------------------------------------------------------------
 		--
 		-- emitter
 		--
 		-----------------------------------------------------------------------------------------
-		--Read the exported Particle Designer file (JSON) into a string
-		local filePath = system.pathForFile( "content/spells/windup/sparkles.json" )
-		local f = io.open( filePath, "r" )
-		local emitterData
-		if (f) then
-			emitterData = f:read( "*a" )
-			f:close()
-		else
-			print( "ERROR: Could not read ", filePath )
-		end
-		 
-		-- Decode the string
-		local emitterParams = json.decode( emitterData )
-		emitterParams.duration = glowTime + mainTime --override the loaded duration to the glow time (set earlier)
-		util.setEmitterColors(emitterParams, self.currentAttack.element.c)
-		
-		-- Create the emitter with the decoded parameters
-		local emitter = display.newEmitter( emitterParams )
-		self.group:insert(emitter)
-		-- Center the emitter within the content area
+		local emitter = self.windupGlow.emitter
+		--override the loaded duration to the glow time (set earlier)
+		emitter.duration = windupTime
+		--set emitter colors
+		util.setEmitterColors(emitter, self.currentAttack.element.c)
+		emitter:stop()
 		emitter.x, emitter.y = pos.x, pos.y
 		emitter:start()
 		 
@@ -215,42 +233,30 @@ function lib_puppet.puppetFactory(puppet)
 		-- image
 		--
 		-----------------------------------------------------------------------------------------
-		local glow = display.newImageRect(self.group, "content/particles/32_0h.png", 64, 64)
+		local image = self.windupGlow.image
 		local c = self.currentAttack.element.c
-		glow:setFillColor(c.r, c.g, c.b)
-		glow.x, glow.y = pos.x, pos.y
+		image.isVisible = true
+		image:setFillColor(c.r, c.g, c.b)
+		image.x, image.y = pos.x, pos.y
 		local function destroyGlow()
-			glow:removeSelf()
-			emitter:removeSelf()
+			image.isVisible = false
+			emitter:stop()
 		end
 		local function glowOver()
 			--transition.fadeOut(glow, { time = mainTime * 1000, })
-			transition.moveTo( glow, { x = castPos.x, y = castPos.y, time = mainTime *.75 * 1000, onComplete = destroyGlow } )
-			transition.moveTo( emitter, { x = castPos.x, y = castPos.y, time = mainTime *.75 * 1000 } )
-			transition.scaleTo( glow, { xScale=.5, yScale=.5, time = mainTime * 1000 } )
+			transition.moveTo( image, { x = castPos.x, y = castPos.y, time = windupToAttackTime *.75 * 1000, onComplete = destroyGlow } )
+			transition.moveTo( emitter, { x = castPos.x, y = castPos.y, time = windupToAttackTime *.75 * 1000 } )
+			transition.scaleTo( image, { xScale=.5, yScale=.5, time = windupToAttackTime * 1000 } )
 		end
-		print(glow.x, glow.y)
-		glow.alpha = 0
-		glow.xScale = .2
-		glow.yScale = .2
+		print(image.x, image.y)
+		image.alpha = 0
+		image.xScale = .2
+		image.yScale = .2
 		--glow.blendMode = "add"
-		print("time for attack glow = "..glowTime)
-		transition.to(glow, { time = glowTime * 1000, alpha = .8, onComplete = glowOver })
-		transition.scaleTo( glow, { xScale=1, yScale=1, time= glowTime * 1000 } )
+		print("time for attack glow = "..windupTime)
+		transition.to(image, { time = windupTime * 1000, alpha = .8, onComplete = glowOver })
+		transition.scaleTo( image, { xScale=1, yScale=1, time= windupTime * 1000 } )
 		
-	end
-
-	function puppet:beginAttackAnim(attack, animCompleteListener)
-		self.currentAttack = attack --set to nil once attack is complete, used to determin whether puppet is in attacking state
-		self.animCompleteListener = animCompleteListener --called once animation is complete
-		print("start attack for " .. self.currentAttack.name)
-		if (attack.windupGlow) then
-			self:makeWindupGlow(defaultAnimations.attack, attack.windupTime)
-		end
-		self.currentFrame = 0
-		self.frameTimer = 0
-		self.attackTimer = 0
-		self.attackState = 1
 	end
 
 	function puppet:puppetOnFrame()

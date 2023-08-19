@@ -42,7 +42,7 @@
             end
         end
         
-        function attack:loadDisplay() --called from end of new() - loads display for spell, whether image or emitter
+        function attack:loadDisplay() --loads spell display on creation, whether image or emitter
             print("---------------loading display for "..self.name)
             -- Get raw path to the app documents directory
             local path = system.pathForFile( "content/spells/"..self.name, system.ResourceDirectory )
@@ -84,9 +84,9 @@
             print("attack "..self.name.." set to inactive")
         end
 
-        function attack:createProjectile(origin, target) --called by attack:fire() for projectile attacks
+        function attack:createProjectile() --called by attack:fire() for projectile attacks
             print("creating attack projectile")
-            local projectile = entity:create(origin.x, origin.y)
+            local projectile = entity:create(self.origin.x, self.origin.y)
             attack.projectile = projectile
             projectile.speed = attack.displayParams[1].speed
             projectile.normal = attack.normal
@@ -140,18 +140,15 @@
                     self.emitters[#self.emitters+1] = emitter
                 end
             end
-            projectile:createDisplay(origin)
+            projectile:createDisplay(self.origin)
 
             projectile:addOnFrameMethod(projectile.projectile_onFrame)
             return projectile
         end
 
         function attack:fire(puppet) --called from puppet when attack anim is complete
-            local origin = { x = self.origin.x - puppet.finishWindupAttackOffset.x + puppet.xOffset, y = self.origin.y - puppet.finishWindupAttackOffset.y + puppet.yOffset}
-            local target = { x = self.target.x, y = self.target.y }
-            print(origin, target)
             if (self.displayType == "projectile") then
-                attack.projectile = self:createProjectile(origin, target)
+                attack.projectile = self:createProjectile()
             end
             print("---------------------attack "..self.name.." fired")
         end

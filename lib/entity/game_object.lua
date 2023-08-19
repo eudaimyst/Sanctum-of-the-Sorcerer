@@ -51,9 +51,8 @@
                 return
             end
             self.isMoving = true
-            if ( self.moveDirection ~= dir ) then --movement direction has changed
-                self:setMoveDirection(dir) --sets move direction and updates the facing direction
-            end
+            self:setMoveDirection(dir) --sets move direction and updates the facing direction
+            
             local posDelta = { x = self.moveDirection.x * self.moveSpeed * gv.frame.dts, y = self.moveDirection.y * self.moveSpeed * gv.frame.dts }
             local newPos = { x = self.world.x + posDelta.x, y = self.world.y + posDelta.y }
             local newTileX = map:getTileAtPoint( { x = newPos.x, y = self.world.y  } )
@@ -84,13 +83,7 @@
 
         function gameObject:setFacingDirection(dir) --sets facing direction and re-creates rect
             self.facingDirection = dir
-            self.texture = self.textures[dir]
-            if (self.isPuppet) then
-                self:animDirChanged()
-            else --let the puppet handle its own rect updates based on animation
-                print("updating rect from set facing direction") --debug
-                self:updateRectImage()
-            end
+            self:updateRectImage()
         end
 
         function gameObject:updateRectPos() --needs to be called after cam bounds has been updated on frame or jitters

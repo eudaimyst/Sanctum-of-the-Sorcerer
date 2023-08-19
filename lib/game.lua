@@ -11,7 +11,7 @@
 	local puppet = require("lib.entity.game_object.puppet")
 	local character = require("lib.entity.game_object.puppet.character")
 	local entity = require("lib.entity")
-	local enemies = require("lib.global.enemy_params")
+	local enemyParams = require("lib.global.enemy_params")
 	local lfs = require("lfs")
 	local spellParams = require("lib.global.spell_params")
 
@@ -27,7 +27,7 @@
 		local charParams = { 
 			name = "character", width = 128, height = 128,
 			yOffset = -32,
-			moveSpeed = 200, spellSlots = 5,
+			moveSpeed = 180, spellSlots = 5,
 			spawnPos = map:getSpawnPoint()
 		}
 		game.char = character:create(charParams, hud)
@@ -45,9 +45,11 @@
 		
 		for i = 1, #entity.store do
 			e = entity.store[i]
-			for j = 1, #e.onFrameMethods do
-				onFrameMethod = e.onFrameMethods[j]
-				onFrameMethod(e) --passes entity to onFrame function
+			if (e) then
+				for j = 1, #e.onFrameMethods do
+					onFrameMethod = e.onFrameMethods[j]
+					onFrameMethod(e) --passes entity to onFrame function
+				end
 			end
 		end
 	end
@@ -128,8 +130,16 @@
 		print("loading enemy textures")
 		local puppetTextureStore = {}
 		local enemyContent = "content/game_objects/puppets/enemies/"
-		for _, enemy in pairs (enemies) do
-			--puppetTextureStore[enemy.name] = loadTexturesFromAnimData( enemyContent..enemy.name, enemy.animData)
+		for _, enemy in pairs (enemyParams) do
+			local enemyAnims = {}
+			for animName, animData in pairs(enemy.animations) do --add the enemy animations to the list of animations to load
+				enemyAnims[animName] = animData
+			end
+			for animName, attackData in pairs(enemy.attacks) do --add the enemy attack animations to the list of animations to load
+				print(animName)
+				enemyAnims[animName] = attackData.animData
+			end
+			puppetTextureStore[enemy.name] = loadTexturesFromAnimData( enemyContent..enemy.name.."/", enemyAnims)
 		end
 		-------- Character --------
 		print("loading character textures")

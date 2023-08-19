@@ -9,6 +9,7 @@
 	local attack = require("lib.entity.game_object.puppet.attack")
 	local spellParams = require("lib.global.spell_params")
 	local util = require("lib.global.utilities")
+	local json = require("json")
 
 	local hud --set on create
 
@@ -17,7 +18,7 @@
 
 	lib_character.animations = { --used for loading textures
 		idle = { frames = 4, rate = .8 },
-		walk = { frames = 4, rate = 6 },
+		walk = { frames = 4, rate = 4 },
 	}
 
 	function lib_character:create(_params, _hud)
@@ -54,7 +55,15 @@
 
 		function char:beginCast( target ) --called from game.lua on mouseclick from mouse listener
 			local spell = self.activeSpell
-			local delta = util.deltaPos(self.world, target) --gets the difference between the characters position and the target position
+
+			local angle = util.deltaPosToAngle( self.world, target ) --sets the angle of the character to the target
+			local dir = util.angleToDirection(angle)
+			self:setFacingDirection( dir ) --sets the direction of the character to the angle direction
+			local dir_s = dir.image --gets the direction string for the animation
+
+			local attackPos = spell.animData.attackPos[dir_s] --gets the windup pos from the animation data
+			local offsetPos = { x = self.world.x - attackPos.x, y = self.world.y - attackPos.y + self.yOffset}
+			local delta = util.deltaPos(offsetPos, target) --gets the difference between the characters position and the target position
 
 			local function animCompleteListener() --called when animation is complete
 				self.currentAttack:fire(self)
@@ -62,18 +71,15 @@
 				self.currentAttack = nil
 			end
 
-			local angle = util.deltaPosToAngle( self.world, target ) --sets the angle of the character to the target
-			local dir = util.angleToDirection(angle)
-			self:setFacingDirection( dir ) --sets the direction of the character to the angle direction
-			
+
 			if (spell) then
 				if (not self.currentAttack) then
 					if (not spell.onCooldown) then
-						spell.origin = self.world --set origin to characters position
+						spell.origin = offsetPos
 						if (target) then
 							if (spell.displayType == "projectile") then
 								local n = util.normalizeXY(delta)
-								spell.normal = n --sets the normal of the spell to the normalized delta
+								spell.normal = n --sets the normal used for its movement
 								spell.target = util.factorPos(n, spell.maxDistance) --sets the target to the max distance of the spell
 							end
 						end
@@ -90,19 +96,14 @@
 		end
 		char:addOnFrameMethod(char.charOnFrame)
 
-
-		--char:updateFileName()
-		--char:loadTextures() (called when puppet is created)
 		char:makeRect() --creates rect on creation
+		char:loadWindupGlow() --creates windup glow emitter on creation
 		char.spells = {}
-		--char.spells = { attack:new(spellParams.fireball), attack:new(spellParams.firewall) } --set initial spells for testing, TODO: use addSpell from spells in char params
 		for _, v in pairs(spellParams) do --temp function to add all spells from spell params
 			if v.name then
 				char:addSpell(v)
 			end
 		end
-		--char:addSpell(spellParams.fireBolt)
-		--char.setActiveSpell(1)
 
 		return char
 	end
