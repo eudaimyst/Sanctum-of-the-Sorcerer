@@ -8,7 +8,7 @@
 	local e = {}
 
 		e.rat = {
-			name = "rat", moveSpeed = 200, width = 128, height = 128, yOffset = 0,
+			name = "rat", moveSpeed = 200, width = 164, height = 164, yOffset = 0,
 			attacks = {attack_spin = attackParams.swipe},
 			animations = {
 			idle = { frames = 2, rate = .5 },

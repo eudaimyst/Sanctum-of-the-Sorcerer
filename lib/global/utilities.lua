@@ -80,7 +80,7 @@
 	-- This function will calculate the distance between two points.
 	-- @return Returns the distance between the two points.
 	function util.getDistance(pos1x, pos1y, pos2x, pos2y)
-		local distance = math.sqrt( math.pow(pos1x - pos2x, 2) + math.pow(pos1y - pos2y, 2) )
+		local distance = math.abs( math.sqrt( math.pow( pos1x - pos2x, 2 ) + math.pow( pos1y - pos2y, 2 ) ) )
 		return distance
 	end
 

@@ -51,7 +51,9 @@
         function attack:loadDisplay() --loads spell display on creation, whether image or emitter
             print("---------------loading display for "..self.name)
             -- Get raw path to the app documents directory
-            local path = system.pathForFile( "content/spells/"..self.name, system.ResourceDirectory )
+            local debugPath = "/content/spells/"..self.name
+            local path = system.pathForFile( system.ResourceDirectory ) --if supplying a first paramater, needs to be a file, not a folder
+            path = path..debugPath
             attack.textures = {}
             attack.emitterParams = {}
             for file in lfs.dir( path ) do

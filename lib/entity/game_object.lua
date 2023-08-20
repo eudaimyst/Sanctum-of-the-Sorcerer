@@ -91,7 +91,7 @@
                 --print("updating gameObject rect pos for "..self.name)
                 self.rect.x, self.rect.y = self.world.x + self.xOffset - cam.bounds.x1, self.world.y + self.yOffset - cam.bounds.y1
             else
-                print("gameObject rect for"..self.name.." doesn't exist")
+                print("GAME OBJECT UPDATE RECT POS: rect for "..self.name.."doesn't exist")
             end
         end
 
@@ -114,7 +114,7 @@
                 }
             --print("updated rect image")
             else
-                print("rect doesn't exist")
+                print("GAME OBJECT UPDATE RECT IMAGE: rect for "..self.name.."doesn't exist")
             end
         end
 

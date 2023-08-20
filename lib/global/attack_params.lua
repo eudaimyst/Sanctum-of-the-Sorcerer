@@ -28,7 +28,6 @@
         displayParams = { [1] = {speed = 100, spins = false, endScale = 1} }, --number of images/emitters to display and their properties
         displayScale = 1, --size of attack display normalised to 64 pixels
         element = gc.elements.fire,
-        duration = 1, --lifetime of the attack
         targetType = "point", --"point", "entity", "self", "none"
         radius = -1, --circular radius of an aoe attack
         boundAngle = 30, --limits the angle of attack with radius
@@ -47,7 +46,6 @@
         name = "spin attack", --checks this folder name for images/emitter
         animation = "attack_spin", --name of animation to play, images stored in puppets content folder
         animData = swipeAnim,
-        duration = .3,
         radius = 100, --circular radius of an aoe attack
         boundAngle = 30, --limits the angle of attack with radius
         windupTime = 0, --how long animation loops windup frames

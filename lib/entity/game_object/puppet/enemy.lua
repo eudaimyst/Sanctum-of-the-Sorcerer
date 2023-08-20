@@ -10,14 +10,56 @@
 	local puppet = require("lib.entity.game_object.puppet")
 	local json = require("json");
 
+	local game, cam --set by game module on init
+
+	local gameChar = nil --set by game module
+
 	-- Define module
 	local lib_enemy = {}
 	lib_enemy.enemyStore = {}
+	local wakeupDistance = 4000 --enemies wake up when the char gets this close
 
-	
+	local function checkBounds(pos, bounds)
+		local px, py, cx1, cx2, cy1, cy2 = pos.x, pos.y, bounds.x1, bounds.x2, bounds.y1, bounds.y2
+		if px > cx1 and px < cx2 and py > cy1 and py < cy2 then
+			return true
+		else
+			return false
+		end
+	end
+	local csx = 1
 	local function enemyOnFrame(self)
-		self:updateRectPos() --updates enemy position on screen, game object function
-		self:updateRectImage()
+		--if csx == 1 then print(json.prettify(self)) end
+		--csx = csx + 1
+		if (self.rect) then
+			self:updateRectPos() --updates enemy position on screen, game object function
+			self:updateRectImage()
+		end
+		if (self.isAsleep == true) then
+			if csx == 1 then print("-------------GAMECHAR------------\n"..json.prettify(game.char)) end
+			csx = csx + 1
+			if (gameChar) then
+				--print("umm")
+				local distance = util.getDistance(self.world.x, self.world.y, gameChar.world.x, gameChar.world.y)
+				--print(self.id..": "..distance)
+				if ( distance < wakeupDistance ) then
+					--print("why not")
+					self:wakeup()
+				end
+			end
+		else --enemy is awake
+			if self.isVisible then -- check if enemy goes outside of camera bounds
+				if not checkBounds(self.world, cam.bounds) then
+					self.isVisible = false
+					self:destroyRect()
+				end
+			else --check if enemy enters cameraBounds
+				if checkBounds(self.world, cam.bounds) then
+					self.isVisible = true
+					self:makeRect()
+				end
+			end
+		end
 	end
 
 	function lib_enemy:create(_params)
@@ -25,13 +67,23 @@
 		--print("creating enemy entity at: " .. _params.world.x .. ", " .. _params.world.y .. "")
 		local enemy = puppet:create(_params)
 		enemy.world.x, enemy.world.y = _params.world.x, _params.world.y
-		enemy:makeRect()
-
-		--print(json.prettify(enemy))
-		lib_enemy.enemyStore[#lib_enemy.enemyStore+1] = enemy
+		enemy.isVislbe, enemy.isAsleep = false, true
+		
+		function enemy:wakeup() --called on frame when wakeupDistance is met
+			print("enemy "..self.id.." is waking up")
+			self.isAsleep = false
+		end
 		
 		enemy:addOnFrameMethod(enemyOnFrame)
 
+	end
+
+	function lib_enemy:setGameChar(char)
+		gameChar = char
+	end
+
+	function lib_enemy.init(_game, _cam)
+		game, cam = _game, _cam
 	end
 
 	return lib_enemy

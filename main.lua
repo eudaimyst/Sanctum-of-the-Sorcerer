@@ -8,8 +8,8 @@
 
 -- hide the status bar
 display.setStatusBar( display.HiddenStatusBar )
-native.setProperty( "mouseCursorVisible", false )
-print("mouse cursor visible: "..tostring(native.getProperty( "mouseCursorVisible" )))
+--native.setProperty( "mouseCursorVisible", false )
+--print("mouse cursor visible: "..tostring(native.getProperty( "mouseCursorVisible" )))
 
 -- include the Corona "composer" module
 local composer = require "composer"

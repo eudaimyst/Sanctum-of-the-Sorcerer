@@ -15,6 +15,7 @@
 	local enemy = require("lib.entity.game_object.puppet.enemy")
 	local lfs = require("lfs")
 	local spellParams = require("lib.global.spell_params")
+	local json = require("json")
 
 
 	-- Define module
@@ -22,7 +23,7 @@
 	local cam, map, key, mouse, hud --set on init()
 
 
-	function game.spawnChar()
+	function game:spawnChar()
 		print("char getting spawn point from map: ")
 		local charParams = { 
 			name = "character", width = 128, height = 128,
@@ -30,16 +31,17 @@
 			moveSpeed = 180, spellSlots = 5,
 			spawnPos = map:getSpawnPoint()
 		}
-		game.char = character:create(charParams, hud)
+		self.char = character:create(charParams, hud)
+		--print(json.prettify(game.char))
+		enemy:setGameChar(self.char)
 		
-		cam:setMode("follow", game.char)
+		cam:setMode("follow", self.char)
 	end
 
 	function game.spawnEnemy(enemySaveData)
 		local ratParams = util.deepcopy(enemyParams.rat)
 		ratParams.world = { x = enemySaveData.spawnPoint.x * map.tileSize / 10, y = enemySaveData.spawnPoint.y * map.tileSize / 10 }
-		local gameEnemy = enemy:create(ratParams)
-
+		enemy:create(ratParams)
 	end
 
 	function game:beginPlay()
@@ -48,11 +50,12 @@
 			self.char:move(direction)
 		end
 
+		self:spawnChar()
+
 		for i = 1, #map.enemies do
 			self.spawnEnemy(map.enemies[i])
 		end
 
-		self.spawnChar()
 		hud:draw(self.char)
 		key.registerMoveListener(moveInput)
 		key.registerSpellSelectListener(self.char.setActiveSpell)
@@ -69,15 +72,8 @@
 		
 		for _,e in pairs(entity.store) do
 			if not e.markedForDestruction then --entity will be destroyed this frame, do not run its onFrame method
-				if (e.isProjectile) then
-					print ("running all on frame methods for entity ["..e.id.."]")
-				end
 				for j = 1, #e.onFrameMethods do
-					local onFrameMethod = e.onFrameMethods[j]
-					if (e.isProjectile) then
-						print ("running on frame method ["..j.."] for entity ["..e.id.."]")
-					end
-					onFrameMethod(e) --passes entity to onFrame function as self
+					e.onFrameMethods[j](e) --passes entity to onFrame function as self
 				end
 			end
 		end
@@ -86,6 +82,7 @@
 	function game.init(_cam, _map, _key, _mouse, _hud)
 		print("setting cam and map for game library")
 		key, cam, map, hud, mouse = _key, _cam, _map, _hud, _mouse
+		enemy.init(game, cam)
 	end
 	
 	local function loadTextureFrames(i, path, table)

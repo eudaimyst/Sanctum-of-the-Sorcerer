@@ -46,20 +46,23 @@ local lib_puppet = {}
 lib_puppet.textureStore = {}
 
 local function puppetOnFrame(self)
-	self:updateState()
-	self:animUpdateLoop() --changes puppets current frame based on animation timer
+	if self.rect then --dont run anim related functions if no rect
+		self:updateState()
+		self:animUpdateLoop() --changes puppets current frame based on animation timer
+	end
 end
 
 function lib_puppet.puppetFactory(puppet)
 	print("adding puppet functions")
 
 	function puppet:makeRect() --makes game objects rect if doesn't exist
-		print("making gameObject rect, isPuppet = " .. tostring(self.isPuppet))
+		print("making puppet rect, isPuppet = " .. tostring(self.isPuppet))
 		if (self.rect) then
 			print("rect already created")
 			return
 		end
-		local texture = lib_puppet.textureStore[self.name][self.facingDirection.image][self.state][self.animFrame]
+		print(self.id.." (id): "..self.name, self.facingDirection.image, self.state, self.animFrame)
+		local texture = lib_puppet.textureStore[self.name][self.facingDirection.image][self.state][self.animFrame-1]
 		self.rect = display.newImageRect(self.group, texture.filename, texture.baseDir, self.width, self.height)
 		self.rect.x, self.rect.y = self.world.x + self.xOffset, self.world.y + self.yOffset
 
@@ -87,7 +90,7 @@ function lib_puppet.puppetFactory(puppet)
 				}
 			end
 		else
-			print("rect for"..self.name.."doesn't exist")
+			--print("PUPPET UPDATE RECT IMAGE: rect for "..self.name.."doesn't exist")
 		end
 	end
 
