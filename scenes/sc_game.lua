@@ -110,6 +110,7 @@
 		if (generatingMap) then
 			mapgen:onFrame()
 		else
+			debug.updateText( "entities", #entity.store)
 			debug.updateText( "camBoundMin", math.floor(cam.bounds.x1)..","..math.floor(cam.bounds.y1) )
 			debug.updateText( "camBoundMax", math.floor(cam.bounds.x2)..","..math.floor(cam.bounds.y2) )
 			debug.updateText( "#camTiles", #cam.screenTiles )

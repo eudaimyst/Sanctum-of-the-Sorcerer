@@ -43,12 +43,11 @@ local defaultParams = {
 
 -- Define module
 local lib_puppet = {}
-lib_puppet.store = {}
 lib_puppet.textureStore = {}
 
-function lib_puppet:storePuppet(puppet)
-	puppet.puppetID = #self.store + 1 --creates the object id --NOTE: Different to entity id
-	self.store[puppet.puppetID] = puppet --stores the object in this modules store of object
+local function puppetOnFrame(self)
+	self:updateState()
+	self:animUpdateLoop() --changes puppets current frame based on animation timer
 end
 
 function lib_puppet.puppetFactory(puppet)
@@ -137,7 +136,7 @@ function lib_puppet.puppetFactory(puppet)
 	end
 
 	function puppet:nextAnimFrame(anim) --called to set next frame of animation	
-		print(self.name..".animFrame: " .. self.animFrame .. " / " .. anim.frames)
+		--print(self.name..".animFrame: " .. self.animFrame .. " / " .. anim.frames)
 
 		if (self.state == "attack") then --attack sub state has finished and looping anim
 			self:nextAttackAnimFrame(anim) --returns true if animation is complete
@@ -151,8 +150,10 @@ function lib_puppet.puppetFactory(puppet)
 	end
 
 	function puppet:nextAttackAnimFrame(anim) --called from nextAnimFrame when in attack state
-		if (self.animFrame == anim.windupStartFrame) then --reached windup start frame
+		if (self.animFrame == 1) then
 			self:startWindupGlow() --starts windup glow
+		end
+		if (self.animFrame == anim.windupStartFrame) then --reached windup start frame
 			self.attackWindingUp = true --sets attack winding up to true
 		end
 		if (self.animFrame == anim.windupEndFrame) then --reached attack frame
@@ -192,6 +193,7 @@ function lib_puppet.puppetFactory(puppet)
 		-- Create the emitter with the decoded parameters
 		local emitter = display.newEmitter( emitterParams )
 		self.group:insert(emitter)
+		emitter:stop()
 		--create image
 		local image = display.newImageRect(self.group, "content/game_objects/puppets/"..self.name.."/windup/glow.png", 64, 64)
 		image.isVisible = false
@@ -208,7 +210,7 @@ function lib_puppet.puppetFactory(puppet)
 		
 		print("adding windup glow")
 		local windupTime = attack.windupTime
-		local windupToAttackTime = (anim.attackFrame - anim.windupEndFrame) * (1 / anim.frames / self.attackSpeed)
+		local windupToAttackTime = (anim.attackFrame) * (1 / anim.frames / self.attackSpeed)
 
 		local pos = { x = self.rect.x - windupOffset.x, y = self.rect.y - windupOffset.y } 
 		local castPos = { x = self.rect.x - attackOffset.x, y = self.rect.y - attackOffset.y } 
@@ -259,11 +261,7 @@ function lib_puppet.puppetFactory(puppet)
 		
 	end
 
-	function puppet:puppetOnFrame()
-		self:updateState()
-		self:animUpdateLoop() --changes puppets current frame based on animation timer
-	end
-	puppet:addOnFrameMethod(puppet.puppetOnFrame)
+	puppet:addOnFrameMethod(puppetOnFrame)
 end
 
 function lib_puppet:create(_params) --creates the game object
@@ -277,8 +275,7 @@ function lib_puppet:create(_params) --creates the game object
 	puppet:setParams(defaultParams, _params) --adds puppet params
 	lib_puppet.puppetFactory(puppet) --adds functions to puppet
 
-	lib_puppet:storePuppet(puppet)
-	print("puppet created with puppet id: " .. puppet.puppetID)
+	print("puppet created with entity id: " .. puppet.id)
 	return puppet
 end
 

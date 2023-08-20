@@ -14,26 +14,39 @@
 	-----------------------------------------------------------------------------------------
 	
     local cam = require("lib.camera")
+    local util = require("lib.global.utilities")
 
     -- Define module
 	local lib_entity = {}
     lib_entity.store = {}
     lib_entity.parentGroup = nil --set by setGroup function
+    local entityCount = 0
+
+    local function entityOnFrame(self) --this function Must have a unique name for any module that creates an entity
+        self.screen.x, self.screen.y = self.world.x - cam.bounds.x1, self.world.y - cam.bounds.y1 --calculate the entities position on the screen based off its world coords
+    end
 
     function lib_entity.entityFactory(entity)
 		print("adding entity functions")
 
         function entity:destroySelf() --called to remove the entity, its group and reference to it
-            self.group:removeSelf()
-            self.group = nil
-            lib_entity.store[self.id] = nil
+            local function doDestruction()
+                print("destroying entity with id: "..self.id)
+                self.group:removeSelf()
+                self.group = nil
+                self.onFrameMethods = nil
+                lib_entity.store[self.id] = nil
 
+                self = nil
+            end
             if ( self.onDestroy ) then
                 self:onDestroy()
             end
-            self = nil
+            print("entity "..self.id.." marked for destruction")
+            self.markedForDestruction = true
+            timer.performWithDelay( 0, doDestruction ) --use a timer as we should not destroy the entity while iterating through the onFrame functions
         end
-
+ 
         function entity:setParams(defaultParams, _params) --copies the params from the passed or default params table to the entity
             print("setting entity params")
             if (_params) then --if passed a table of params
@@ -51,29 +64,27 @@
             end
         end
 
-        function entity:entityOnFrame() --this function Must have a unique name for any module that creates an entity
-            self.screen.x, self.screen.y = self.world.x - cam.bounds.x1, self.world.y - cam.bounds.y1 --calculate the entities position on the screen based off its world coords
-        end
 
         function entity:addOnFrameMethod(method) --adds a function to the onFrameFuncs table which is called each frame
+            --self.method = util.deepcopy(method)
             self.onFrameMethods[#self.onFrameMethods+1] = method
         end
 
-        entity:addOnFrameMethod(entity.entityOnFrame)
+        entity:addOnFrameMethod(entityOnFrame)
 
     end
 
     function lib_entity:storeObject(entity)
-        entity.id = #self.store + 1 --creates the object id --NOTE: Different to entity id
-        self.store[entity.id] = entity --stores the object in this modules store of object
     end
 
     function lib_entity:create(_x, _y) --store = any store be it gameObjects, enemies etc...
-        print("creating entity")
+        entityCount = entityCount + 1
+        print("creating entity with id "..entityCount)
 
-        local entity = { isPuppet = false, isGameObject = false,
+        local entity = { id = entityCount, isPuppet = false, isGameObject = false,
             world = {x = 0, y = 0}, screen = {x = 0, y = 0},
-            group = nil, attack = nil, onFrameMethods = {}
+            group = nil, attack = nil,
+            onFrameMethods = {}, markedForDestruction = nil
         }
         if _x then entity.world.x = _x end
         if _y then entity.world.y = _y end 
@@ -88,6 +99,7 @@
 
         lib_entity.entityFactory(entity) --adds functions to entity
         lib_entity:storeObject(entity) --stores the entity
+        self.store[entityCount] = entity --stores the object in this modules store of object
 
         print("entity created with id: " .. entity.id)
         return entity

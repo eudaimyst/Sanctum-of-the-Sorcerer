@@ -12,6 +12,7 @@
 	local character = require("lib.entity.game_object.puppet.character")
 	local entity = require("lib.entity")
 	local enemyParams = require("lib.global.enemy_params")
+	local enemy = require("lib.entity.game_object.puppet.enemy")
 	local lfs = require("lfs")
 	local spellParams = require("lib.global.spell_params")
 
@@ -19,7 +20,6 @@
 	-- Define module
 	local game = {}
 	local cam, map, key, mouse, hud --set on init()
-	local e, onFrameMethod --for calling entity onFrame functions
 
 
 	function game.spawnChar()
@@ -35,6 +35,30 @@
 		cam:setMode("follow", game.char)
 	end
 
+	function game.spawnEnemy(enemySaveData)
+		local ratParams = util.deepcopy(enemyParams.rat)
+		ratParams.world = { x = enemySaveData.spawnPoint.x * map.tileSize / 10, y = enemySaveData.spawnPoint.y * map.tileSize / 10 }
+		local gameEnemy = enemy:create(ratParams)
+
+	end
+
+	function game:beginPlay()
+		
+		local function moveInput(direction) --moveListener passed to key module
+			self.char:move(direction)
+		end
+
+		for i = 1, #map.enemies do
+			self.spawnEnemy(map.enemies[i])
+		end
+
+		self.spawnChar()
+		hud:draw(self.char)
+		key.registerMoveListener(moveInput)
+		key.registerSpellSelectListener(self.char.setActiveSpell)
+		mouse.registerClickListener(self.mouseClick)
+	end
+
 	function game:onFrame()
 
 		gameObject:clearMovement() --sets isMoving to false for all game objects, before being set by key input
@@ -43,12 +67,17 @@
 		cam:onFrame() --processes camera movement
 		map:cameraMove(game.char.moveDirection) --move map tiles, destroy boundaryTiles, create new tiles
 		
-		for i = 1, #entity.store do
-			e = entity.store[i]
-			if (e) then
+		for _,e in pairs(entity.store) do
+			if not e.markedForDestruction then --entity will be destroyed this frame, do not run its onFrame method
+				if (e.isProjectile) then
+					print ("running all on frame methods for entity ["..e.id.."]")
+				end
 				for j = 1, #e.onFrameMethods do
-					onFrameMethod = e.onFrameMethods[j]
-					onFrameMethod(e) --passes entity to onFrame function
+					local onFrameMethod = e.onFrameMethods[j]
+					if (e.isProjectile) then
+						print ("running on frame method ["..j.."] for entity ["..e.id.."]")
+					end
+					onFrameMethod(e) --passes entity to onFrame function as self
 				end
 			end
 		end
@@ -165,19 +194,6 @@
 				game.char:beginCast( target )
 			end
 		end
-	end
-
-	function game:beginPlay()
-		
-		local function moveInput(direction)
-			self.char:move(direction)
-		end
-
-		self.spawnChar()
-		hud:draw(self.char)
-		key.registerMoveListener(moveInput)
-		key.registerSpellSelectListener(self.char.setActiveSpell)
-		mouse.registerClickListener(self.mouseClick)
 	end
 
 	return game

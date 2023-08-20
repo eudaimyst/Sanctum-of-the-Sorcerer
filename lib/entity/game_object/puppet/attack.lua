@@ -16,24 +16,30 @@
 
     local basePath = "content/spells"
 
-    local data = { --not being used
-        timer = 0, currentPhase = "pre",
-        cooldownTimer = 0, onCooldown = false,
-        durationTimer = 0,
-        origin = { x = 0, y = 0 }, --position at start of attack
-        delta = { x = 0, y = 0 }, --between start and end
-        target = { x = 0, y = 0 }, --position for targeted attacks
-    }
-    --{ width=64, height=64, numFrames = 1 }
 	-- Define module
-	local lib_attack = { } 
+	local lib_attack = { }
+    
+
+    local function projOnFrame(self)
+        print("running projectile onFrame for entity: "..self.id)
+        self.durationTimer = self.durationTimer + gv.frame.dts
+        self.world.x = self.world.x + self.normal.x * self.speed * gv.frame.dts
+        self.world.y = self.world.y + self.normal.y * self.speed * gv.frame.dts
+        if (map:getTileAtPoint(self.world).col == 1) or (self.durationTimer > self.duration) then
+            for i = 1, #self.emitters do
+                print("removing emitter"..i)
+                self.emitters[i]:stop()
+                self.emitters[i]:removeSelf()
+            end
+            self:destroySelf()
+            return
+        end
+        self:updateDisplayPos()
+    end
 
     function lib_attack:new(_params, _puppet) --takes params for the new attack and the puppet that is casting it (puppet used for loading anims)
 
-        local attack = {}
-        for k, v in pairs(data) do
-            attack[k] = v
-        end
+        local attack = { projectileStore = {} }
         for k, v in pairs(attackParams.default) do
             if _params[k] then
                 attack[k] = _params[k]
@@ -84,12 +90,17 @@
             print("attack "..self.name.." set to inactive")
         end
 
-        function attack:createProjectile() --called by attack:fire() for projectile attacks
+        function attack:createProjectile(index) --called by attack:fire() for projectile attacks
             print("creating attack projectile")
-            local projectile = entity:create(self.origin.x, self.origin.y)
-            attack.projectile = projectile
-            projectile.speed = attack.displayParams[1].speed
-            projectile.normal = attack.normal
+            attack.projectileStore[#attack.projectileStore+1] = entity:create(self.origin.x, self.origin.y)
+            local projectile = attack.projectileStore[#attack.projectileStore]
+            projectile.isProjectile = true
+            projectile.displayParams = attack.displayParams[index]
+            projectile.speed = attack.displayParams[index].speed
+            projectile.durationTimer = 0
+            projectile.normal = {x = attack.normal.x, y = attack.normal.y}
+            projectile.duration = projectile.speed * self.maxDistance / 100000
+            print("projectile duration: "..projectile.duration)
 
             function projectile:updateDisplayPos()
                 for i = 1, #self.rects do
@@ -99,24 +110,6 @@
                     self.emitters[i].x, self.emitters[i].y = self.screen.x, self.screen.y
                     --print("setting emitter "..i.." to "..self.screen.x..", "..self.screen.y)
                 end
-            end
-
-            function projectile:projectile_onFrame()
-                attack.durationTimer = attack.durationTimer + gv.frame.dts
-                self.world.x = self.world.x + self.normal.x * self.speed * gv.frame.dts
-                self.world.y = self.world.y + self.normal.y * self.speed * gv.frame.dts
-                if (map:getTileAtPoint(self.world).col == 1) then
-                    attack.durationTimer = 0
-                    self:destroySelf()
-                    for i = 1, #self.emitters do
-                        self.emitters[i]:stop()
-                    end
-                end
-                if (attack.durationTimer > attack.duration) then
-                    attack.durationTimer = 0
-                    self:destroySelf() --calls entity destroy method
-                end
-                self:updateDisplayPos()
             end
 
             function projectile:createDisplay(origin)
@@ -141,19 +134,21 @@
                 end
             end
             projectile:createDisplay(self.origin)
-
-            projectile:addOnFrameMethod(projectile.projectile_onFrame)
-            return projectile
+            print("adding on frame method for "..projectile.id)
+            projectile:addOnFrameMethod(projOnFrame)
+            print(projOnFrame)
         end
 
-        function attack:fire(puppet) --called from puppet when attack anim is complete
+        function attack:fire() --called from puppet when attack anim is complete
             if (self.displayType == "projectile") then
-                attack.projectile = self:createProjectile()
+                for i = 1, #self.displayParams do
+                    self:createProjectile(i)
+                end
             end
             print("---------------------attack "..self.name.." fired")
         end
 
-        attack.displayData = attack:loadDisplay() --set display type table from string name for key
+        attack:loadDisplay() --set display type table from string name for key
         attack.icon = basePath.."/"..attack.name.."/icon.png"
 
         return attack

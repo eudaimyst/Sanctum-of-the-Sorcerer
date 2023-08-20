@@ -81,6 +81,7 @@
 		local saveParams = {width = self.params.width, height = self.params.height,
 		tiles = self.tileStore.indexedTiles, saveTileSize = self.params.tileSize,
 		rooms = self.rooms, startRoom = self.startRoom.id, endRoom = self.endRoom.id, treasureRoom = self.treasureRoom.id,
+		enemies = self.enemies,
 		startPoint = self.startPoint, endPoint = self.endPoint, level = self.params.level}
 		return saveParams
 	end
@@ -227,7 +228,6 @@
 		self.run = false
 	end
 	function mapgen:deleteMap()
-
 		if (not self.run) then --cant clear tiles while tileGen running
 			local ts = self.tileStore
 			for i = 1, #ts.indexedTiles do
@@ -244,7 +244,7 @@
 				ts.tileColumns[i] = nil
 			end
 		end
-		
+		self.group:removeSelf()
 	end
 
 	function mapgen:runGenFunc(completeListener)

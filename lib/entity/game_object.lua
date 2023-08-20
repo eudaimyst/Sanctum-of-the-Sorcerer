@@ -87,7 +87,12 @@
         end
 
         function gameObject:updateRectPos() --needs to be called after cam bounds has been updated on frame or jitters
-            self.rect.x, self.rect.y = self.world.x + self.xOffset - cam.bounds.x1, self.world.y + self.yOffset - cam.bounds.y1
+            if (self.rect) then
+                --print("updating gameObject rect pos for "..self.name)
+                self.rect.x, self.rect.y = self.world.x + self.xOffset - cam.bounds.x1, self.world.y + self.yOffset - cam.bounds.y1
+            else
+                print("gameObject rect for"..self.name.." doesn't exist")
+            end
         end
 
         function gameObject:updateRectImage() --called to update image of rect, override by puppets
@@ -130,11 +135,6 @@
                 self.rect = nil
             end
 		end
-
-        function gameObject:gameObjectOnFrame()
-
-        end
-        gameObject:addOnFrameMethod(gameObject.gameObjectOnFrame)
     end
 
     function lib_gameObject:storeObject(gameObject) --stores gameObject

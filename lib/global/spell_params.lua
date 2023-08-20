@@ -20,7 +20,6 @@
         displayParams = { [1] = {speed = 600, spins = false, endScale = 1} }, --number of images/emitters to display and their properties
         displayScale = 1, --size of attack display normalised to 64 pixels
         element = gc.elements.fire,
-        duration = 1, --lifetime of the attack
         targetType = "point", --"point", "entity", "self", "none"
         radius = -1, --circular radius of an aoe attack
         boundAngle = 30, --limits the angle of attack with radius
@@ -99,11 +98,22 @@
     params.fireBolt = {
         animation = "cast_proj",
         name = "fireBolt",
+        displayType = "projectile", --"image", "emitter"
         windupTime = 1,
         duration = 100, --lifetime of the attack
         displayParams = { [1] = {speed = 300, spins = false, endScale = 1} }, --number of images/emitters to display and their properties
         windupGlow = true,
         element = gc.elements.fire
+    }
+    params.earthBolt = {
+        animation = "cast_raise",
+        name = "earthBolt",
+        displayType = "projectile", --"image", "emitter"
+        windupTime = 0,
+        duration = 100, --lifetime of the attack
+        displayParams = { [1] = {speed = 300, spins = false, endScale = 1} }, --number of images/emitters to display and their properties
+        windupGlow = true,
+        element = gc.elements.earth
     }
     params.iceStorm = {
         animation = "cast_raise",
@@ -114,6 +124,7 @@
     params.airBolt = {
         animation = "cast_proj",
         name = "airBolt",
+        displayType = "projectile", --"image", "emitter"
         displayParams = { [1] = {speed = 600, spins = false, endScale = 1} }, --number of images/emitters to display and their properties
         windupGlow = true,
         element = gc.elements.air

@@ -366,6 +366,7 @@
 		self.spawnPoint = {x = saveData.startPoint.x / saveData.saveTileSize * self.params.tileSize, y = saveData.startPoint.y / saveData.saveTileSize * self.params.tileSize}
 		print("spawnPoint set to map: "..self.spawnPoint.x..", "..self.spawnPoint.y)
 		self.worldWidth, self.worldHeight = saveData.width * self.params.tileSize, saveData.height * self.params.tileSize --width and height in pixels
+		self.enemies = saveData.enemies
 		
 		self:createMapTiles(saveData.tiles) --call function to create tiles
 		self.tileData = saveData.tiles --store tileData to redraw map without reloading

@@ -14,12 +14,14 @@
 	local hud --set on create
 
 	-- Define module
-	local lib_character = {}
-
-	lib_character.animations = { --used for loading textures
+	local lib_character = { animations = { --used for loading textures
 		idle = { frames = 4, rate = .8 },
 		walk = { frames = 4, rate = 4 },
-	}
+	} }	
+
+	local function charOnFrame(self)
+		self:updateRectPos() --updates game char position on screen, game object function
+	end
 
 	function lib_character:create(_params, _hud)
 		hud = _hud
@@ -67,7 +69,6 @@
 
 			local function animCompleteListener() --called when animation is complete
 				self.currentAttack:fire(self)
-				spell:deactivate()
 				self.currentAttack = nil
 			end
 
@@ -89,12 +90,7 @@
 			end
 		end
 
-		function char:charOnFrame()
-
-			self:updateRectPos() --updates game char position on screen, game object function
-	
-		end
-		char:addOnFrameMethod(char.charOnFrame)
+		char:addOnFrameMethod(charOnFrame)
 
 		char:makeRect() --creates rect on creation
 		char:loadWindupGlow() --creates windup glow emitter on creation
