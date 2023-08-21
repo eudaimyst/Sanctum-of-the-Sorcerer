@@ -40,7 +40,7 @@
 
 	function game.spawnEnemy(enemySaveData)
 		local ratParams = util.deepcopy(enemyParams.rat)
-		ratParams.world = { x = enemySaveData.spawnPoint.x * map.tileSize / 10, y = enemySaveData.spawnPoint.y * map.tileSize / 10 }
+		ratParams.spawnPos = { x = enemySaveData.spawnPoint.x * map.tileSize / 10, y = enemySaveData.spawnPoint.y * map.tileSize / 10 }
 		enemy:create(ratParams)
 	end
 
@@ -69,7 +69,8 @@
 		key:onFrame() --processes key inputs
 		cam:onFrame() --processes camera movement
 		map:cameraMove(game.char.moveDirection) --move map tiles, destroy boundaryTiles, create new tiles
-		
+		enemy:onFrame() --calls enemy lib onFrame for decision making timer
+
 		for _,e in pairs(entity.store) do
 			if not e.markedForDestruction then --entity will be destroyed this frame, do not run its onFrame method
 				for j = 1, #e.onFrameMethods do
