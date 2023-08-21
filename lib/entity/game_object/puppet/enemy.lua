@@ -20,6 +20,7 @@
 	local lib_enemy = {}
 	lib_enemy.enemyStore = {}
 	local wakeupDistance = 4000 --enemies wake up when the char gets this close
+	local decisionRate = 3 --time in seconds between making decisions
 
 	local decisionTimer = 0
 	local decisionRate = 500 --(ms) how often to decide next action to take
@@ -33,7 +34,7 @@
 			return false
 		end
 	end
-	local csx = 1
+
 	local function enemyOnFrame(self)
 		--if csx == 1 then print(json.prettify(self)) end
 		--csx = csx + 1
