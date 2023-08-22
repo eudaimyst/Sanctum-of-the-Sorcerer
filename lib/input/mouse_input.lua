@@ -128,7 +128,7 @@
 				return compareIndexes(objects).rect --returns highest object in heirarchy
 			end
 		end
-		print("mouse is not over an object")
+		--print("mouse is not over an object")
 		return nil
 	end
 
@@ -174,7 +174,7 @@
 				M.scroll = true
 				M.scrollValue = event.scrollY
 				mouseScrollListener(event.scrollY)
-	            print( "Mouse is scrolling with a value of "..event.scrollY)
+	            --print( "Mouse is scrolling with a value of "..event.scrollY)
 
 				timer.performWithDelay( 0, mouseScrollComplete )
 	        end
@@ -187,7 +187,7 @@
 				--print("mouse pressed")
 				if (M.pressed == false) then --only if mouse not held down
 					M.pressed = true --set to true so don't register mouse being held down
-					print("mouse clicked at pos: "..event.x..", "..event.y)
+					--print("mouse clicked at pos: "..event.x..", "..event.y)
 					--call listeners
 					if (clickListener) then
 						clickListener(event.x, event.y)
@@ -209,7 +209,7 @@
 							end
 							timer.performWithDelay( 0, clickTimer )
 						end
-						print("found object under mouse")
+						--print("found object under mouse")
 					else
 						M.clickedObject = nil
 					end

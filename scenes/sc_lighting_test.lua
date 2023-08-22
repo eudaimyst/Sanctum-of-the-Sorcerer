@@ -41,7 +41,7 @@
 	local sceneGroup = display.newGroup( )
 
 
-	local light = {x = 0, y = 0, radius = 200}
+	local light = {x = 0, y = 0, radius = 200, active = false}
 	
 	local tileSize = 100
 	local tileStore = {}
@@ -76,6 +76,9 @@
 			startPos = {x = x, y = y}
 		elseif finishPos == nil then
 			finishPos = {x = x, y = y}
+		elseif startPos and finishPos then
+			startPos = nil
+			finishPos = nil
 		end
 		updateTileLights()
 		local tile = getTileAtPoint(x, y)
@@ -107,6 +110,13 @@
 	end
 
 	local function onFrame()
+		if startPos then
+			light.x = startPos.x
+			light.y = startPos.y
+			light.active = true
+		else
+			light.active = false
+		end
 	end
 
 	function scene:create( event ) -- Called when scene's view does not exist.
