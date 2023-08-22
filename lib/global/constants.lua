@@ -51,12 +51,12 @@
 		for k, v in pairs(t) do
 			v.x = i.w * .5 - v.x
 			v.y = i.h * .5 - v.y
-			print("unscaled")
-			print(k..":  ".."x: "..v.x.." y: "..v.y)
-			print("scaled")
+			--print("unscaled")
+			--print(k..":  ".."x: "..v.x.." y: "..v.y)
+			--print("scaled")
 			v.x = math.round(v.x * s.x)
 			v.y = math.round(v.y * s.y)
-			print(k..":  ".."x: "..v.x.." y: "..v.y)
+			--print(k..":  ".."x: "..v.x.." y: "..v.y)
 		end
 	end
 	scaleTable(M.charHandsWindup)
