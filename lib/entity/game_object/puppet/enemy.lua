@@ -130,7 +130,7 @@
 					return r
 				end
 				local newTargetPos = { x = self.spawnPos.x + getWanderPoint(), y = self.spawnPos.y + getWanderPoint() }
-				print("pos:", newTargetPos.x, newTargetPos.y)
+				print(self.name, self.id, "move idle target pos:", newTargetPos.x, newTargetPos.y)
 				self:setMoveTarget(newTargetPos) --game object function
 			elseif ( util.compareFuzzy( self.world, self.moveTarget, moveTargetFuzzy ) ) then
 				print (self.name, self.id, "has reached its idle target")

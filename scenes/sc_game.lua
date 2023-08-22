@@ -73,7 +73,6 @@
 				mapgen:deleteMap()
 				--load the map
 				loadMap("game_level", false)
-
 		
 				game:beginPlay() --spawns character and sets camera to follow
 
