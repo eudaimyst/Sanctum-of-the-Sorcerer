@@ -23,6 +23,7 @@
     local entity = require("lib.entity")
     local cam = require("lib.camera")
     local map = require("lib.map")
+    local util = require("lib.global.utilities")
     local json = require("json")
     local lfs = require("lfs")
 
@@ -39,16 +40,39 @@
         spawnPos = { x = 0, y = 0 },
         directional = false, moveDirection = gc.move.down, facingDirection = gc.move.down,
         isMoving = false,
+        moveTarget = nil --target position relative to the game object
     }
+
+    local function gameObjOnFrame(self)
+        if self.moveTarget then
+            self:move(self.moveTarget)
+        end
+    end
 
     function lib_gameObject.gameObjectFactory(gameObject)
 		print("adding gameObject functions")
 
-        function gameObject:move(dir) --called each frame from key_input by scene
+        function gameObject:setMoveTarget(pos) --once move target is set, then onFrame will know to call the move function to the constructed moveTarget
+            --print(json.prettify(self))
+            print("lolwut:", self.world.x, self.world.y)
+            local normalTarget = util.normalizeXY(util.deltaPos(self.world, pos))
+            local angle = util.deltaPosToAngle(self.world, pos)
+            --directions were originally intended to be constants and not intended to have their values changed
+            --TODO: come up with a proper direction framework that is not accessed as constants
+            local dir = util.deepcopy(util.angleToDirection(angle)) 
+            dir.x, dir.y = normalTarget.x, normalTarget.y
+            self.moveTarget = dir
+
+        end
+
+        function gameObject:move(dir) --called each frame from key_input by scene, also onFrame if moveTarget is set
             
             if (self.currentAttack) then --puppets use this logic for movement
                 print("can't move while attacking")
                 return
+            end
+            if self.name == "character" then
+                --print("moving "..self.name.." with id "..self.id.." in dirrection: "..dir.image)
             end
             self.isMoving = true
             self:setMoveDirection(dir) --sets move direction and updates the facing direction
@@ -135,6 +159,8 @@
                 self.rect = nil
             end
 		end
+
+        
     end
 
     function lib_gameObject:storeObject(gameObject) --stores gameObject
@@ -163,6 +189,8 @@
         lib_gameObject:storeObject(gameObject) --stores gameObject
 
         --gameObject:loadTextures()
+
+        gameObject:addOnFrameMethod(gameObjOnFrame)
 
         print("gameObject created with id: " .. gameObject.objID)
         return gameObject

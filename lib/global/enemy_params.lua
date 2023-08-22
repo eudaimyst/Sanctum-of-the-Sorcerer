@@ -15,7 +15,7 @@
 			attacks = {attack_spin = attackParams.swipe},
 			animations = {
 			idle = { frames = 2, rate = .5 },
-			walk = { frames = 4, rate = 4 }, }
+			walk = { frames = 4, rate = 12 }, }
 		}
 
 	return e

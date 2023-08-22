@@ -55,7 +55,8 @@
 
 	-- This code converts a delta position (the difference between two points in space) to an angle, 
 	-- which is useful for determining where a player is facing when moving from one point to another.
-	function util.deltaPosToAngle(pos1, pos2)
+	function util.deltaPosToAngle(pos1, _pos2)
+		local pos2 = _pos2 or { x = 0, y = 0 }
 		if not pos1 or not pos2 then
 			print("ERROR: deltaPosToAngle() called with invalid parameters")
 			return nil
@@ -65,6 +66,18 @@
 			angle = angle + 360
 		end
 		return angle
+	end
+
+	function util.compareFuzzy(pos1, pos2, fuzzyDistance)
+		local dim = {"x", "y"}
+		for i = 1, #dim do
+			if pos1[dim[i]] < pos2[dim[i]] + fuzzyDistance and pos1[dim[i]] > pos2[dim[i]] - fuzzyDistance
+			and pos1[dim[2-i]] < pos2[dim[2-i]] + fuzzyDistance and pos1[dim[2-i]] > pos2[dim[2-i]] - fuzzyDistance then
+				return true
+			else
+				return false
+			end
+		end
 	end
 
 	function util.setEmitterColors(params, color)
@@ -84,9 +97,13 @@
 		return distance
 	end
 
-	function util.normalizeXY(pos)
-		local magnitude = math.sqrt(math.pow(pos.x, 2) + math.pow( pos.y, 2 ))
-		return { x = pos.x / magnitude, y = pos.y / magnitude }
+	function util.normalizeXY(pos) --takes a table with x, y and returns a table with x, y normalised to 1 unit vector
+		if pos then
+			local magnitude = math.sqrt(math.pow(pos.x, 2) + math.pow( pos.y, 2 ))
+			return { x = pos.x / magnitude, y = pos.y / magnitude }
+		else
+			print("ERROR: util.normalized pass with no position")
+		end
 	end
 
 	function util.deltaPos(pos1, pos2)

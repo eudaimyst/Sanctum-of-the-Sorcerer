@@ -26,6 +26,8 @@
 	local decisionRate = 500 --(ms) how often to decide next action to take
 	local makeDecision = nil
 
+	local moveTargetFuzzy = 3
+
 	local function checkBounds(pos, bounds)
 		local px, py, cx1, cx2, cy1, cy2 = pos.x, pos.y, bounds.x1, bounds.x2, bounds.y1, bounds.y2
 		if px > cx1 and px < cx2 and py > cy1 and py < cy2 then
@@ -49,8 +51,13 @@
 		if self.isAsleep == false then
 			if (makeDecision) then
 				--print(tostring(makeDecision))
-				self:makeDecision(distance)
+				self.currentAction = self:makeDecision(distance)
 			end
+		end
+		--print("uhh")
+		if self.currentAction then
+			--print("running current action")
+			self.currentAction(self)
 		end
 
 	end
@@ -89,11 +96,13 @@
 				end
 				if self.isVisible then -- check if enemy goes outside of camera bounds
 					if not checkBounds(self.world, cam.bounds) then
+						print("setting enemy "..self.id.." to not visible")
 						self.isVisible = false
 						self:destroyRect()
 					end
 				else --check if enemy enters cameraBounds
 					if checkBounds(self.world, cam.bounds) then
+						print("setting enemy "..self.id.." to visible")
 						self.isVisible = true
 						self:makeRect()
 					end
@@ -102,35 +111,56 @@
 		end
 
 		function enemy:moveToAttack()
-
+			print("enemy "..self.id.." is moving to attack")
+			if (gameChar) then
+				self:setMoveTarget( { x = gameChar.world.x, y = gameChar.world.y } )
+			else
+				print("no char found or no world coords")
+			end
 		end
 
-		function enemy:moveIdle()
-			local function getWanderPoint()
-				return math.random(-self.wanderDistance, self.wanderDistance)
-			end
-			local newTargetPos = { x = getWanderPoint(), y = getWanderPoint() }
-			self.moveTarget = newTargetPos 
+		function enemy:moveIdle() --called on frame if this function is the currentAction set by makeDecision
+			if (not self.moveTarget) then
+				print("setting move target for "..self.id)
+				local function getWanderPoint()
+					local r = math.random(self.wanderDistance.min, self.wanderDistance.max)
+					if math.random() == 1 then
+						r = r * -1
+					end
+					return r
+				end
+				local newTargetPos = { x = self.spawnPos.x + getWanderPoint(), y = self.spawnPos.y + getWanderPoint() }
+				print("pos:", newTargetPos.x, newTargetPos.y)
+				self:setMoveTarget(newTargetPos) --game object function
+			elseif ( util.compareFuzzy( self.world, self.moveTarget, moveTargetFuzzy ) ) then
+				print (self.name, self.id, "has reached its idle target")
+				self.currentAction = nil -- no more action taken until enemy makesDecision again
+				self.moveTarget = nil
+			end	
 		end
 
 		function enemy:makeDecision(distance) --called from enemies onFrame if decisionTimer > decisionRate
-			print("enemy "..self.id.." is deciding action")
+			--print("enemy "..self.id.." is deciding action")
 			if (self.currentAction) then
 				if ( self.currentAction == self.moveToIdle) then
 					if (distance < self.sightRange ) then
-						self.currentAction = self.moveToAttack
+						print("setting current action to moveToATtack from idle")
+						return self.moveToAttack
 					end
 				elseif (self.currentAction == self.moveToAttack) then
 					if (self.timeInCombat > self.leashTime) then
-						self.currentAction = self.moveIdle
+						print("setting current action to moveToIdle due to leashing")
+						return self.moveIdle
 					end
 				end
 			else
-				print("distance, sightRange: "..distance, tostring(self.sightRange))
+				--print("distance, sightRange: "..distance, tostring(self.sightRange))
 				if (distance < self.sightRange ) then
-					self.currentAction = self.moveToAttack
+					print("setting current action to due to sight range")
+					return self.moveToAttack
 				else
-					self.currentAction = self.moveToIdle
+					--print("setting action to idle")
+					return self.moveIdle
 				end
 			end
 
