@@ -46,6 +46,10 @@
     local function gameObjOnFrame(self)
         if self.moveTarget then
             self:move(self.moveTarget)
+            if util.compareFuzzy(self.world, self.moveTarget) then
+                self.moveTarget = nil --mark as nil to stop moving
+				print (self.name, self.id, "has reached its move target")
+            end
         end
     end
 
@@ -61,8 +65,8 @@
             --TODO: come up with a proper direction framework that is not accessed as constants
             local dir = util.deepcopy(util.angleToDirection(angle)) 
             dir.x, dir.y = normalTarget.x, normalTarget.y
+            print(self.id, "target dir: ", dir.x, dir.y)
             self.moveTarget = dir
-
         end
 
         function gameObject:move(dir) --called each frame from key_input by scene, also onFrame if moveTarget is set

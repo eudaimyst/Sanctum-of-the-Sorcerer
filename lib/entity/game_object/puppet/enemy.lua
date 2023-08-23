@@ -26,7 +26,7 @@
 	local decisionRate = 500 --(ms) how often to decide next action to take
 	local makeDecision = nil
 
-	local moveTargetFuzzy = 3
+	local moveTargetFuzzy = 10
 
 	local function checkBounds(pos, bounds)
 		local px, py, cx1, cx2, cy1, cy2 = pos.x, pos.y, bounds.x1, bounds.x2, bounds.y1, bounds.y2
@@ -111,7 +111,7 @@
 		end
 
 		function enemy:moveToAttack()
-			print("enemy "..self.id.." is moving to attack")
+			--print("enemy "..self.id.." is moving to attack")
 			if (gameChar) then
 				self:setMoveTarget( { x = gameChar.world.x, y = gameChar.world.y } )
 			else
@@ -121,22 +121,19 @@
 
 		function enemy:moveIdle() --called on frame if this function is the currentAction set by makeDecision
 			if (not self.moveTarget) then
-				print("setting move target for "..self.id)
+				print("setting idle target for "..self.id)
 				local function getWanderPoint()
 					local r = math.random(self.wanderDistance.min, self.wanderDistance.max)
-					if math.random() == 1 then
+					if math.random(0, 1) == 1 then
 						r = r * -1
 					end
 					return r
 				end
-				local newTargetPos = { x = self.spawnPos.x + getWanderPoint(), y = self.spawnPos.y + getWanderPoint() }
-				print(self.name, self.id, "move idle target pos:", newTargetPos.x, newTargetPos.y)
-				self:setMoveTarget(newTargetPos) --game object function
-			elseif ( util.compareFuzzy( self.world, self.moveTarget, moveTargetFuzzy ) ) then
-				print (self.name, self.id, "has reached its idle target")
+				local targetPos = { x = self.spawnPos.x + getWanderPoint(), y = self.spawnPos.y + getWanderPoint() }
+				print(self.name, self.id, "move idle target pos:", targetPos.x, targetPos.y)
+				self:setMoveTarget(targetPos) --game object function
 				self.currentAction = nil -- no more action taken until enemy makesDecision again
-				self.moveTarget = nil
-			end	
+			end
 		end
 
 		function enemy:makeDecision(distance) --called from enemies onFrame if decisionTimer > decisionRate
@@ -160,7 +157,11 @@
 					return self.moveToAttack
 				else
 					--print("setting action to idle")
-					return self.moveIdle
+					if self.moveTarget then --already moving to a target
+						return nil
+					else
+						return self.moveIdle
+					end
 				end
 			end
 

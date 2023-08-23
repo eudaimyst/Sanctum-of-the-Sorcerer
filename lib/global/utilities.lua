@@ -68,15 +68,14 @@
 		return angle
 	end
 
-	function util.compareFuzzy(pos1, pos2, fuzzyDistance)
-		local dim = {"x", "y"}
-		for i = 1, #dim do
-			if pos1[dim[i]] < pos2[dim[i]] + fuzzyDistance and pos1[dim[i]] > pos2[dim[i]] - fuzzyDistance
-			and pos1[dim[2-i]] < pos2[dim[2-i]] + fuzzyDistance and pos1[dim[2-i]] > pos2[dim[2-i]] - fuzzyDistance then
-				return true
-			else
-				return false
-			end
+	function util.compareFuzzy(pos1, pos2, _fuzzyDistance)
+		local fuzzyDistance = _fuzzyDistance or 10
+		
+		if pos1.x <= pos2.x + fuzzyDistance and pos1.x >= pos2.x - fuzzyDistance
+		and pos1.y <= pos2.y + fuzzyDistance and pos1.y >= pos2.y - fuzzyDistance then
+			return true
+		else
+			return false
 		end
 	end
 
