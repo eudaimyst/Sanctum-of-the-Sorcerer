@@ -26,6 +26,7 @@
 	local mouseScrollListener --function to call when mouse is scrolled (set by scene)
 
 	local clickListener --used to pass click position to game for spell casting
+	local rightClickListener
 
 	local function checkCollisionPoint()
 		queryHit = physics.queryRegion( M.x, M.y, M.x - 1, M.y - 1 )
@@ -160,6 +161,10 @@
 		clickListener = func
 	end
 
+	function M.registerRightClickListener(func)
+		rightClickListener = func
+	end
+
 	-- Called when a mouse event has been received.
 	local function onMouseEvent( event )
 
@@ -225,6 +230,10 @@
 						M.clickedObject = nil
 					end
 					]]
+				end
+			elseif (event.isSecondaryButtonDown) then
+				if rightClickListener then
+					rightClickListener(event.x, event.y)
 				end
 			end
 	    end

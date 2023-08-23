@@ -27,16 +27,14 @@
 	--common modules - solar2d
 	local composer = require("composer")
 	local physics = require("physics")
-	local mouse = require("lib.input.mouse_input")
-	local mround = math.round
-	local mfloor = math.floor
-	local mrad = math.rad
-	local mcos, msin = math.cos, math.sin
-	local msqrt = math.sqrt
 
 	--common modules
 	local util = require("lib.global.utilities")
 	local gv = require("lib.global.variables")
+	local mouse = require("lib.input.mouse_input")
+
+	local mfloor = math.floor
+	local mceil = math.floor
 
 	--create scene
 	local scene = composer.newScene()
@@ -50,38 +48,49 @@
 	local moveSpeed = .5
 	local moveNormal = nil
 
+	local lightingUpdateRate = 50 --ms
+	local lightingUpdateTimer = 0
+
+	local blockerUpdateRate = 200 --ms
+	local blockerUpdateTimer = 0
+
 	local startPos, finishPos = nil, nil
 
 	local function getTileAtPoint(x, y)
 		local tx, ty = mfloor(x/tileSize)+1, mfloor(y/tileSize)+1
-		print("click tcord:", tx, ty)
-		return tileStore[tx][ty]
+		--print("click tcord:", tx, ty)
+		if tileStore[tx] then
+			if tileStore[tx][ty] then
+				return tileStore[tx][ty]
+			else
+				return nil
+			end
+		else
+			return nil
+		end
 	end
 
-	local function updateTileLights()
+	local function updateTileLights(updateBlockers)
 		for col = 1, #tileStore do
 			for row = 1, #tileStore[col] do
 				local tile = tileStore[col][row]
 				--print(col, row, tile.lightValue)
-				tile:calcLightValue()
-				tile:setFillColor(tile.lightValue)
-				tile:setStrokeColor(tile.lightValue)
+				if light then
+					if tile.col == false then
+						tile:calcLightValue(updateBlockers)
+						tile:updateColor()
+					end
+				end
+				tile:updateColor()
 			end
 		end
 	end
 
 	local function createLight(_x, _y)
-		local l = {x = _x or 0, y = _y or 0, radius = 800, intensity = 1, active = false, rayCount = 12, rays = nil}
-
+		local l = {x = _x or 0, y = _y or 0, radius = 800, intensity = 2, exponent = .1, active = false, path = nil}
 		function l:setPos(_x, _y)
 			self.x, self.y = _x, _y
-			if self.rays then
-				self:updateRays()
-			else
-				self:makeRays()
-			end
 		end
-
 		function l:updateRays()
 			local rayCount = self.rayCount
 			for i = 1, rayCount do
@@ -89,39 +98,10 @@
 				line.x, line.y = self.x, self.y
 			end
 		end
-
 		function l:destroySelf()
-			local rayCount = self.rayCount
-			for i = 1, rayCount do
-				local ray = self.rays[i]
-				ray.line:removeSelf()
-				ray = nil
-				self.rays[i] = nil
-			end
-			self.rays = nil
 			self = nil
+			light = nil
 		end
-
-		function l:makeRays()
-			local d = self.radius --light ray distance
-			local rays = {} --stores the rays
-			local rayCount = self.rayCount
-			for i = 1, rayCount do
-				local angle = 360 / rayCount * i
-				local r = mrad(angle) --radians
-				local x, y = d * mcos(r), d * msin(r)
-				local ray = { startPos = {x = self.x, y = self.y}, finishPos = {x = self.x + x, y = self.y + y}, delta = {x = x, y = y } }
-				print("ray", i, "start", ray.startPos.x, ray.startPos.y, "finish", ray.finishPos.x, ray.finishPos.y)
-				--x = dist cos angle, y = dist sin angle
-				local line = display.newLine( ray.startPos.x, ray.startPos.y, ray.finishPos.x, ray.finishPos.y )
-				line.isVisible = true
-				line.strokeWidth = 2
-				ray.line = line
-				rays[i] = ray
-			end
-			self.rays = rays
-		end
-		l:makeRays()
 		return l
 	end
 
@@ -131,44 +111,109 @@
 		tile.x, tile.y = x, y
 		tile.mid = {x = x + tileSize / 2, y = y + tileSize / 2}
 		tile.lightValue = .3
+		tile.lightBlockers = 0
+		tile.col = false
 		util.zeroAnchors(tile)
 		tile:setStrokeColor(tile.lightValue)
 		tile.strokeWidth = 4
-		function tile:calcLightValue()
+
+		function tile:calcLightValue(updateBlockers)
 			if light then
-				local dist = util.getDistance(light.x, light.y, self.mid.x, self.mid.y)
-				local rad = light.radius + tileSize
-				tile.lightValue = light.intensity * ( ( 1 - msqrt(dist / rad) ) * light.intensity ) 
+				local midx, midy = self.mid.x, self.mid.y
+				local dist = util.getDistance(light.x, light.y, midx, midy)
+				if dist > light.radius then
+					self.lightValue = 0
+				else
+					if updateBlockers then
+						print("updating blockers")
+						self.lightBlockers = 0
+						local rayStart = {x = light.x, y = light.y}
+						local rayEnd = {x = midx, y = midy}
+						local rayDelta = {x = rayEnd.x - rayStart.x, y = rayEnd.y - rayStart.y}
+						local rayNormal = util.normalizeXY(rayDelta)
+						local raySegment = {x = rayNormal.x * tileSize/2, y = rayNormal.y * tileSize/4}
+						local segmentLength = util.getDistance(0, 0, raySegment.x, raySegment.y)
+						local segments = mceil(dist / segmentLength)
+						for i = 1, segments do
+							local checkPos = {x = rayStart.x + rayNormal.x * segmentLength * i, y = rayStart.y + rayNormal.y * segmentLength * i}
+							local checkTile = getTileAtPoint(checkPos.x, checkPos.y)
+							if checkTile then
+								if checkTile.col == true then
+									--found a light blocker
+									self.lightBlockers = self.lightBlockers + 1
+								end
+							end
+						end
+					end
+					local rad = light.radius + tileSize
+					local mod = (2 - self.lightBlockers) / 2
+					self.lightValue = light.intensity * ( ( 1 - (dist / rad) ^ light.exponent ) * light.intensity * mod )
+				end
 			end
+		end
+
+		function tile:updateColor()
+			if self.col then
+				self:setFillColor(1, 0, 0)
+				self:setStrokeColor(1, 0, 0)
+			else
+				self:calcLightValue()
+				if (light) then
+					self:setFillColor(self.lightValue)
+					self:setStrokeColor(self.lightValue)
+				else
+					self:setFillColor(.2)
+					self:setStrokeColor(.2)
+				end
+			end
+		end
+
+		function tile:toggleCol()
+			if self.col == false then
+				self.col = true
+			else
+				self.col = false
+			end
+			self:updateColor()
 		end
 		return tile
 	end
 
 	local function onMouseClick(x, y)
-		print("set light location to "..x, y)
-		
-		if startPos == nil and finishPos == nil then
+		print("set light location to ", x, y)
+		local tile = getTileAtPoint(x, y)
+		tile:setStrokeColor(1, 1, 0)
+		if startPos == nil and finishPos == nil then --first click
 			startPos = {x = x, y = y}
 			light = createLight(x, y)
-		elseif startPos and finishPos == nil then
+			updateTileLights(true)
+		elseif startPos and finishPos == nil then --second click
 			finishPos = {x = x, y = y}
-		elseif startPos and finishPos then
+			light.path = display.newLine(startPos.x,startPos.y,finishPos.x,finishPos.y)
+			light.path:setStrokeColor(0, 1, 0)
+		elseif startPos and finishPos then --light is moving third click
 			startPos = nil
-		elseif startPos == nil and finishPos then
+		elseif startPos == nil and finishPos then --light not moving third or fourth click
+			light.path:removeSelf()
 			startPos = nil
 			finishPos = nil
 			moveNormal = nil
+			light.path = nil
 			light:destroySelf()
-			updateTileLights()
+			updateTileLights(true)
 		end
+	end
 
-		updateTileLights()
+	local function onMouseRightClick(x, y)
+		print("right click at ", x, y)
 		local tile = getTileAtPoint(x, y)
-		tile:setStrokeColor(1, 1, 0)
+		tile:toggleCol()
+		updateTileLights(true)
 	end
 
 	local function firstFrame()
 		mouse.registerClickListener(onMouseClick)
+		mouse.registerRightClickListener(onMouseRightClick)
 		local tileGroup = display.newGroup()
 		sceneGroup:insert(tileGroup)
 		local tileCount = {x = math.ceil(display.actualContentWidth/tileSize), y = math.ceil(display.actualContentHeight/tileSize)}
@@ -178,7 +223,14 @@
 				tileStore[col][row] = createTile(col, row)
 			end
 		end
-		updateTileLights()
+		updateTileLights(nil)
+		local instructions = display.newText( {
+			text = "left click = create light, move light, stop movement, destroy light\nright click = toggle wall tiles",
+			font = native.systemFont,   
+			fontSize = 18,
+			align = "left"  -- Alignment parameter
+		} );
+		util.zeroAnchors(instructions)
 	end
 
 	local function onFrame()
@@ -189,7 +241,17 @@
 			local nx = light.x + moveNormal.x * gv.frame.dt * moveSpeed
 			local ny = light.y + moveNormal.y * gv.frame.dt * moveSpeed
 			light:setPos(nx, ny)
-			updateTileLights()
+			lightingUpdateTimer = lightingUpdateTimer + gv.frame.dt
+			blockerUpdateTimer = blockerUpdateTimer + gv.frame.dt
+			if lightingUpdateTimer > lightingUpdateRate then
+				lightingUpdateTimer = 0
+				if blockerUpdateTimer > blockerUpdateRate then
+					blockerUpdateTimer = 0
+					updateTileLights(true)
+				else
+					updateTileLights(nil)
+				end
+			end
 			if util.compareFuzzy(light, finishPos) then
 				startPos = nil
 			end
@@ -197,7 +259,6 @@
 	end
 
 	function scene:create( event ) -- Called when scene's view does not exist.
-		
 		sceneGroup = self.view
 		display.setDefault( "background", .09, .09, .09 )
 		-- We need physics started to add bodies
@@ -206,39 +267,28 @@
 	end
 
 	function scene:show( event )
-
 		sceneGroup = self.view
 		local phase = event.phase
-
 		if phase == "will" then -- Called when scene is still off screen and is about to move on screen
-			
 		elseif phase == "did" then -- Called when scene is now on screen
 			print("scene loaded")
 			mouse.init()
 			firstFrame()
-
-			
 			Runtime:addEventListener( "enterFrame", onFrame ) --listerer for every frame
 		end
 	end
 
 	function scene:hide( event )
-
 		sceneGroup = self.view
 		local phase = event.phase
-
 		if event.phase == "will" then -- Called when scene is on screen and is about to move off screen
-			
 		elseif phase == "did" then -- Called when scene is now off screen
-			
 		end
 	end
 
 	function scene:destroy( event )
 		-- Called prior to removal of scene's "view" (sceneGroup)
-
-		local sceneGroup = self.view
-
+		sceneGroup = self.view
 		package.loaded[physics] = nil; physics = nil
 	end
 
