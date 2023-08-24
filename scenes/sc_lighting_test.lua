@@ -91,13 +91,6 @@
 		function l:setPos(_x, _y)
 			self.x, self.y = _x, _y
 		end
-		function l:updateRays()
-			local rayCount = self.rayCount
-			for i = 1, rayCount do
-				local line = self.rays[i].line
-				line.x, line.y = self.x, self.y
-			end
-		end
 		function l:destroySelf()
 			self = nil
 			light = nil

@@ -7,6 +7,7 @@
 	--common modules
 	local util = require("lib.global.utilities")
 	local fileio = require( "lib.map.fileio")
+	local tiles = require("lib.map.tiles")
 
 	local defaultTileset = { --this is the default tileset data FOR THE SCENE ONLY (map generator has its own fix is TODO)
 		void = { savestring = "v", image = "void.png"},
@@ -17,7 +18,8 @@
 	}
 	--not yet implemented
 
-	local wallSubTypes = { void = "void_", innerCorner = "inner_corner_", outerCorner = "outer_corner_", horizontal = "horizontal_", vertical = "vertical_", error = "error_" }
+	local wallSubTypes = { void = "void_", innerCorner = "inner_corner_", outerCorner = "outer_corner_",
+		horizontal = "horizontal_", vertical = "vertical_", error = "error_" }
 
 	-- Define module
 	local map = {}
@@ -176,6 +178,8 @@
 		
 		local tileData = _tileData or self.tileData
 		local tileSize
+		local tileStore = self.tileStore
+		local tileStoreCols, tileStoreRows, tileStoreIndex = tileStore.tileCols, tileStore.rows, tileStore.indexedTiles
 
 		if (cam.mode == cam.modes.debug) then --if debugging cam tiles have different size
 			print("camdebug tilesize = "..cam.mode.debugTileSize)
@@ -197,6 +201,7 @@
 		self:createSavestringLookup(defaultTileset) --takes a tileset and makes a lookup table from savestring to tile type
 		self:createTexturesFromTileset(defaultTileset) --preloads the tile textures
 
+		--[[  moved to tiles.lua
 		local function createTile(x, y, i, s, c) --new tile constructor
 			local tile = {}
 			tile.id, tile.x, tile.y = i, x, y --tile.x = tile column, tile.y = tile row
@@ -305,18 +310,19 @@
 			--tiles by default do not have a rect, createRect is called when tile needs to be shown, ie between camera bounds on camera move
 			--tile:createRect()
 			return tile
-		end
+		end ]]
 
+		tiles:init(self, cam, defaultTileset, wallSubTypes, mapImageFolder)
 		local x, y = 1, 1
 		for i = 1, #tileData do --for each tile in the tileData taken from the map file
 			--print(x, y)
 			local data = tileData[i]
-			local tile = createTile(x, y, i, data.s, data.c)
-			if y == 1 then self.tileStore.tileCols[x] = {} end --create the tileCols 
-			if x == 1 then self.tileStore.tileRows[y] = {} end --create the tileRows 
-			self.tileStore.tileCols[x][y] = tile --store the tile in the correct position in tileCols
-			self.tileStore.tileRows[y][x] = tile
-			self.tileStore.indexedTiles[i] = tile --also store the tile in an indexed table
+			local tile = tiles:createTile(i, x, y, data.s, data.c)
+			if y == 1 then tileStoreCols[x] = {} end --create the tileCols 
+			if x == 1 then tileStoreRows[y] = {} end --create the tileRows 
+			tileStoreCols[x][y] = tile --store the tile in the correct position in tileCols
+			tileStoreRows[y][x] = tile
+			tileStoreIndex[i] = tile --also store the tile in an indexed table
 
 			if x >= width then --reached the end of tile creation for the row
 				x, y = 1, y + 1 --increase the counter for the y axis and reset the x
@@ -325,8 +331,8 @@
 			end
 		end
 
-		for i = 1, #self.tileStore.indexedTiles do --set subtypes, must be after all tiles created to get neighbour tiles
-			local tile = self.tileStore.indexedTiles[i]
+		for i = 1, #tileStoreIndex do --set subtypes, must be after all tiles created to get neighbour tiles
+			local tile = tileStoreIndex[i]
 			if tile.type == "wall" then
 				tile:setWallSubType()
 			end
