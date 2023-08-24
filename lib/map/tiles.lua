@@ -7,6 +7,11 @@
 	--common modules
 	local g = require("lib.global.constants")
 	local util = require("lib.global.utilities")
+	local lighting = require("lib.entity.light_emitter")
+	local json = require("json")
+
+	local mceil = math.ceil
+
 	local map, cam, defaultTileset, wallSubTypes, mapImageFolder
 	local tileSize, halfTileSize
 	-- Define module
@@ -16,19 +21,26 @@
 		map, cam, defaultTileset, wallSubTypes, mapImageFolder = _map, _cam, _defaultTileset, _wallSubTypes, _mapImageFolder
 		tileSize = map.tileSize
 		halfTileSize = tileSize/2
+		print("----tiles module initiated----")
 	end
 
 	function lib_tile:createTile(_id, _column, _row, _collision, _string)
 		local tile = {}
 		local i, x, y, c, s = _id, _column, _row, _collision, _string
+		--print(i, x, y, c, s)
 		tile.id, tile.x, tile.y = i, x, y --tile.x = tile column, tile.y = tile row
 		tile.col = c
 		--tile screen pos is exclusively accessed through its rect
 		tile.world = { x = x * tileSize, y = y * tileSize }
+		tile.mid = { x = x * tileSize + halfTileSize, y = y * tileSize + halfTileSize }
 		
 		local stringLookup = map.saveStringLookup
-		local type = stringLookup[s]
-		tile.type = type --sets the tile type string to the key name of the matching tileset entry
+		--print("tile string lookup:")
+		--print(json.prettify(stringLookup))
+		--print("looking for string in key"..s)
+		--print('setting tile type to string '..stringLookup[s])
+		local type = stringLookup[s] --sets the tile type string to the key name of the matching tileset entry
+		tile.type = type
 		tile.imageTexture = defaultTileset[type].texture --imageFileLocation for this tile
 		--print("tile image file: "..tile.imageFile)
 
@@ -99,6 +111,43 @@
 			if (self.rect) then
 				self.rect:removeSelf()
 				self.rect = nil
+			end
+		end
+
+		function tile:updateLighting()
+			if (self.rect) then --bypass if not rect
+				for ii = 1, #lighting.store then
+					local light = lighting.store[ii]
+
+					local midx, midy = self.mid.x, self.mid.y
+					local dist = util.getDistance(light.x, light.y, midx, midy)
+					if dist > light.radius then
+						self.lightValue = 0
+					else
+						print("updating blockers")
+						self.lightBlockers = 0
+						local rayStart = {x = light.x, y = light.y}
+						local rayEnd = {x = midx, y = midy}
+						local rayDelta = {x = rayEnd.x - rayStart.x, y = rayEnd.y - rayStart.y}
+						local rayNormal = util.normalizeXY(rayDelta)
+						local raySegment = {x = rayNormal.x * tileSize/2, y = rayNormal.y * tileSize/4}
+						local segmentLength = util.getDistance(0, 0, raySegment.x, raySegment.y)
+						local segments = mceil(dist / segmentLength)
+						for i = 1, segments do
+							local checkPos = {x = rayStart.x + rayNormal.x * segmentLength * i, y = rayStart.y + rayNormal.y * segmentLength * i}
+							local checkTile = getTileAtPoint(checkPos.x, checkPos.y)
+							if checkTile then
+								if checkTile.col == true then
+									--found a light blocker
+									self.lightBlockers = self.lightBlockers + 1
+								end
+							end
+						end
+						local rad = light.radius + tileSize
+						local mod = (2 - self.lightBlockers) / 2
+						self.lightValue = light.intensity * ( ( 1 - (dist / rad) ^ light.exponent ) * light.intensity * mod )
+					end
+				end
 			end
 		end
 

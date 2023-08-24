@@ -8,6 +8,7 @@
 	local util = require("lib.global.utilities")
 	local fileio = require( "lib.map.fileio")
 	local tiles = require("lib.map.tiles")
+	local json = require("json")
 
 	local defaultTileset = { --this is the default tileset data FOR THE SCENE ONLY (map generator has its own fix is TODO)
 		void = { savestring = "v", image = "void.png"},
@@ -128,6 +129,7 @@
 		bMax.x, bMax.y = worldPointToTileCoords(x2 + self.tileSize, y2 + self.tileSize)
 		--local boundWidth, boundHeight = boundMax.x - boundMin.x, boundMax.y - boundMin.y
 		local tileList = {}
+		local tileListCols = {} --stores tiles in a col/row format for lighting
 		local boundaryTiles = { up = {}, down = {}, left = {}, right = {} } --tiles on the edge of the bounds
 		local tx, ty --used for clamping
 		for y = cMin.y, cMax.y do
@@ -135,6 +137,10 @@
 				tx, ty = clampToMapSize(x, y)
 				--print("getting tile: "..tx..", "..ty.." from tileStore")
 				tileList[#tileList+1] = self.tileStore.tileCols[tx][ty]
+				if x == cMin.x then
+					tileListCols[#tileListCols+1] = {}
+				end
+				tileListCols[#tileListCols][x-cMin.x+1] = self.tileStore.tileCols[tx][ty]
 			end
 		end
 		for y = bMin.y, bMax.y do
@@ -153,11 +159,11 @@
 		for k, v in pairs(boundaryTiles) do
 			--print("boundary "..k.." has "..#v.." tiles")
 		end
-		return tileList, boundaryTiles
+		return tileList, boundaryTiles, tileListCols
 	end
 
 	function map:createTexturesFromTileset(tileset)--preloads the tile textures
-		for k, tileData in pairs(self.params.tileset) do
+		for k, tileData in pairs(tileset) do
 			print("creating tileset for texture: "..k)
 			local fName = mapImageFolder.."default_tileset/"..tileset[k].image
 			
@@ -166,9 +172,9 @@
 		end
 	end
 	
-	function map:createSavestringLookup(defaultTileset) --takes a tileset and makes a lookup table from savestring to tile type
+	function map:createSavestringLookup(tileset) --takes a tileset and makes a lookup table from savestring to tile type
 		map.saveStringLookup = {}
-		for k, v in pairs(defaultTileset) do
+		for k, v in pairs(tileset) do
 			map.saveStringLookup[v.savestring] = k
 		end
 	end
@@ -178,8 +184,10 @@
 		
 		local tileData = _tileData or self.tileData
 		local tileSize
-		local tileStore = self.tileStore
-		local tileStoreCols, tileStoreRows, tileStoreIndex = tileStore.tileCols, tileStore.rows, tileStore.indexedTiles
+		local tileStore = {}
+		self.tileStore = tileStore
+		local tileStoreCols, tileStoreRows, tileStoreIndex = {}, {}, {}
+		tileStore.tileCols, tileStore.rows, tileStore.indexedTiles = tileStoreCols, tileStoreRows, tileStoreIndex
 
 		if (cam.mode == cam.modes.debug) then --if debugging cam tiles have different size
 			print("camdebug tilesize = "..cam.mode.debugTileSize)
@@ -192,13 +200,14 @@
 		--TODO: clean this up by copying all params to module
 		self.width, self.height = self.params.width, self.params.height
 		self.tileSize = self.params.tileSize
-		self.tileset = self.params.tileset
+		self.tileset = defaultTileset
 		self.worldWidth, self.worldHeight = self.params.width * tileSize, self.params.height * tileSize
 		self.centerX, self.centerY = self.worldWidth/2, self.worldHeight/2
 		local width, height, tileset = self.width, self.height, self.tileset --set local vars for readability
 		local halfTileSize = tileSize/2
 
 		self:createSavestringLookup(defaultTileset) --takes a tileset and makes a lookup table from savestring to tile type
+		--print(json.prettify(self.saveStringLookup))
 		self:createTexturesFromTileset(defaultTileset) --preloads the tile textures
 
 		--[[  moved to tiles.lua
@@ -314,10 +323,11 @@
 
 		tiles:init(self, cam, defaultTileset, wallSubTypes, mapImageFolder)
 		local x, y = 1, 1
+		local createTile = tiles.createTile
 		for i = 1, #tileData do --for each tile in the tileData taken from the map file
 			--print(x, y)
 			local data = tileData[i]
-			local tile = tiles:createTile(i, x, y, data.s, data.c)
+			local tile = createTile(tiles, i, x, y, data.c, data.s)
 			if y == 1 then tileStoreCols[x] = {} end --create the tileCols 
 			if x == 1 then tileStoreRows[y] = {} end --create the tileRows 
 			tileStoreCols[x][y] = tile --store the tile in the correct position in tileCols
@@ -384,7 +394,7 @@
 
 		local cb = bounds or cam.bounds
 		local s = tileSize or self.tileSize * 2	--buffer size
-		cam.screenTiles, cam.boundaryTiles = self:getTilesBetweenWorldBounds( cb.x1-s, cb.y1-s, cb.x2+s, cb.y2+s ) --get cam tiles within cam borders
+		cam.screenTiles, cam.boundaryTiles, cam.screenTileCols = self:getTilesBetweenWorldBounds( cb.x1-s, cb.y1-s, cb.x2+s, cb.y2+s ) --get cam tiles within cam borders
 
 	end
 

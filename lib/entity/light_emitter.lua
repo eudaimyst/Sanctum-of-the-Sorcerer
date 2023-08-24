@@ -13,8 +13,8 @@
 	local lightEmitter = {}
 	lightEmitter.store = {}
 
-	local function updateLight(entity) --
-		
+	local function updateLightPos(entity) --
+		entity.light.x, entity.light.y = entity.world.x, entity.world.y
 	end
 
 	function lightEmitter.attachToEntity(entity, _params)
@@ -24,7 +24,7 @@
 			if _params.intensity then light.intensity = _params.intensity end
 			if _params.exponent then light.exponent = _params.exponent end
 		end
-		entity:addOnFrameMethod(updateLight)
+		entity:addOnFrameMethod(updateLightPos)
 		lightEmitter.store[#lightEmitter.store+1] = light
 		entity.light = light
 	end

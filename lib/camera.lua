@@ -27,6 +27,7 @@
 	cam.zoomTime = 300
 	cam.moveSpeed = 1
 	cam.screenTiles = {} --holds references to all tiles displayed on screen within bounds
+	cam.screenTileCols = {}
 	cam.boundaryTiles = {} --holds references to tiles that are on the boundary of the screen
 
 	function cam:updateBounds()

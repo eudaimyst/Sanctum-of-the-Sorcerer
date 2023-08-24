@@ -58,14 +58,14 @@
 
         function gameObject:setMoveTarget(pos) --once move target is set, then onFrame will know to call the move function to the constructed moveTarget
             --print(json.prettify(self))
-            print("move target:",self.id, self.world.x, self.world.y)
+            --print("move target:",self.id, self.world.x, self.world.y)
             local normalTarget = util.normalizeXY(util.deltaPos(self.world, pos))
             local angle = util.deltaPosToAngle(self.world, pos)
             --directions were originally intended to be constants and not intended to have their values changed
             --TODO: come up with a proper direction framework that is not accessed as constants
             local dir = util.deepcopy(util.angleToDirection(angle)) 
             dir.x, dir.y = normalTarget.x, normalTarget.y
-            print(self.id, "target dir: ", dir.x, dir.y)
+            --print(self.id, "target dir: ", dir.x, dir.y)
             self.moveTarget = dir
         end
 
