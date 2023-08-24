@@ -17,16 +17,23 @@
 		entity.light.x, entity.light.y = entity.world.x, entity.world.y
 	end
 
-	function lightEmitter.attachToEntity(entity, _params)
-		local light = {x = entity.world.x, y = entity.world.y, radius = 800, intensity = 2, exponent = .1, active = false, path = nil}
+	local function createLight(_params)
+		local light = { x = 0, y = 0, radius = 800, intensity = 10, exponent = .1, active = false, path = nil }
 		if _params then
+			if _params.x then light.x = _params.x end
+			if _params.y then light.y = _params.y end
 			if _params.radius then light.radius = _params.radius end
 			if _params.intensity then light.intensity = _params.intensity end
 			if _params.exponent then light.exponent = _params.exponent end
 		end
-		entity:addOnFrameMethod(updateLightPos)
 		lightEmitter.store[#lightEmitter.store+1] = light
-		entity.light = light
+		return light
+	end
+
+	function lightEmitter.attachToEntity(entity, _params)
+		entity:addOnFrameMethod(updateLightPos)
+		entity.light = createLight(_params)
+		entity.light.x, entity.light.y = entity.world.x, entity.world.y
 	end
 
 	return lightEmitter

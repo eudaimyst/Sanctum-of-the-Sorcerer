@@ -112,6 +112,7 @@
 	end
 
 	function map:getTileAtPoint(pos) --takes pos table with x, y and returns tile at that world pos
+		--print("get tile: ", pos.x, pos.y)
 		if (pos) then
 			local x, y = worldPointToTileCoords(pos.x, pos.y)
 			return self.tileStore.tileCols[x][y]
@@ -470,10 +471,6 @@
 	function map:init(sceneGroup, _cam)
 		sceneGroup:insert(self.group)
 		cam = _cam
-	end
-
-	function map:onFrame() --called from game or level editor on frame ????
-	
 	end
 
 	return map

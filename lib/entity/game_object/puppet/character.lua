@@ -10,6 +10,7 @@
 	local spellParams = require("lib.global.spell_params")
 	local util = require("lib.global.utilities")
 	local json = require("json")
+	local lights = require("lib.entity.light_emitter")
 
 	local hud --set on create
 
@@ -100,6 +101,8 @@
 				char:addSpell(v)
 			end
 		end
+
+		lights.attachToEntity(char)
 
 		return char
 	end

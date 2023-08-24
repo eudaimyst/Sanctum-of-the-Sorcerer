@@ -15,6 +15,7 @@
 	local enemy = require("lib.entity.game_object.puppet.enemy")
 	local lfs = require("lfs")
 	local spellParams = require("lib.global.spell_params")
+	local tiles = require("lib.map.tiles") --to call onFrame to update tiles
 	local json = require("json")
 
 
@@ -78,6 +79,8 @@
 				end
 			end
 		end
+
+		tiles:onFrame()
 	end
 
 	function game.init(_cam, _map, _key, _mouse, _hud)

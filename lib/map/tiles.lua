@@ -5,12 +5,18 @@
 	-----------------------------------------------------------------------------------------
 
 	--common modules
-	local g = require("lib.global.constants")
+	local gv = require("lib.global.variables")
 	local util = require("lib.global.utilities")
 	local lighting = require("lib.entity.light_emitter")
 	local json = require("json")
 
 	local mceil = math.ceil
+
+	local lightingUpdateRate = 50 --ms
+	local lightingUpdateTimer = 0
+
+	local lightBlockerUpdateRate = 200 --ms
+	local lightBlockerUpdateTimer = 0
 
 	local map, cam, defaultTileset, wallSubTypes, mapImageFolder
 	local tileSize, halfTileSize
@@ -24,25 +30,44 @@
 		print("----tiles module initiated----")
 	end
 
+	function lib_tile:onFrame() --called from game or level editor on frame ????
+		
+		local dt = gv.frame.dt
+		lightingUpdateTimer = lightingUpdateTimer + dt
+		lightBlockerUpdateTimer = lightBlockerUpdateTimer + dt
+
+		if lightingUpdateTimer > lightingUpdateRate then
+			lightingUpdateTimer = 0
+			
+			local screenTiles = cam.screenTiles
+			
+			if lightBlockerUpdateTimer > lightBlockerUpdateRate then
+				lightBlockerUpdateTimer = 0
+			
+				for i = 1, #screenTiles do
+					screenTiles[i]:updateLightValue(true)
+				end
+			else
+				for i = 1, #screenTiles do
+					screenTiles[i]:updateLightValue(nil)
+				end
+			end
+		end
+	end
+
 	function lib_tile:createTile(_id, _column, _row, _collision, _string)
 		local tile = {}
-		local i, x, y, c, s = _id, _column, _row, _collision, _string
-		--print(i, x, y, c, s)
-		tile.id, tile.x, tile.y = i, x, y --tile.x = tile column, tile.y = tile row
-		tile.col = c
+		tile.id, tile.x, tile.y = _id, _column, _row --tile.x = tile column, tile.y = tile row
+		tile.lightValue = 0
+		tile.col = _collision
 		--tile screen pos is exclusively accessed through its rect
-		tile.world = { x = x * tileSize, y = y * tileSize }
-		tile.mid = { x = x * tileSize + halfTileSize, y = y * tileSize + halfTileSize }
+		tile.world = { x = _column * tileSize, y = _row * tileSize }
+		tile.mid = { x = _column * tileSize + halfTileSize, y = _row * tileSize + halfTileSize }
 		
 		local stringLookup = map.saveStringLookup
-		--print("tile string lookup:")
-		--print(json.prettify(stringLookup))
-		--print("looking for string in key"..s)
-		--print('setting tile type to string '..stringLookup[s])
-		local type = stringLookup[s] --sets the tile type string to the key name of the matching tileset entry
+		local type = stringLookup[_string] --sets the tile type string to the key name of the matching tileset entry
 		tile.type = type
 		tile.imageTexture = defaultTileset[type].texture --imageFileLocation for this tile
-		--print("tile image file: "..tile.imageFile)
 
 		function tile:setWallSubType() --look at neighbouring tiles to set a subtype for this tile
 			local st = wallSubTypes
@@ -114,39 +139,49 @@
 			end
 		end
 
-		function tile:updateLighting()
+		function tile:updateLightValue(updateLightBlockers)
 			if (self.rect) then --bypass if not rect
-				for ii = 1, #lighting.store then
+				for ii = 1, #lighting.store do
 					local light = lighting.store[ii]
+					local lightX, lightY = light.x, light.y
+					local rad = light.radius + tileSize
+					local exp, int = light.exponent, light.intensity
 
 					local midx, midy = self.mid.x, self.mid.y
 					local dist = util.getDistance(light.x, light.y, midx, midy)
 					if dist > light.radius then
 						self.lightValue = 0
 					else
-						print("updating blockers")
-						self.lightBlockers = 0
-						local rayStart = {x = light.x, y = light.y}
-						local rayEnd = {x = midx, y = midy}
-						local rayDelta = {x = rayEnd.x - rayStart.x, y = rayEnd.y - rayStart.y}
-						local rayNormal = util.normalizeXY(rayDelta)
-						local raySegment = {x = rayNormal.x * tileSize/2, y = rayNormal.y * tileSize/4}
-						local segmentLength = util.getDistance(0, 0, raySegment.x, raySegment.y)
-						local segments = mceil(dist / segmentLength)
-						for i = 1, segments do
-							local checkPos = {x = rayStart.x + rayNormal.x * segmentLength * i, y = rayStart.y + rayNormal.y * segmentLength * i}
-							local checkTile = getTileAtPoint(checkPos.x, checkPos.y)
-							if checkTile then
-								if checkTile.col == true then
-									--found a light blocker
-									self.lightBlockers = self.lightBlockers + 1
+						if updateLightBlockers then
+							self.lightBlockers = 0
+							local rayDelta = {x = midx - light.x, y = midy - light.y}
+							local rayNormal = util.normalizeXY(rayDelta)
+							local raySegment = {x = rayNormal.x * halfTileSize, y = rayNormal.y * halfTileSize}
+							local segmentLength = util.getDistance(0, 0, raySegment.x, raySegment.y)
+							local segments = mceil(dist / segmentLength)
+							for i = 1, segments do
+								local checkPos = {x = lightX + rayNormal.x * segmentLength * i, y = lightY + rayNormal.y * segmentLength * i}
+								--print(checkPos.x, checkPos.y)
+								--print("checking blockers")
+								local checkTile = map:getTileAtPoint(checkPos)
+								if checkTile then
+									if checkTile.type == "void" then
+										--found a light blocker
+										self.lightBlockers = self.lightBlockers + 1
+									end
 								end
 							end
+							local mod = (2 - self.lightBlockers) / 2
+							self.lightValue = ( 1 - (dist / rad) ^ exp ) * int * mod
 						end
-						local rad = light.radius + tileSize
-						local mod = (2 - self.lightBlockers) / 2
-						self.lightValue = light.intensity * ( ( 1 - (dist / rad) ^ light.exponent ) * light.intensity * mod )
 					end
+				end
+				if self.type == "wall" then
+					for i = 0, 3 do
+						self.rect.wallRects[i]:setFillColor(self.lightValue)
+					end
+			else
+					self.rect:setFillColor(self.lightValue)
 				end
 			end
 		end
@@ -154,10 +189,12 @@
 		function tile:createRect()
 			if (self.type == "wall") then --if tile is a wall then we need to make a group for the subtiles
 				self.rect = display.newGroup()
+				self.rect.wallRects = {}
 				map.group:insert(self.rect)
 				self.rect.anchorChildren = true
-				for i = 0, 3, 1 do --four corners
+				for i = 0, 3 do --four corners
 					local wallRect = display.newImageRect( self.rect, self.wallTexture[i].filename, self.wallTexture[i].baseDir, halfTileSize, halfTileSize ) --create rect for each wall
+					self.rect.wallRects[i] = wallRect
 					wallRect = util.zeroAnchors(wallRect)
 					local n, r = math.modf( i / 2 ) --set wall rect position using math
 					wallRect.x = r * tileSize - halfTileSize
@@ -177,4 +214,5 @@
 		--tile:createRect()
 		return tile
 	end
+
 	return lib_tile
