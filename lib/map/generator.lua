@@ -54,13 +54,16 @@
 	mapgen.edgeRooms = { up = {}, down = {}, left = {}, right = {} }
 	local sides = { "up", "down", "left", "right" }
 	local oppEdges = { up = "down", down = "up", left = "right", right = "left" }
-	local roomStartEndPoints = { up = {axis = "y", side = "min", midAxis = "x"}, down = {axis = "y", side = "max", midAxis = "x"},
-								 left = {axis = "x", side = "min", midAxis = "y"}, right = {axis = "x", side = "max", midAxis = "y"} }
+	--this is used to figure out which roomBounds to use based on side, for start end points
+	local roomStartEndPoints = { 	up = {axis = "y", side = "min", midAxis = "x" },
+									down = {axis = "y", side = "max", midAxis = "x" },
+								 	left = {axis = "x", side = "min", midAxis = "y" },
+									right = {axis = "x", side = "max", midAxis = "y" } }
 	mapgen.index = 1 --used for iterating map generator to draw variable number of tiles per frame 
 	mapgen.run = false
 	mapgen.paused = false
 
-	function mapgen:createRoom(id, x1, y1, x2, y2, edge)
+	function mapgen:createRoom(id, x1, y1, x2, y2, edge) --called by mapgen func
 		local room = {}
 		room.worldBounds = { min = { x = x1, y = y1 }, max = { x = x2, y = y2 } }
 		room.midPoint = { x = (x1 + x2) / 2, y = (y1 + y2) / 2 }
@@ -155,6 +158,37 @@
 		end
 		--return enemies
 		mapgen.enemies = enemies
+	end
+
+	function mapgen:generateDecals()
+		local decals = {}
+
+		local function windowGen()
+			local windowSpacing = 3
+			--create windows only on side rooms
+			for side, room in pairs(self.edgeRooms) do
+				local windowAngles = {up = 270, right = 0, down = 90, left = 180}
+				local wallTiles = room.wallTiles[side]
+				local wallLength = #wallTiles
+				local windowTiles = {}
+				for i = 1, math.floor(wallLength / windowSpacing) do
+					windowTiles[i] = wallTiles[windowSpacing * i]
+					
+				end
+				for i = 1, #windowTiles do
+					local tile = windowTiles[side]
+					local window = {x = nil, y = nil, angle = windowAngles[side], savestring = "win"}
+					window.x = tile.xPos * mapgen.tileSize
+					window.y = tile.yPos * mapgen.tileSize
+					decals[#decals+1] = window
+				end
+			end
+		end
+		windowGen()
+		
+
+
+
 	end
 
 	function mapgen:init(sceneGroup) --sets generator params to passed params or defaults for each default param defined

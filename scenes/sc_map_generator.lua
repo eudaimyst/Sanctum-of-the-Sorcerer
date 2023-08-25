@@ -69,6 +69,10 @@
 			mapgen:generateEnemies()
 		end
 
+		local function startDecalGen()
+			mapgen:generateDecals()
+		end
+
 		local function clearMap() --keep the tiles but remove any floor
 			mapgen:clearTiles()
 		end
@@ -96,7 +100,9 @@
 					[2] = { { label = "Generate floor", eType = t.toggleButtons, amount = 2,
 					texts = { "start", "clear" }, clickListener = {startGenMethod, clearMap} } },
 					[3] = { { label = "Generate enemies", eType = t.toggleButtons, amount = 2,
-					texts = { "start", "clear" }, clickListener = {startEnemyGen, clearMap} } }
+					texts = { "start", "clear" }, clickListener = {startEnemyGen, clearMap} } },
+					[4] = { { label = "Generate decals", eType = t.toggleButtons, amount = 2,
+					texts = { "start", "clear" }, clickListener = {startDecalGen, clearMap} } },
 			} },
 			[2] = { label = "Save / Load", collapsable = true, elements = {
 					[1] = { {param = "filename", label = "File Name:", eType = t.inputField, inputListener = updateFilename } },
