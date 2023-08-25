@@ -182,8 +182,10 @@
 			updateTileLights(true)
 		elseif startPos and finishPos == nil then --second click
 			finishPos = {x = x, y = y}
-			light.path = display.newLine(startPos.x,startPos.y,finishPos.x,finishPos.y)
-			light.path:setStrokeColor(0, 1, 0)
+			if light then
+				light.path = display.newLine(startPos.x,startPos.y,finishPos.x,finishPos.y) 
+				light.path:setStrokeColor(0, 1, 0)
+			end
 		elseif startPos and finishPos then --light is moving third click
 			startPos = nil
 		elseif startPos == nil and finishPos then --light not moving third or fourth click
@@ -191,8 +193,10 @@
 			startPos = nil
 			finishPos = nil
 			moveNormal = nil
-			light.path = nil
-			light:destroySelf()
+			if light then
+				light.path = nil
+				light:destroySelf()
+			end
 			updateTileLights(true)
 		end
 	end

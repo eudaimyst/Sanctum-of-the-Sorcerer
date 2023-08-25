@@ -68,6 +68,13 @@
 		return angle
 	end
 
+	function util.sortBounds (x1, x2, y1, y2)
+		local t
+		if (x1 > x2) then t = x2; x2 = x1; x1 = t end
+		if (y1 > y2) then t = y2; y2 = y1; y1 = t end
+		return x1, x2, y1, y2
+	end
+
 	function util.compareFuzzy(pos1, pos2, _fuzzyDistance)
 		local fuzzyDistance = _fuzzyDistance or 10
 		

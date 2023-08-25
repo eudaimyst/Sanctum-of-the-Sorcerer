@@ -9,9 +9,9 @@
 	local util = require("lib.global.utilities")
 
 	--mapgen functions module
-	local genFuncs = require("lib.map.gen_functions")
+	local genfuncs = require("lib.map.genfuncs")
 
-	for k, v in pairs(genFuncs) do
+	for k, v in pairs(genfuncs) do
 		print("mapgen functions: ", k, v)
 	end
 
@@ -27,14 +27,14 @@
 	}
 
 	mapgen.levels = {
-		{ name = "Castle", method = genFuncs.pointsExpand, tileset = defaultTileset }, --value is what the param is set to when dropdown is selected
-		{ name = "Dungeon", method = genFuncs.rogue, tileset = defaultTileset },
-		{ name = "Sewers", method = genFuncs.rogue, tileset = defaultTileset },
-		{ name = "Goblin town", method = genFuncs.wfc, tileset = defaultTileset },
-		{ name = "Caverns", method = genFuncs.noise, tileset = defaultTileset },
-		{ name = "Lava", method = genFuncs.noise, tileset = defaultTileset },
-		{ name = "Cultist hideout", method = genFuncs.wfc, tileset = defaultTileset },
-		{ name = "Lair", method = genFuncs.mixed, tileset = defaultTileset } }
+		{ name = "Castle", method = genfuncs.pointsExpand, tileset = defaultTileset }, --value is what the param is set to when dropdown is selected
+		{ name = "Dungeon", method = genfuncs.rogue, tileset = defaultTileset },
+		{ name = "Sewers", method = genfuncs.rogue, tileset = defaultTileset },
+		{ name = "Goblin town", method = genfuncs.wfc, tileset = defaultTileset },
+		{ name = "Caverns", method = genfuncs.noise, tileset = defaultTileset },
+		{ name = "Lava", method = genfuncs.noise, tileset = defaultTileset },
+		{ name = "Cultist hideout", method = genfuncs.wfc, tileset = defaultTileset },
+		{ name = "Lair", method = genfuncs.mixed, tileset = defaultTileset } }
 	for i = 1, #mapgen.levels do
 		mapgen.levels[i].tileset = defaultTileset --until we make more tilesets for the level
 	end
@@ -44,10 +44,14 @@
 	end
 
 	mapgen.defaultParams = { width = 100, height = 100, tileSize = 10, level = mapgen.levels[1], tilesPerFrame = 500} --default paramaters for map generator if run without being passed
-	mapgen.defaultParams.level.method:init()
-	for k, v in pairs(mapgen.defaultParams.level.method.params) do
+	print("initialising genfunc for default level")
+	print(json.prettify(genfuncs))
+	mapgen.defaultParams.level.method:init(mapgen, genfuncs)
+	--[[
+	for k, v in pairs(mapgen.defaultParams.level.method.params) do --TODO: why are we copying params from the genfuc params to the the defaultParams for the mapgen?
 		mapgen.defaultParams[k] = v
 	end
+	]]
 
 	mapgen.tileStore = { tileColumns = {}, tileRows = {}, indexedTiles = {} }
 	mapgen.rooms = {} --stores room data for gen funcs that use them
@@ -197,9 +201,6 @@
 		end
 		self.group = display.newGroup()
 		sceneGroup:insert( self.group )
-		for i = 1, #mapgen.levels do
-			mapgen.levels[i].method:init()
-		end
 		print("------------------------------------mapgen params---")
 		print(json.prettify(self.params))
 	end
@@ -284,7 +285,7 @@
 	function mapgen:runGenFunc(completeListener)
 		print("level print")
 		--print(json.prettify( self.params.level ))
-		self.params.level.method:startGen(nil, self, completeListener)
+		self.params.level.method:startGen(nil, completeListener)
 	end
 
 	function mapgen:makeTile(x, y)
