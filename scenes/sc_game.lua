@@ -40,6 +40,7 @@
 			cam:moveToPoint(map.spawnPoint.x, map.spawnPoint.y)
 			map:refreshCamTiles()
 			map.showTiles(cam.screenTiles)
+			map:createDecals()
 		end
 	end
 

@@ -31,7 +31,10 @@
 	local phase = 1 --phases of the map generation
 	
 	local completeListener = nil
-	local roomStore = {} --created by the generator
+
+	local roomStore = {} --room data for room generation, set by genfunc createRoom
+	local mapRooms = {} --room data that gets saved, set by setMapRooms
+
 	local tileset = {}
 	local tileStore = {}
 	local width, height = 0, 0
@@ -40,6 +43,9 @@
 	local phaseFunctions = {} --set on startGen
 
 	local gotoNextPhase --used to iterate through phases
+
+	local startRoom, endRoom, treasureRoom = nil, nil, nil --these are mapRooms not genRooms used for making decals and other room stuff
+	local mapEdgeRooms = { up = {}, down = {}, left = {}, right = {}} --stores that have map edges --stores mapRooms that are on the map edges
 
 
 	local function onFrame() --called each frame from mapgen
@@ -61,7 +67,7 @@
 		end
 	end
 	
-	function pointsExpand:init(_mapgen, _genfuncs)
+	function pointsExpand:init(_mapgen, _genfuncs) --called by mapgen at scene creation
 		print("init points expand")
 		print(json.prettify(_genfuncs))
 		mapgen = _mapgen
@@ -72,7 +78,7 @@
 	
 	end
 	
-	function pointsExpand:startGen(_params, _completeListener)
+	function pointsExpand:startGen(_params, _completeListener) --called by mapgen when generation is started (button pressed, game started)
 		completeListener = _completeListener
 		roomStore = {} --created by the generator
 		tileset = mapgen.params.level.tileset
@@ -91,10 +97,12 @@
 			params = defaultParams
 		end
 		
-		phaseFunctions = {
+		phaseFunctions = { --these are the functions called during map generation per frame
 			pointsExpand.setInsets, pointsExpand.setSections, pointsExpand.setRoomsStartPoint,
 			pointsExpand.expandRooms, pointsExpand.setRoomNeighbours, pointsExpand.makeRoomWalls, pointsExpand.makeDoors,
-			pointsExpand.setFinalMapColours, pointsExpand.setMapgenRooms
+			pointsExpand.setFinalMapColours,
+			pointsExpand.setMapRooms, --after mapgen is complete, set the mapRooms
+			pointsExpand.makeDecals
 		}
 
 		print("starting generation function points expand")
@@ -212,31 +220,168 @@
 		end
 	end
 
-	function pointsExpand:setMapgenRooms()
-		local directions = { "up", "down", "left", "right" }
-		for i = 1, #roomStore do
-			local room = roomStore[i]
-			local tileSize = mapgen.params.tileSize
-			local x1, y1 = room.bounds.x1 * tileSize + tileSize, room.bounds.y1 * tileSize + tileSize
-			local x2, y2 = room.bounds.x2 * tileSize - tileSize, room.bounds.y2 * tileSize - tileSize
-			local edges = {}
-			for j = 1, #directions do
-				local dir = directions[j]
-				if (room.neighbours[dir][1] == "map") then
-					edges[#edges + 1] = dir
+	function pointsExpand:makeDecals()
+		local decals = {}
+
+		local function makeDecal(_params)
+			local decal = { [_params.savestring] = {
+				x = _params.tileX * mapgen.params.tileSize,
+				y = _params.tileY * mapgen.params.tileSize,
+				angle = _params.angle, } }
+			decals[#decals+1] = decal
+		end
+
+		local function makeWindows()
+			local windowSpacing = 6
+			local cornerOffset = 4
+			--create windows only on side rooms
+			for side, genRooms in pairs(mapEdgeRooms) do
+				for ii = 1, #genRooms do
+					local genRoom = genRooms[ii]
+					local windowAngles = {up = 270, right = 0, down = 90, left = 180}
+					print("drawind windows for room ", genRoom.id)
+					--print(json.prettify(genRoom))
+					local genRoom = roomStore[genRoom.id]
+					local wallTiles = genRoom.wallTiles[side] --get the walltiles from the roomStore (genRoom)
+					local wallLength = #wallTiles
+					local windowTiles = {}
+					local windowsLength = math.floor( (wallLength - cornerOffset * 2) ) + 1 --length of wall that can contain windows
+					local windowCount = math.ceil(windowsLength / windowSpacing)
+					local actualWindowSpacing = windowsLength / windowCount
+					print("wCount", windowCount, "wLengths", wallLength, windowsLength )
+					for i = 1, windowCount + 1 do
+						local windowPos = cornerOffset + ( math.round(actualWindowSpacing * (i - 1)) )
+						windowTiles[i] = wallTiles[windowPos]
+					end
+					setColor(windowTiles, "white")
+					print("setting "..#windowTiles.." windows")
+					for i = 1, #windowTiles do
+						local tile = windowTiles[i]
+						local window = { tileX = tile.x, tileY = tile.y, angle = windowAngles[side], savestring = "win" }
+						makeDecal(window)
+					end
 				end
-			end
-			if #edges > 0 then
-				for j = 1, #edges do
-					mapgen:createRoom(room.id, x1 , y1, x2, y2, edges[j]) --passes relevant room data to mapgen
-				end
-			else
-				mapgen:createRoom(room.id, x1, y1, x2, y2)
 			end
 		end
+		makeWindows()
+		mapgen.decals = decals
+
+	end
+
+	function pointsExpand:setMapRooms()
+
+		local directions = { "up", "down", "left", "right" }
+		local oppEdges = { up = "down", down = "up", left = "right", right = "left" }
+
+		--used to figure out which roomBounds to use based on side, for start end points 
+		local roomStartEndPoints = { 	up = {axis = "y", side = "min", midAxis = "x" },
+										down = {axis = "y", side = "max", midAxis = "x" },
+										 left = {axis = "x", side = "min", midAxis = "y" },
+										right = {axis = "x", side = "max", midAxis = "y" } }
+
+		local function createMapRoom(id, x1, y1, x2, y2, edge) --called by makeMapRooms
+			local room = {}
+			room.worldBounds = { min = { x = x1, y = y1 }, max = { x = x2, y = y2 } }
+			room.midPoint = { x = (x1 + x2) / 2, y = (y1 + y2) / 2 }
+			room.id = id
+			print("setting room id for room ", id)
+			room.edges = {}
+			if (edge) then
+				room.edges[#room.edges+1] = edge --stores strings of the rooms edges in the room
+				mapEdgeRooms[edge][#mapEdgeRooms[edge] + 1] = room --store the rooms which are on the map edges
+			end
+			for i = 1, #mapRooms do --iterate through already stored rooms
+				if (mapRooms[i].id == id) then --as we pass the same id for edge rooms, if it already exists we dont want to duplicate it
+					return nil
+				end
+			end
+			return room
+		end
+
+		local function makeMapRooms() --makes new tables for each room that will be used for enemies and decals
+
+			for i = 1, #roomStore do --iterate through roomStore and add new room data to 
+				local genRoom = roomStore[i]
+				local tileSize = mapgen.params.tileSize
+				local x1, y1 = genRoom.bounds.x1 * tileSize + tileSize, genRoom.bounds.y1 * tileSize + tileSize
+				local x2, y2 = genRoom.bounds.x2 * tileSize - tileSize, genRoom.bounds.y2 * tileSize - tileSize
+				local mapEdges = {}
+				for j = 1, #directions do
+					local dir = directions[j]
+					if (genRoom.neighbours[dir][1] == "map") then
+						mapEdges[#mapEdges + 1] = dir
+					end
+				end
+				local mapRoom = nil
+				if #mapEdges > 0 then --we call createMapRoom for each map edge the room is bordering
+					for j = 1, #mapEdges do
+						mapRoom = createMapRoom(genRoom.id, x1 , y1, x2, y2, mapEdges[j]) --makes the maps version of the room
+					end
+				else
+					mapRoom = createMapRoom(genRoom.id, x1, y1, x2, y2)
+				end
+				if mapRoom then
+					mapRooms[#mapRooms+1] = mapRoom
+				end
+			end
+			--
+		end
+
+		local function setRoomDifficulty(room) --used to determine how many enemies to spawn
+			local shortEdge, bigEdge = {x = 0, y = 0}, {x = 0, y = 0}
+			local midPoint, startPoint = room.midPoint, mapgen.startPoint --use distance between room midpoint and start point to calculate room difficulty
+			if (midPoint.x < startPoint.x)
+			then shortEdge.x = midPoint.x; bigEdge.x = startPoint.x
+			else shortEdge.x = startPoint.x; bigEdge.x = midPoint.x end
+			if (midPoint.y < startPoint.y)
+			then shortEdge.y = midPoint.y; bigEdge.y = startPoint.y
+			else shortEdge.y = startPoint.y; bigEdge.y = midPoint.y end
+			return 1 - (shortEdge.x / bigEdge.x + shortEdge.y / bigEdge.y) / 2
+		end
+
+		local function setStartEnd()
+			local rand = math.random
+			local i = rand(#directions)
+			local side = directions[i] --pick a side
+			local oppSide = oppEdges[side] --get the opposite side
+			local sideRooms = mapEdgeRooms[side] --get the rooms in the chosen side
+			local oppSideRooms = mapEdgeRooms[oppSide]
+			startRoom = sideRooms[math.ceil(#sideRooms/2)] --get the middle room from the chosen side
+			local endRoomSide = rand(0, 1) --multiplier to determine which corner end room to pick
+			endRoom = oppSideRooms[ ( ( (#oppSideRooms - 1) * endRoomSide ) + 1) ] --pick a room from the chosen side
+			treasureRoom = oppSideRooms[ ( ( (#oppSideRooms - 1) * (1 - endRoomSide) ) + 1) ] --pick a room from the opposite side
+			local function getStartEndPoint(room, pointData)
+				local point = {}
+				local bounds = room.worldBounds
+				local mainAxis = pointData.axis
+				local otherAxis = pointData.midAxis
+				point[mainAxis] = bounds[pointData.side][mainAxis]
+				point[otherAxis] = bounds.max[otherAxis] - (bounds.max[otherAxis] - bounds.min[otherAxis]) / 2
+				return point
+			end
+			local startPoint = getStartEndPoint(startRoom, roomStartEndPoints[side])
+			local endPoint = getStartEndPoint(endRoom, roomStartEndPoints[oppSide])
+			print(startPoint.x, startPoint.y, endPoint.x, endPoint.y)
+			local startRect = display.newRect( mapgen.group, startPoint.x, startPoint.y, 10, 10 )
+			startRect:setFillColor( 1, 0, 1 )
+			local endRect = display.newRect( mapgen.group, endPoint.x, endPoint.y, 10, 10 )
+			endRect:setFillColor( 0, 1, 1 )
+			local treasureRect = display.newRect( mapgen.group, treasureRoom.midPoint.x, treasureRoom.midPoint.y, 20, 20 )
+			treasureRect:setFillColor( 1, 1, 0 )
+			return startPoint, endPoint
+		end
+
+		makeMapRooms()
+		mapgen.rooms = mapRooms --assign rooms to map for enemy generation
+		mapgen.startPoint, mapgen.endPoint = setStartEnd()
+		for i = 1, #mapRooms do
+			mapRooms[i].difficulty = setRoomDifficulty(mapRooms[i])
+		end
+
+
 	end
 	
-	function pointsExpand:createroom(startPoint) --startpoint is a table that has x and y positions
+	function pointsExpand:createroom(startPoint) --startpoint is a table that has x and y tile coords to start the room generation
 	
 		local room = {}
 		print("!!!!!!!!!!!!!!!!!!!!!!!creating room!!!!!!!!!!!!!!!!!!!!!!!")

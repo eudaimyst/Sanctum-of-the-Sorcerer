@@ -190,7 +190,7 @@
 			if (self.type == "wall") then --if tile is a wall then we need to make a group for the subtiles
 				self.rect = display.newGroup()
 				self.rect.wallRects = {}
-				map.group:insert(self.rect)
+				map.tileGroup:insert(self.rect)
 				self.rect.anchorChildren = true
 				for i = 0, 3 do --four corners
 					local wallRect = display.newImageRect( self.rect, self.wallTexture[i].filename, self.wallTexture[i].baseDir, halfTileSize, halfTileSize ) --create rect for each wall
@@ -202,7 +202,7 @@
 				end
 			else
 				--print("creating rect for tile id: "..self.id.. " with image "..image)
-				self.rect = display.newImageRect( map.group, self.imageTexture.filename, self.imageTexture.baseDir, tileSize, tileSize )
+				self.rect = display.newImageRect( map.tileGroup, self.imageTexture.filename, self.imageTexture.baseDir, tileSize, tileSize )
 			end
 			self.rect.x, self.rect.y = self.world.x, self.world.y
 			util.zeroAnchors(self.rect)
