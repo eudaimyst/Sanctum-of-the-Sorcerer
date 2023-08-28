@@ -44,7 +44,6 @@
 		local distance = util.getDistance(self.world.x, self.world.y, gameChar.world.x, gameChar.world.y)
 		
 		if (self.rect) then
-			self:updateRectPos() --updates enemy position on screen, game object function
 			self:updateRectImage()
 		end
 		self:updateSleep(distance)

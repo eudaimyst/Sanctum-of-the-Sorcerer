@@ -90,7 +90,7 @@ function lib_puppet.puppetFactory(puppet)
 				}
 			end
 		else
-			--print("PUPPET UPDATE RECT IMAGE: rect for "..self.name.."doesn't exist")
+			print("WARNING: rect for", self.name, self.id, "doesn't exist (puppet.lua)")
 		end
 	end
 

@@ -8,6 +8,7 @@
 	local gv = require("lib.global.variables")
 	local util = require("lib.global.utilities")
 	local lighting = require("lib.entity.light_emitter")
+	local entity = require("lib.entity")
 	local json = require("json")
 
 	local mceil = math.ceil
@@ -31,7 +32,6 @@
 	end
 
 	function lib_tile:onFrame() --called from game or level editor on frame ????
-		
 		local dt = gv.frame.dt
 		lightingUpdateTimer = lightingUpdateTimer + dt
 		lightBlockerUpdateTimer = lightBlockerUpdateTimer + dt
@@ -56,11 +56,11 @@
 	end
 
 	function lib_tile:createTile(_id, _column, _row, _collision, _string)
-		local tile = {}
-		tile.id, tile.x, tile.y = _id, _column, _row --tile.x = tile column, tile.y = tile row
+		local tile = entity:create(_column * tileSize, _row * tileSize, nil)
 		tile.lightValue = 0
 		tile.col = _collision
 		--tile screen pos is exclusively accessed through its rect
+		tile.x, tile.y = _column, _row
 		tile.world = { x = _column * tileSize, y = _row * tileSize }
 		tile.mid = { x = _column * tileSize + halfTileSize, y = _row * tileSize + halfTileSize }
 		
@@ -128,7 +128,7 @@
 		function tile:updateRectPos() --updates the tiles rect position to match its world position within cam bounds and scaled by camera zoom
 			if (self.rect) then
 				self.rect.xScale, self.rect.yScale = cam.zoom, cam.zoom
-				self.rect.x, self.rect.y = (self.world.x - cam.bounds.x1) * cam.zoom , (self.world.y - cam.bounds.y1) * cam.zoom
+				self.rect.x, self.rect.y = self.screen.x, self.screen.y
 			end
 		end
 

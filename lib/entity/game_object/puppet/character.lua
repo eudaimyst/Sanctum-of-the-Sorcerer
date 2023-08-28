@@ -20,10 +20,6 @@
 		walk = { frames = 4, rate = 4 },
 	} }	
 
-	local function charOnFrame(self)
-		self:updateRectPos() --updates game char position on screen, game object function
-	end
-
 	function lib_character:create(_params, _hud)
 		hud = _hud
 		print("creating character entity")
@@ -65,7 +61,7 @@
 			local dir_s = dir.image --gets the direction string for the animation
 
 			local attackPos = spell.animData.attackPos[dir_s] --gets the windup pos from the animation data
-			local offsetPos = { x = self.world.x - attackPos.x, y = self.world.y - attackPos.y + self.yOffset}
+			local offsetPos = { x = self.world.x - attackPos.x, y = self.world.y - attackPos.y}
 			local delta = util.deltaPos(offsetPos, target) --gets the difference between the characters position and the target position
 
 			local function animCompleteListener() --called when animation is complete
@@ -90,8 +86,6 @@
 				end
 			end
 		end
-
-		char:addOnFrameMethod(charOnFrame)
 
 		char:makeRect() --creates rect on creation
 		char:loadWindupGlow() --creates windup glow emitter on creation

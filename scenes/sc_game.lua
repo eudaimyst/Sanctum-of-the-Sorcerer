@@ -36,7 +36,6 @@
 		print("load map pressed")
 		if map:loadMap(fName, isResource) then
 			--cam:moveToPoint(map.worldWidth / 2, map.worldHeight / 2)
-			map:updateTilesPos()
 			cam:moveToPoint(map.spawnPoint.x, map.spawnPoint.y)
 			map:refreshCamTiles()
 			map.showTiles(cam.screenTiles)

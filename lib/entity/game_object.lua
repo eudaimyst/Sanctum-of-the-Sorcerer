@@ -32,7 +32,7 @@
     lib_gameObject.store = {}
 
     local defaultParams = {
-        name = "default", isGameObject = true,
+        name = "default",
         currentHP = 10, maxHP = 10, level = 0, element = nil, --gameplay data
         moveSpeed = 100,
         width = 96, height = 96, xOffset = 0, yOffset = 0, --display data
@@ -114,15 +114,6 @@
             self:updateRectImage()
         end
 
-        function gameObject:updateRectPos() --needs to be called after cam bounds has been updated on frame or jitters
-            if (self.rect) then
-                --print("updating gameObject rect pos for "..self.name)
-                self.rect.x, self.rect.y = self.world.x + self.xOffset - cam.bounds.x1, self.world.y + self.yOffset - cam.bounds.y1
-            else
-                print("GAME OBJECT UPDATE RECT POS: rect for "..self.name.."doesn't exist")
-            end
-        end
-
         function gameObject:updateRectImage() --called to update image of rect, override by puppets
             --print(json.prettify(self.textures))
             if (self.rect) then
@@ -147,7 +138,6 @@
         end
 
 		function gameObject:makeRect() --makes game objects rect if doesn't exist
-            print("making gameObject rect, isPuppet = " .. tostring(self.isPuppet))
             if (self.rect) then
                 print("rect already created")
                 return
@@ -182,12 +172,6 @@
 		--print("GAME OBJECT PARAMS:--------\n" .. json.prettify(gameObject) .. "\n----------------------")
 
         gameObject.world.x, gameObject.world.y = gameObject.spawnPos.x, gameObject.spawnPos.y --sets the intial world point to the passed x and y or the default x and y
-
-        if (not gameObject.isPuppet) then --all puppets are directional so dont change the name
-            if (gameObject.name == "default" and gameObject.directional) == true then
-                gameObject.name = "default_directional"  --if the object is directional and has the default name, change the name to the directional default name
-            end
-        end
 
         lib_gameObject.gameObjectFactory(gameObject) --adds functions to gameObject
         lib_gameObject:storeObject(gameObject) --stores gameObject

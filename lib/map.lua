@@ -7,8 +7,9 @@
 	--common modules
 	local util = require("lib.global.utilities")
 	local fileio = require( "lib.map.fileio")
-	local tiles = require("lib.map.tiles")
+	local tiles = require("lib.entity.tile")
 	local json = require("json")
+
 
 	local defaultTileset = { --this is the default tileset data FOR THE SCENE ONLY (map generator has its own fix is TODO)
 		void = { savestring = "v", image = "void.png"},
@@ -42,13 +43,20 @@
 
 	map.params = { width = 10, height = 10, tileStore = {}, tileSize = 128, tileset = defaultTileset }
 
+	--locals for performance,
+	local mfloor = math.floor
+
+	local tileSize = 0  --set by createMapTiles from params 
+	local tStoreCols, tStoreRows, tStoreIndex = {}, {}, {} --set by createMaptiles
+	local trashx, trashy = 0, 0 --used by worldPointToTileCoords
+
 	local mapImageFolder = "content/map/"
 
 	local function worldPointToTileCoords(_x, _y) --takes x y in world coords and returns tile coords
 		--print("map width/height: "..map.worldWidth..", "..map.worldHeight)
-		local x, y = math.floor(_x / map.tileSize), math.floor( _y / map.tileSize)
+		trashx, trashy = mfloor(_x / tileSize), mfloor( _y / tileSize)
 		--print("worldPointToTileCoords: ".._x.." = "..x..", ".._y.." = "..y)
-		return x, y
+		return trashx, trashy
 	end
 	
 	local function hideTiles(tileList)
@@ -205,8 +213,8 @@
 		local tileSize
 		local tileStore = {}
 		self.tileStore = tileStore
-		local tileStoreCols, tileStoreRows, tileStoreIndex = {}, {}, {}
-		tileStore.tileCols, tileStore.rows, tileStore.indexedTiles = tileStoreCols, tileStoreRows, tileStoreIndex
+		tStoreCols, tStoreRows, tStoreIndex = {}, {}, {}
+		tileStore.tileCols, tileStore.rows, tileStore.indexedTiles = tStoreCols, tStoreRows, tStoreIndex
 
 		if (cam.mode == cam.modes.debug) then --if debugging cam tiles have different size
 			print("camdebug tilesize = "..cam.mode.debugTileSize)
@@ -219,6 +227,7 @@
 		--TODO: clean this up by copying all params to module
 		self.width, self.height = self.params.width, self.params.height
 		self.tileSize = self.params.tileSize
+		tileSize = self.tileSize
 		self.tileset = defaultTileset
 		self.worldWidth, self.worldHeight = self.params.width * tileSize, self.params.height * tileSize
 		self.centerX, self.centerY = self.worldWidth/2, self.worldHeight/2
@@ -238,11 +247,11 @@
 			--print(x, y)
 			local data = tileData[i]
 			local tile = createTile(tiles, i, x, y, data.c, data.s)
-			if y == 1 then tileStoreCols[x] = {} end --create the tileCols 
-			if x == 1 then tileStoreRows[y] = {} end --create the tileRows 
-			tileStoreCols[x][y] = tile --store the tile in the correct position in tileCols
-			tileStoreRows[y][x] = tile
-			tileStoreIndex[i] = tile --also store the tile in an indexed table
+			if y == 1 then tStoreCols[x] = {} end --create the tileCols 
+			if x == 1 then tStoreRows[y] = {} end --create the tileRows 
+			tStoreCols[x][y] = tile --store the tile in the correct position in tileCols
+			tStoreRows[y][x] = tile
+			tStoreIndex[i] = tile --also store the tile in an indexed table
 
 			if x >= width then --reached the end of tile creation for the row
 				x, y = 1, y + 1 --increase the counter for the y axis and reset the x
@@ -251,19 +260,13 @@
 			end
 		end
 
-		for i = 1, #tileStoreIndex do --set subtypes, must be after all tiles created to get neighbour tiles
-			local tile = tileStoreIndex[i]
+		for i = 1, #tStoreIndex do --set subtypes, must be after all tiles created to get neighbour tiles
+			local tile = tStoreIndex[i]
 			if tile.type == "wall" then
 				tile:setWallSubType()
 			end
 		end
 		print(#self.tileStore.indexedTiles.." map tiles created \n ----map creation complete----")
-	end
-
-	function map:updateTilesPos()
-		for i = 1, #self.tileStore.indexedTiles do --
-			self.tileStore.indexedTiles[i]:updateRectPos()
-		end
 	end
 
 	function map:createDecals()
@@ -275,7 +278,7 @@
 				print(decalName, decalName, decalName)
 				print(decalTextures[decalName].filename)
 				decal.texture = { filename = decalTextures[decalName].filename, baseDir = decalTextures[decalName].baseDir }
-				display.newImageRect(self.decalGroup, decalTextures[decalName].filename, decalTextures[decalName].baseDir, 128, 128);
+				decal.rect = display.newImageRect(self.decalGroup, decalTextures[decalName].filename, decalTextures[decalName].baseDir, 128, 128);
 				decal.rect.x = saveData.x * self.tileSize
 				decal.rect.y = saveData.y * self.tileSize
 				decal.rect.rotation = saveData.angle
@@ -351,26 +354,22 @@
 	end
 
 	function map:cameraMove(direction) --called when the camera moves in a direction to hide/show tiles at camera boundary
-		if (cam.mode == cam.modes.debug) then --if debug mode is on for camera, we do not move / destroy tiles, only update their display
-			self:updateDebugTiles(direction)
-		else
-			self:refreshCamTiles() --gets camera screen and boundary tiles
+		self:refreshCamTiles() --gets camera screen and boundary tiles
 
-			--hide tiles at opposite direction of movement, show tiles in direction of movement
-			if direction.y > 0 then
-				hideTiles(cam.boundaryTiles.up); showTiles(cam.boundaryTiles.down)
-			elseif direction.y < 0 then
-				hideTiles(cam.boundaryTiles.down); showTiles(cam.boundaryTiles.up)
-			end
-			if direction.x > 0 then
-				hideTiles(cam.boundaryTiles.left); showTiles(cam.boundaryTiles.right)
-			elseif direction.x < 0 then
-				hideTiles(cam.boundaryTiles.right); showTiles(cam.boundaryTiles.left)
-			end
-			for _, tile in pairs(cam.screenTiles) do
-				if (tile.rect) then --tiles already has rect
-					tile:updateRectPos() --update the tiles rect based off cam bounds  
-				end
+		--hide tiles at opposite direction of movement, show tiles in direction of movement
+		if direction.y > 0 then
+			hideTiles(cam.boundaryTiles.up); showTiles(cam.boundaryTiles.down)
+		elseif direction.y < 0 then
+			hideTiles(cam.boundaryTiles.down); showTiles(cam.boundaryTiles.up)
+		end
+		if direction.x > 0 then
+			hideTiles(cam.boundaryTiles.left); showTiles(cam.boundaryTiles.right)
+		elseif direction.x < 0 then
+			hideTiles(cam.boundaryTiles.right); showTiles(cam.boundaryTiles.left)
+		end
+		for _, tile in pairs(cam.screenTiles) do
+			if (tile.rect) then --tiles already has rect
+				tile:updateRectPos() --update the tiles rect based off cam bounds  
 			end
 		end
 	end

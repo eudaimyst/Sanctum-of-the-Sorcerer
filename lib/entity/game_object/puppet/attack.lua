@@ -13,6 +13,7 @@
     local entity = require("lib.entity")
     local lfs = require("lfs")
     local map = require("lib.map")
+    local cam = require("lib.camera")
 
     local basePath = "content/spells"
 
@@ -106,10 +107,10 @@
 
             function projectile:updateDisplayPos()
                 for i = 1, #self.rects do
-                    self.rects[i].x, self.rects[i].y = self.screen.x, self.screen.y
+                    self.rects[i].x, self.rects[i].y = (self.world.x - cam.bounds.x1) * cam.zoom , (self.world.y - cam.bounds.y1) * cam.zoom
                 end
                 for i = 1, #self.emitters do
-                    self.emitters[i].x, self.emitters[i].y = self.screen.x, self.screen.y
+                    self.emitters[i].x, self.emitters[i].y = (self.world.x - cam.bounds.x1) * cam.zoom , (self.world.y - cam.bounds.y1) * cam.zoom
                     --print("setting emitter "..i.." to "..self.screen.x..", "..self.screen.y)
                 end
             end

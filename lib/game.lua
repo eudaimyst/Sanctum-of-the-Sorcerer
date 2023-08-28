@@ -15,7 +15,7 @@
 	local enemy = require("lib.entity.game_object.puppet.enemy")
 	local lfs = require("lfs")
 	local spellParams = require("lib.global.spell_params")
-	local tiles = require("lib.map.tiles") --to call onFrame to update tiles
+	local tiles = require("lib.entity.tile") --to call onFrame to update tiles
 	local json = require("json")
 
 
@@ -56,7 +56,7 @@
 		for i = 1, #map.enemies do
 			self.spawnEnemy(map.enemies[i])
 		end
-		for i = 1, #map.decals do
+		for i = 1, #map.decalStore do
 			--make lights here for decals that have light data
 		end
 

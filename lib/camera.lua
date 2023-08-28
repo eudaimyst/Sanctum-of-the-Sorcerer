@@ -10,7 +10,7 @@
 
 	-- Define module
 	local cam = {}
-	local halfScreenWidth, halfScreenHeight = display.contentWidth / 2, display.contentHeight / 2
+	local halfScreenWidth, halfScreenHeight = display.actualContentWidth / 2, display.actualContentHeight / 2
 
 	cam.modes = {
 		follow = { target = nil },
