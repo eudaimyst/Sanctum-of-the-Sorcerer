@@ -20,12 +20,14 @@
 	local lightBlockerUpdateTimer = 0
 
 	local map, cam, defaultTileset, wallSubTypes, mapImageFolder
+	local tStoreIndex, tStoreCols
 	local tileSize, halfTileSize
 	-- Define module
 	local lib_tile = {}
 
 	function lib_tile:init(_map, _cam, _defaultTileset, _wallSubTypes, _mapImageFolder)
 		map, cam, defaultTileset, wallSubTypes, mapImageFolder = _map, _cam, _defaultTileset, _wallSubTypes, _mapImageFolder
+		tStoreIndex, tStoreCols = map.getTileStore()
 		tileSize = map.tileSize
 		halfTileSize = tileSize/2
 		print("----tiles module initiated----")
@@ -39,17 +41,17 @@
 		if lightingUpdateTimer > lightingUpdateRate then
 			lightingUpdateTimer = 0
 			
-			local screenTiles = cam.screenTiles
+			local camTiles = map.getCamTiles()
 			
 			if lightBlockerUpdateTimer > lightBlockerUpdateRate then
 				lightBlockerUpdateTimer = 0
 			
-				for i = 1, #screenTiles do
-					screenTiles[i]:updateLightValue(true)
+				for i = 1, #camTiles do
+					camTiles[i]:updateLightValue(true)
 				end
 			else
-				for i = 1, #screenTiles do
-					screenTiles[i]:updateLightValue(nil)
+				for i = 1, #camTiles do
+					camTiles[i]:updateLightValue(nil)
 				end
 			end
 		end
@@ -87,12 +89,12 @@
 				local searchCol = self.x+search[subID].x --columns of the tiles to search
 				local searchRow = self.y+search[subID].y --rows
 				--print("checking wall type at col, row: "..searchCol..", "..searchRow.." for tile xy "..self.x..", "..self.y)
-				local Xtype = map.tileStore.tileCols[searchCol][self.y].type --get tile type to left/right
-				local Ytype = map.tileStore.tileCols[self.x][searchRow].type --get tile type above/below
+				local Xtype = tStoreCols[searchCol][self.y].type --get tile type to left/right
+				local Ytype = tStoreCols[self.x][searchRow].type --get tile type above/below
 
 				if (Xtype == "wall" ) then 
 					if (Ytype == "wall") then
-						local innerWallType = map.tileStore.tileCols[searchCol][searchRow].type --store tiles type
+						local innerWallType = tStoreCols[searchCol][searchRow].type --store tiles type
 						if (innerWallType == "wall" or innerWallType == "void") then --if there is a wall or void on the diagonal tile to prevent inner corners repeating
 							subTypes[subID] = st.void --need to set "void" if theres a wall or "void" on other side of corner
 						else
@@ -126,9 +128,10 @@
 		end
 
 		function tile:updateRectPos() --updates the tiles rect position to match its world position within cam bounds and scaled by camera zoom
+			--print("updating rect for tile", self.id)
 			if (self.rect) then
 				self.rect.xScale, self.rect.yScale = cam.zoom, cam.zoom
-				self.rect.x, self.rect.y = self.screen.x, self.screen.y
+				self.rect.x, self.rect.y = (self.world.x - cam.bounds.x1) * cam.zoom , (self.world.y - cam.bounds.y1) * cam.zoom
 			end
 		end
 
@@ -180,7 +183,7 @@
 					for i = 0, 3 do
 						self.rect.wallRects[i]:setFillColor(self.lightValue)
 					end
-			else
+				else
 					self.rect:setFillColor(self.lightValue)
 				end
 			end
@@ -204,11 +207,8 @@
 				--print("creating rect for tile id: "..self.id.. " with image "..image)
 				self.rect = display.newImageRect( map.tileGroup, self.imageTexture.filename, self.imageTexture.baseDir, tileSize, tileSize )
 			end
-			self.rect.x, self.rect.y = self.world.x, self.world.y
 			util.zeroAnchors(self.rect)
-			if (cam.mode ~= cam.modes.debug) then
-				self:updateRectPos()
-			end
+			self:updateRectPos()
 		end
 		--tiles by default do not have a rect, createRect is called when tile needs to be shown, ie between camera bounds on camera move
 		--tile:createRect()

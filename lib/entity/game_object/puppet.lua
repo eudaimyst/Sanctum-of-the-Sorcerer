@@ -90,7 +90,7 @@ function lib_puppet.puppetFactory(puppet)
 				}
 			end
 		else
-			print("WARNING: rect for", self.name, self.id, "doesn't exist (puppet.lua)")
+			--print("WARNING: rect for", self.name, self.id, "doesn't exist (puppet.lua)")
 		end
 	end
 
