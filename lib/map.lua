@@ -9,6 +9,7 @@
 	local fileio = require( "lib.map.fileio")
 	local tiles = require("lib.entity.tile")
 	local json = require("json")
+	local decal = require("lib.entity.decal")
 
 
 	local defaultTileset = { --this is the default tileset data FOR THE SCENE ONLY (map generator has its own fix is TODO)
@@ -18,10 +19,6 @@
 		water = { savestring = "w", image = "void.png"},
 		blocker = { savestring = "b", image = "dungeon_wall.png"}
 	}
-	local decalData = {
-		win = "window/window.png"
-	}
-	local decalTextures = {}
 
 	local wallSubTypes = { void = "void_", innerCorner = "inner_corner_", outerCorner = "outer_corner_",
 		horizontal = "horizontal_", vertical = "vertical_", error = "error_" }
@@ -49,8 +46,7 @@
 	local camTiles = {} --tiles within camera bounds
 	local lastFrameCamTiles = {} --tiles within cameraBounds on previous frame
 	local tileSize = 0  --set by createMapTiles from params 
-	local tStoreCols, tStoreRows, tStoreIndex = {}, {}, {} --set by createMaptiles
-	local trashx, trashy = 0, 0 --used by worldPointToTileCoords
+	local tStoreCols, tStoreIndex = {}, {} --set by createMaptiles
 
 	local mapImageFolder = "content/map/"
 
@@ -91,26 +87,10 @@
 		return tStoreIndex, tStoreCols
 	end
 
-	function map:clear()
-		local ts = self.tileStore --readability
-		for i = 1, #ts.indexedTiles do
-			--print("clearing tile: "..i)
-			ts.tileRows[ts.indexedTiles[i].y][ts.indexedTiles[i].x] = nil
-			ts.tileCols[ts.indexedTiles[i].x][ts.indexedTiles[i].y] = nil
-			if (ts.indexedTiles[i].rect) then
-				ts.indexedTiles[i].rect:removeSelf()
-				ts.indexedTiles[i].rect = nil
-			end
-			ts.indexedTiles[i] = nil
-		end
-		for i = 1, #ts.tileRows do
-			ts.tileRows[i] = nil
-		end
-		for i = 1, #ts.tileCols do
-			ts.tileCols[i] = nil
-		end
-		return true
+	function map.getCamTiles()
+		return camTiles
 	end
+
 
 	function map:getTileAtPoint(pos) --takes pos table with x, y and returns tile at that world pos
 		--print("get tile: ", pos.x, pos.y)
@@ -128,43 +108,24 @@
 		local tileBoundWidth = tileMaxX - tileMinX
 		local tileBoundHeight = tileMaxY - tileMinY
 		local tileList = {}
-		local boundarySides = {"up", "down", "left", "right"}
-		
-		--[[
-		local bMin, bMax = {x = 0, y = 0}, {x = 0, y = 0} --bounds of the cam
-		bMin.x, bMin.y = worldPointToTileCoords(x1 - self.tileSize, y1 - self.tileSize)
-		bMax.x, bMax.y = worldPointToTileCoords(x2 + self.tileSize, y2 + self.tileSize)
-		]]
-		--local boundWidth, boundHeight = boundMax.x - boundMin.x, boundMax.y - boundMin.y
 		local counter = 1
 		for x = 1, tileBoundWidth do
-			local column = tStoreCols[x]
+			local column = tStoreCols[tileMinX + x]
 			for y = 1, tileBoundHeight do
 				--print("getting tile from store:", x, y)
-				tileList[counter] = column[y]
+				tileList[counter] = column[tileMinY + y]
 				counter = counter + 1
 			end
 		end
-
-		--[[
-		for y = bMin.y, bMax.y do
-			tx, ty = clampToMapSize(bMin.x, y)
-			boundaryTiles.left[#boundaryTiles.left+1] = self.tileStore.tileCols[tx][ty]
-			tx, ty = clampToMapSize(bMax.x, y)
-			boundaryTiles.right[#boundaryTiles.right+1] = self.tileStore.tileCols[tx][ty]
-		end
-		for x = bMin.x, bMax.x do
-			tx, ty = clampToMapSize(x, bMin.y)
-			boundaryTiles.up[#boundaryTiles.up+1] = self.tileStore.tileCols[tx][ty]
-			tx, ty = clampToMapSize(x, bMax.y)
-			boundaryTiles.down[#boundaryTiles.down+1] = self.tileStore.tileCols[tx][ty]
-		end
-		--print(#tileList.." tiles between bounds ", x1, y1, x2, y2)
-		for k, v in pairs(boundaryTiles) do
-			--print("boundary "..k.." has "..#v.." tiles")
-		end
-		]]
 		return tileList
+	end
+
+	function map:getSpawnPoint()
+		if self.spawnPoint then
+			return self.spawnPoint
+		else
+			return { x = self.params.width*self.params.tileSize / 2, y = self.params.width*self.params.tileSize / 2 }
+		end
 	end
 
 	function map:createTexturesFromTileset(tileset)--preloads the tile textures
@@ -174,16 +135,6 @@
 			
 			print(fName)
 			tileData.texture = graphics.newTexture( { type = "image", filename = fName, baseDir = system.ResourceDirectory } )
-		end
-	end
-
-	function map:createDecalTextures()
-		local decalDir = mapImageFolder.."decals/"
-		print("loading decal textures")
-		for k, v in pairs(decalData) do
-			local path = decalDir..v
-			print(k, v, "path=", path)
-			decalTextures[k] = graphics.newTexture( { type = "image", filename = path, baseDir = system.ResourceDirectory } )
 		end
 	end
 	
@@ -200,7 +151,7 @@
 		local tileData = _tileData or self.tileData
 		local tileStore = {}
 		self.tileStore = tileStore
-		tStoreCols, tStoreRows, tStoreIndex = {}, {}, {}
+		tStoreCols, tStoreIndex = {}, {}
 
 		if (cam.mode == cam.modes.debug) then --if debugging cam tiles have different size
 			print("camdebug tilesize = "..cam.mode.debugTileSize)
@@ -223,7 +174,6 @@
 		self:createSavestringLookup(defaultTileset) --takes a tileset and makes a lookup table from savestring to tile type
 		--print(json.prettify(self.saveStringLookup))
 		self:createTexturesFromTileset(defaultTileset) --preloads the tile textures
-		self:createDecalTextures()
 
 		tiles:init(self, cam, defaultTileset, wallSubTypes, mapImageFolder) --initialise the tile module
 
@@ -234,9 +184,7 @@
 			local data = tileData[i]
 			local tile = createTile(tiles, i, x, y, data.c, data.s)
 			if y == 1 then tStoreCols[x] = {} end --create the tileCols 
-			if x == 1 then tStoreRows[y] = {} end --create the tileRows 
 			tStoreCols[x][y] = tile --store the tile in the correct position in tileCols
-			tStoreRows[y][x] = tile
 			tStoreIndex[i] = tile --also store the tile in an indexed table
 
 			if x >= width then --reached the end of tile creation for the row
@@ -259,27 +207,12 @@
 		for i = 1, #self.decalSavedata do
 			local decalData = self.decalSavedata[i]
 			for decalName, saveData in pairs(decalData) do
-				local decal = {}
-				print(json.prettify(saveData))
-				print(decalName, decalName, decalName)
-				print(decalTextures[decalName].filename)
-				decal.texture = { filename = decalTextures[decalName].filename, baseDir = decalTextures[decalName].baseDir }
-				decal.rect = display.newImageRect(self.decalGroup, decalTextures[decalName].filename, decalTextures[decalName].baseDir, 128, 128);
-				decal.rect.x = saveData.x * self.tileSize
-				decal.rect.y = saveData.y * self.tileSize
-				decal.rect.rotation = saveData.angle
-				map.decalStore[#map.decalStore+1] = decal
+				decal:create(decalName, saveData, tileSize)
 			end
 		end
 	end
 
-	function map:getSpawnPoint()
-		if self.spawnPoint then
-			return self.spawnPoint
-		else
-			return { x = self.params.width*self.params.tileSize / 2, y = self.params.width*self.params.tileSize / 2 }
-		end
-	end
+
 
 	function map:loadMap(_fName, isResource)
 		print("loadMap called from map lib")
@@ -308,12 +241,7 @@
 		return true
 	end
 
-	function map.getCamTiles()
-		return camTiles
-	end
-
 	function map:refreshCamTiles() --gets all tiles within cams bounds and updates their rect
-		lastFrameCamTiles = {}
 		local cb = cam.bounds
 		--get cam tiles within cam borders
 		camTiles = self:getTilesBetweenWorldBounds( cb.x1-tileSize, cb.y1-tileSize,
@@ -322,49 +250,60 @@
 		local tempTile = nil
 		for i = 1, #camTiles do
 			tempTile = camTiles[i]
-			tempTile.onScreen = true
+			tempTile.onScreenCheck = true
 			if (tempTile.rect) then --tile already has rect
 				tempTile:updateRectPos() --update the tiles rect based off cam bounds  
 			else
+				--print("created rect for tile", tempTile.id)
 				tempTile:createRect()
 			end
-			lastFrameCamTiles[i] = tempTile
 		end
 		for i = 1, #lastFrameCamTiles do
 			tempTile = lastFrameCamTiles[i]
-			if tempTile.onScreen == false then
+			if (tempTile.onScreenCheck == false) then
 				if (tempTile.rect) then --tiles already has rect
-					tempTile.rect:removeSelf() --update the tiles rect based off cam bounds  
+					tempTile:destroyRect() --destroy the tiles rect
 				end
 			end
-			tempTile.onScreen = false
+			tempTile.onScreenCheck = false
+		end
+		lastFrameCamTiles = {}
+		for i = 1, #camTiles do
+			lastFrameCamTiles[i] = camTiles[i]
 		end
 	end
 
-	function map:cameraZoom(zoomDir) --1 = zoom in, 2 = zoom out
+	function map:cameraZoom() --1 = zoom in, 2 = zoom out
 		cam:updateBounds()
 		self:refreshCamTiles()
-		print("zooming")
-		if (zoomDir == 1) then
-			for _, tileList in pairs(cam.boundaryTiles) do
+		--print("zooming")
+	end
 
+	function map:clear()
+		local ts = self.tileStore --readability
+		for i = 1, #ts.indexedTiles do
+			--print("clearing tile: "..i)
+			ts.tileRows[ts.indexedTiles[i].y][ts.indexedTiles[i].x] = nil
+			ts.tileCols[ts.indexedTiles[i].x][ts.indexedTiles[i].y] = nil
+			if (ts.indexedTiles[i].rect) then
+				ts.indexedTiles[i].rect:removeSelf()
+				ts.indexedTiles[i].rect = nil
 			end
-		elseif (zoomDir == 2) then
-			for _, tileList in pairs(cam.boundaryTiles) do
-				print("showing "..#cam.boundaryTiles.." tiles")
-
-			end
+			ts.indexedTiles[i] = nil
 		end
-		for _, tile in pairs(cam.screenTiles) do
-			if (tile.rect) then --tiles already has rect
-				tile:updateRectPos() --update the tiles rect based off cam bounds  
-			end
+		for i = 1, #ts.tileRows do
+			ts.tileRows[i] = nil
 		end
+		for i = 1, #ts.tileCols do
+			ts.tileCols[i] = nil
+		end
+		return true
 	end
 
 	function map:init(sceneGroup, _cam)
 		sceneGroup:insert(self.group)
 		cam = _cam
+		decal:init(self)
 	end
 
 	return map

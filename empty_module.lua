@@ -5,7 +5,8 @@
 	-----------------------------------------------------------------------------------------
 
 	--common modules
-	local g = require("lib.global.constants")
+	local gc = require("lib.global.constants")
+	local gv = require("lib.global.variables")
 	local util = require("lib.global.utilities")
 
 

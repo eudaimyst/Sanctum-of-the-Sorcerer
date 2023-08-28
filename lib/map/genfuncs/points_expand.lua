@@ -47,7 +47,6 @@
 	local startRoom, endRoom, treasureRoom = nil, nil, nil --these are mapRooms not genRooms used for making decals and other room stuff
 	local mapEdgeRooms = { up = {}, down = {}, left = {}, right = {}} --stores that have map edges --stores mapRooms that are on the map edges
 
-
 	local function onFrame() --called each frame from mapgen
 
 		gotoNextPhase = true --true to do one phase per frame, unless phase sets false (like room expand)
@@ -225,9 +224,10 @@
 
 		local function makeDecal(_params)
 			local decal = { [_params.savestring] = {
-				x = _params.tileX * mapgen.params.tileSize,
-				y = _params.tileY * mapgen.params.tileSize,
-				angle = _params.angle, } }
+				x = _params.tileX, y = _params.tileY, --tile x and y
+				xOff = _params.xOffset, yOff = _params.yOffset, --offsets are in tile units as we only save the tile x and y and don't know the game tile size
+				angle = _params.angle --as decals are static we only pass an angle, otherwise it should be a game object
+			} } 
 			decals[#decals+1] = decal
 		end
 
@@ -238,7 +238,8 @@
 			for side, genRooms in pairs(mapEdgeRooms) do
 				for ii = 1, #genRooms do
 					local genRoom = genRooms[ii]
-					local windowAngles = {up = 270, right = 0, down = 90, left = 180}
+					local windowAngles = {up = 0, right = 90, down = 180, left = 270}
+					local windoOffset = {up = {x = 0, y = 0.65}, right = {x = 0.35, y = 0}, down = {x = 0, y = 0.35}, left = {x = 0.65, y = 0}}
 					print("drawind windows for room ", genRoom.id)
 					--print(json.prettify(genRoom))
 					local genRoom = roomStore[genRoom.id]
@@ -257,7 +258,8 @@
 					print("setting "..#windowTiles.." windows")
 					for i = 1, #windowTiles do
 						local tile = windowTiles[i]
-						local window = { tileX = tile.x, tileY = tile.y, angle = windowAngles[side], savestring = "win" }
+						local window = { tileX = tile.x, tileY = tile.y, angle = windowAngles[side], savestring = "win",
+										 xOffset = windoOffset[side].x, yOffset = windoOffset[side].y}
 						makeDecal(window)
 					end
 				end

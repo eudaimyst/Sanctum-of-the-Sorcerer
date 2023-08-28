@@ -63,8 +63,9 @@
 		tile.col = _collision
 		--tile screen pos is exclusively accessed through its rect
 		tile.x, tile.y = _column, _row
-		tile.world = { x = _column * tileSize, y = _row * tileSize }
 		tile.mid = { x = _column * tileSize + halfTileSize, y = _row * tileSize + halfTileSize }
+		--print("tile world pos: ", tile.world.x, tile.world.y) --(DEBUG:WORKING)
+		tile.rect = nil
 		
 		local stringLookup = map.saveStringLookup
 		local type = stringLookup[_string] --sets the tile type string to the key name of the matching tileset entry
@@ -128,7 +129,6 @@
 		end
 
 		function tile:updateRectPos() --updates the tiles rect position to match its world position within cam bounds and scaled by camera zoom
-			--print("updating rect for tile", self.id)
 			if (self.rect) then
 				self.rect.xScale, self.rect.yScale = cam.zoom, cam.zoom
 				self.rect.x, self.rect.y = (self.world.x - cam.bounds.x1) * cam.zoom , (self.world.y - cam.bounds.y1) * cam.zoom

@@ -55,6 +55,7 @@ function game:beginPlay()
 	local function moveInput(direction) --moveListener passed to key module
 		self.char:move(direction)
 		map:refreshCamTiles() --calls updateRect on tiles, creates/destroys rects
+    print("move input done")
 	end
 
 	self:spawnChar()
@@ -88,6 +89,7 @@ function game:onFrame()
 	end
 
 	tiles:onFrame()
+  
 end
 
 function game.init(_cam, _map, _key, _mouse, _hud)

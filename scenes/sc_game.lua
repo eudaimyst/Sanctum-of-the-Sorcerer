@@ -52,7 +52,7 @@
 		end
 
 		local function doZoom()
-			map:cameraZoom(zoomDir)
+			map:cameraZoom()
 		end
 
 		local zoomTimer = timer.performWithDelay( 1, doZoom, -1 )
@@ -114,7 +114,7 @@
 			debug.updateText( "charWorldPos", game.char.world.x..","..game.char.world.y )
 			game:onFrame()
 		end
-
+		
 	end
 
 	function scene:create( event ) -- Called when scene's view does not exist.

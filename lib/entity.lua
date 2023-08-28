@@ -25,12 +25,13 @@
     local function updateRect(self) --calculate the entities position on the screen based off its world coords
         --needs to be called after cam bounds has been updated on frame or jitters
         if (self.rect) then --do not updateScreenPos if entity has no rect (ie, is not on screen)
+            self.rect.xScale, self.rect.yScale = cam.zoom, cam.zoom
             self.rect.x, self.rect.y = (self.world.x - cam.bounds.x1) * cam.zoom , (self.world.y - cam.bounds.y1) * cam.zoom
         end
     end
 
     function lib_entity.entityFactory(entity)
-		print("adding entity functions")
+		--print("adding entity functions")
 
         function entity:destroySelf() --called to remove the entity, its group and reference to it
             local function doDestruction()

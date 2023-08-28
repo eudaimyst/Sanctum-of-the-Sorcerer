@@ -96,7 +96,7 @@
 		end
 		local function doZoom()
 			print("do")
-			map:cameraZoom(zoomDir)
+			map:cameraZoom()
 		end
 		local zoomTimer = timer.performWithDelay( 1, doZoom, -1 ) --starts a timer once bg has faded in
 		cam:adjustZoom(zoomDir, zoomTimer) --updates the zoom value and bounds of camera
