@@ -63,9 +63,6 @@ function game:beginPlay()
 	for i = 1, #map.enemies do
 		self.spawnEnemy(map.enemies[i])
 	end
-	for i = 1, #map.decalStore do
-		--make lights here for decals that have light data
-	end
 
 	hud:draw(self.char)
 	key.registerMoveListener(moveInput)

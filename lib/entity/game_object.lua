@@ -46,7 +46,12 @@
 
     local function gameObjOnFrame(self)
         if self.moveTarget then
-            self:move(self.moveTarget)
+            --directions were originally intended to be constants and not intended to have their values changed
+            --TODO: come up with a proper direction framework that is not accessed as constants
+            local dir = util.deepcopy(self.facingDirection) 
+            local normalTarget = util.normalizeXY(util.deltaPos(self.world, self.moveTarget))
+            dir.x, dir.y = normalTarget.x, normalTarget.y
+            self:move(dir)
             if util.compareFuzzy(self.world, self.moveTarget) then
                 self.moveTarget = nil --mark as nil to stop moving
 				print (self.name, self.id, "has reached its move target")
@@ -60,14 +65,14 @@
         function gameObject:setMoveTarget(pos) --once move target is set, then onFrame will know to call the move function to the constructed moveTarget
             --print(json.prettify(self))
             --print("move target:",self.id, self.world.x, self.world.y)
-            local normalTarget = util.normalizeXY(util.deltaPos(self.world, pos))
+            if (util.compareFuzzy(self.world, pos)) then
+                print("move target is same as current position")
+                return
+            end
             local angle = util.deltaPosToAngle(self.world, pos)
-            --directions were originally intended to be constants and not intended to have their values changed
-            --TODO: come up with a proper direction framework that is not accessed as constants
-            local dir = util.deepcopy(util.angleToDirection(angle)) 
-            dir.x, dir.y = normalTarget.x, normalTarget.y
+            self:setFacingDirection(util.angleToDirection(angle))
             --print(self.id, "target dir: ", dir.x, dir.y)
-            self.moveTarget = dir
+            self.moveTarget = pos
         end
 
         function gameObject:move(dir) --called each frame from key_input by scene, also onFrame if moveTarget is set
@@ -86,8 +91,8 @@
             local newPos = { x = self.world.x + posDelta.x, y = self.world.y + posDelta.y }
             local newTileX = map:getTileAtPoint( { x = newPos.x, y = self.world.y  } )
             local newTileY = map:getTileAtPoint( { x = self.world.x, y = newPos.y  } )
-            if newTileX.col == 1 then newPos.x = self.world.x end
-            if newTileY.col == 1 then newPos.y = self.world.y end
+            if newTileX.col == 1 then newPos.x = self.world.x; self.moveTarget = nil end
+            if newTileY.col == 1 then newPos.y = self.world.y; self.moveTarget = nil end
             self.world.x, self.world.y = newPos.x, newPos.y
         end
 

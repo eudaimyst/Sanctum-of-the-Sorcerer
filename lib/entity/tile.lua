@@ -66,6 +66,7 @@
 		tile.mid = { x = _column * tileSize + halfTileSize, y = _row * tileSize + halfTileSize }
 		--print("tile world pos: ", tile.world.x, tile.world.y) --(DEBUG:WORKING)
 		tile.rect = nil
+		tile.lightBlockers = 0
 		
 		local stringLookup = map.saveStringLookup
 		local type = stringLookup[_string] --sets the tile type string to the key name of the matching tileset entry
@@ -144,6 +145,7 @@
 
 		function tile:updateLightValue(updateLightBlockers)
 			if (self.rect) then --bypass if not rect
+				self.lightValue = 0
 				for ii = 1, #lighting.store do
 					local light = lighting.store[ii]
 					local lightX, lightY = light.x, light.y
@@ -152,9 +154,7 @@
 
 					local midx, midy = self.mid.x, self.mid.y
 					local dist = util.getDistance(light.x, light.y, midx, midy)
-					if dist > light.radius then
-						self.lightValue = 0
-					else
+					if dist < light.radius then
 						if updateLightBlockers then
 							self.lightBlockers = 0
 							local rayDelta = {x = midx - light.x, y = midy - light.y}
@@ -174,9 +174,9 @@
 									end
 								end
 							end
-							local mod = (2 - self.lightBlockers) / 2
-							self.lightValue = ( 1 - (dist / rad) ^ exp ) * int * mod
 						end
+						local mod = (2 - self.lightBlockers) / 2
+						self.lightValue = self.lightValue + ( 1 - (dist / rad) ^ exp ) * int * mod
 					end
 				end
 				if self.type == "wall" then

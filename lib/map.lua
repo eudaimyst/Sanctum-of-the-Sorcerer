@@ -34,7 +34,6 @@
 	map.group:insert(map.decalGroup)
 
 	map.tileStore = { tileRows = {}, tileCols = {}, indexedTiles = {}} --set by loadMap
-	map.decalStore = {}
 	map.startTileID = 0 --tile for character to start on, accessed by game loadMap
 	map.tileData = {}
 	

@@ -123,12 +123,14 @@
 				print("setting idle target for "..self.id)
 				local function getWanderPoint()
 					local r = math.random(self.wanderDistance.min, self.wanderDistance.max)
-					if math.random(0, 1) == 1 then
-						r = r * -1
+					if math.random() > 0.5 then
+						return r
+					else
+						return r * -1
 					end
-					return r
 				end
 				local targetPos = { x = self.spawnPos.x + getWanderPoint(), y = self.spawnPos.y + getWanderPoint() }
+				--local targetPos = { x = self.spawnPos.x, y = self.spawnPos.y }
 				print(self.name, self.id, "move idle target pos:", targetPos.x, targetPos.y)
 				self:setMoveTarget(targetPos) --game object function
 				self.currentAction = nil -- no more action taken until enemy makesDecision again

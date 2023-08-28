@@ -77,6 +77,9 @@
 
 	function util.compareFuzzy(pos1, pos2, _fuzzyDistance)
 		local fuzzyDistance = _fuzzyDistance or 10
+		if pos1 == nil or pos2 == nil then
+			return false
+		end
 		
 		if pos1.x <= pos2.x + fuzzyDistance and pos1.x >= pos2.x - fuzzyDistance
 		and pos1.y <= pos2.y + fuzzyDistance and pos1.y >= pos2.y - fuzzyDistance then

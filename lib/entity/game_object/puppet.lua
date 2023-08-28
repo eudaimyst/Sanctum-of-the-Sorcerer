@@ -111,6 +111,9 @@ function lib_puppet.puppetFactory(puppet)
 	function puppet:animUpdateLoop() --called on each game render frame
 		local anim = self.currentAnim
 		--update rect image on first render frame of loop
+		if self.animFrame > anim.frames then --if animation is changed and frame is greater than the number of frames in the animation, reset frame
+			self.animFrame = 1
+		end
 		if (self.frameTimer == 0) then
 			self:updateRectImage()
 		end

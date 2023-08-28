@@ -14,6 +14,7 @@
     local lfs = require("lfs")
     local map = require("lib.map")
     local cam = require("lib.camera")
+    local light = require("lib.entity.light_emitter")
 
     local basePath = "content/spells"
 
@@ -97,6 +98,7 @@
             print("creating attack projectile")
             attack.projectileStore[#attack.projectileStore+1] = entity:create(self.origin.x, self.origin.y)
             local projectile = attack.projectileStore[#attack.projectileStore]
+            light.attachToEntity(projectile, {radius = 400, intensity = 1, exponent = .3} )
             projectile.isProjectile = true
             projectile.displayParams = attack.displayParams[index]
             projectile.speed = attack.displayParams[index].speed
