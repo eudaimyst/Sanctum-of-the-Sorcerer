@@ -20,7 +20,7 @@ local json = require("json")
 
 
 -- Define module
-local game = {}
+local game = { char = {} }
 local cam, map, key, mouse, hud --set on init()
 
 

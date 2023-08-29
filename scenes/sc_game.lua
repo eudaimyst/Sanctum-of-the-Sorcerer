@@ -90,14 +90,14 @@
 		mouse.init()
 		mouse.registerMouseScrollListener(zoomMap)
 		key.init()
-		map:init(sceneGroup, cam)
+		map:init(sceneGroup, cam, game)
 		mapgen:init(sceneGroup)
 		cam.init()
 		hud.init(sceneGroup, map, game)
 		game.init(cam, map, key, mouse, hud)
 		print("calling game object create from scene")
 
-		entity:init(sceneGroup) --passes group to entity which gets stored for all created entities
+		entity:init(sceneGroup, map) --passes group to entity which gets stored for all created entities
 
 		generateGameMap()
 		game.preloadTextures()

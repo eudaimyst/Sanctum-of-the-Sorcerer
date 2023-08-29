@@ -10,7 +10,8 @@
 	local tiles = require("lib.entity.tile")
 	local json = require("json")
 	local decal = require("lib.entity.decal")
-
+	local cam -- set by init from scene
+	local game
 
 	local defaultTileset = { --this is the default tileset data FOR THE SCENE ONLY (map generator has its own fix is TODO)
 		void = { savestring = "v", image = "void.png"},
@@ -25,7 +26,6 @@
 
 	-- Define module
 	local map = {}
-	local cam = {} --set by init from scene
 
 	map.group = display.newGroup()
 	map.tileGroup = display.newGroup()
@@ -174,7 +174,7 @@
 		--print(json.prettify(self.saveStringLookup))
 		self:createTexturesFromTileset(defaultTileset) --preloads the tile textures
 
-		tiles:init(self, cam, defaultTileset, wallSubTypes, mapImageFolder) --initialise the tile module
+		tiles:init(game, self, cam, defaultTileset, wallSubTypes, mapImageFolder) --initialise the tile module
 
 		local x, y = 1, 1
 		local createTile = tiles.createTile
@@ -299,9 +299,9 @@
 		return true
 	end
 
-	function map:init(sceneGroup, _cam)
+	function map:init(sceneGroup, _cam, _game)
 		sceneGroup:insert(self.group)
-		cam = _cam
+		cam, game = _cam, _game
 		decal:init(self)
 	end
 

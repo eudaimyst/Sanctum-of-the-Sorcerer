@@ -15,6 +15,7 @@
 	
     local cam = require("lib.camera")
     local util = require("lib.global.utilities")
+    local map --set by init
 
     -- Define module
 	local lib_entity = {}
@@ -32,6 +33,13 @@
 
     function lib_entity.entityFactory(entity)
 		--print("adding entity functions")
+
+
+        function entity:updateLightValue()
+            local tile = map:getTileAtPoint(self.world)
+            --print(self.id, tile.id, tile.lightValue)
+            self.lightValue = tile.lightValue
+        end
 
         function entity:destroySelf() --called to remove the entity, its group and reference to it
             local function doDestruction()
@@ -108,8 +116,9 @@
         return entity
     end
 
-    function lib_entity:init(sceneGroup) --sets the group for the entity (all modules that extend the entity class will use this)
+    function lib_entity:init(sceneGroup, _map) --sets the group for the entity (all modules that extend the entity class will use this)
         lib_entity.sceneGroup = sceneGroup
+        map = _map
     end
 
 	return lib_entity

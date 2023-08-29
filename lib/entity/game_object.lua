@@ -41,6 +41,7 @@
         spawnPos = { x = 0, y = 0 },
         directional = false, moveDirection = gc.move.down, facingDirection = gc.move.down,
         isMoving = false,
+        lightValue = 0,
         moveTarget = nil --target position relative to the game object
     }
 
@@ -54,8 +55,11 @@
             self:move(dir)
             if util.compareFuzzy(self.world, self.moveTarget) then
                 self.moveTarget = nil --mark as nil to stop moving
-				print (self.name, self.id, "has reached its move target")
+				--print (self.name, self.id, "has reached its move target")
             end
+        end
+        if self.rect then
+            self:updateLightValue()
         end
     end
 
@@ -132,11 +136,9 @@
                     else
                     texture = self.texture
                 end
-                self.rect.fill = {
-                    type = "image",
-                    filename = texture.filename,     -- "filename" property required
-                    baseDir = texture.baseDir       -- "baseDir" property required
-                }
+                self:destroyRect()
+                self:makeRect()
+                self.rect:setFillColor(self.lightValue)
             --print("updated rect image")
             else
                 print("GAME OBJECT UPDATE RECT IMAGE: rect for "..self.name.."doesn't exist")

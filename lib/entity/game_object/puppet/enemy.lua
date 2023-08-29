@@ -19,7 +19,7 @@
 	-- Define module
 	local lib_enemy = {}
 	lib_enemy.enemyStore = {}
-	local wakeupDistance = 4000 --enemies wake up when the char gets this close
+	local wakeupDistance = 2000 --enemies wake up when the char gets this close
 	local decisionRate = 3 --time in seconds between making decisions
 
 	local decisionTimer = 0
@@ -120,7 +120,7 @@
 
 		function enemy:moveIdle() --called on frame if this function is the currentAction set by makeDecision
 			if (not self.moveTarget) then
-				print("setting idle target for "..self.id)
+				--print("setting idle target for "..self.id)
 				local function getWanderPoint()
 					local r = math.random(self.wanderDistance.min, self.wanderDistance.max)
 					if math.random() > 0.5 then
@@ -131,7 +131,7 @@
 				end
 				local targetPos = { x = self.spawnPos.x + getWanderPoint(), y = self.spawnPos.y + getWanderPoint() }
 				--local targetPos = { x = self.spawnPos.x, y = self.spawnPos.y }
-				print(self.name, self.id, "move idle target pos:", targetPos.x, targetPos.y)
+				--print(self.name, self.id, "move idle target pos:", targetPos.x, targetPos.y)
 				self:setMoveTarget(targetPos) --game object function
 				self.currentAction = nil -- no more action taken until enemy makesDecision again
 			end
@@ -142,19 +142,19 @@
 			if (self.currentAction) then
 				if ( self.currentAction == self.moveToIdle) then
 					if (distance < self.sightRange ) then
-						print("setting current action to moveToATtack from idle")
+						--print("setting current action to moveToATtack from idle")
 						return self.moveToAttack
 					end
 				elseif (self.currentAction == self.moveToAttack) then
 					if (self.timeInCombat > self.leashTime) then
-						print("setting current action to moveToIdle due to leashing")
+						--print("setting current action to moveToIdle due to leashing")
 						return self.moveIdle
 					end
 				end
 			else
 				--print("distance, sightRange: "..distance, tostring(self.sightRange))
 				if (distance < self.sightRange ) then
-					print("setting current action to due to sight range")
+					--print("setting current action to due to sight range")
 					return self.moveToAttack
 				else
 					--print("setting action to idle")

@@ -349,6 +349,7 @@
 			local sideRooms = mapEdgeRooms[side] --get the rooms in the chosen side
 			local oppSideRooms = mapEdgeRooms[oppSide]
 			startRoom = sideRooms[math.ceil(#sideRooms/2)] --get the middle room from the chosen side
+			startRoom.isStartRoom = true --used to check which is start room for spawning enemies
 			local endRoomSide = rand(0, 1) --multiplier to determine which corner end room to pick
 			endRoom = oppSideRooms[ ( ( (#oppSideRooms - 1) * endRoomSide ) + 1) ] --pick a room from the chosen side
 			treasureRoom = oppSideRooms[ ( ( (#oppSideRooms - 1) * (1 - endRoomSide) ) + 1) ] --pick a room from the opposite side

@@ -87,15 +87,16 @@
 		for i = 1, #self.rooms do
 			local room = self.rooms[i]
 			local bounds = room.worldBounds
-			
-			room.area = (bounds.max.x - bounds.min.x) * (bounds.max.y - bounds.min.y)
-			for j = 1, math.floor(room.area/1000 * room.difficulty * 2) do
-				local enemy = {}
-				enemy.spawnPoint = { x = math.random(bounds.min.x, bounds.max.x),
-									 y = math.random(bounds.min.y, bounds.max.y) }
-				local d = display.newRect( self.group, enemy.spawnPoint.x, enemy.spawnPoint.y, enemySize, enemySize )
-				d:setFillColor( 1, 0, 0 )
-				enemies[#enemies+1] = enemy
+			if not room.isStartRoom then
+				room.area = (bounds.max.x - bounds.min.x) * (bounds.max.y - bounds.min.y)
+				for j = 1, math.floor(room.area/1000 * room.difficulty * 2) do
+					local enemy = {}
+					enemy.spawnPoint = { x = math.random(bounds.min.x, bounds.max.x),
+										y = math.random(bounds.min.y, bounds.max.y) }
+					local d = display.newRect( self.group, enemy.spawnPoint.x, enemy.spawnPoint.y, enemySize, enemySize )
+					d:setFillColor( 1, 0, 0 )
+					enemies[#enemies+1] = enemy
+				end
 			end
 		end
 		--return enemies

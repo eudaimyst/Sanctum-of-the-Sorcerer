@@ -13,20 +13,17 @@
 
 	local mceil = math.ceil
 
-	local lightingUpdateRate = 50 --ms
-	local lightingUpdateTimer = 0
-
-	local lightBlockerUpdateRate = 200 --ms
-	local lightBlockerUpdateTimer = 0
-
-	local map, cam, defaultTileset, wallSubTypes, mapImageFolder
+	local game, map, cam, defaultTileset, wallSubTypes, mapImageFolder
 	local tStoreIndex, tStoreCols
 	local tileSize, halfTileSize
+
+	local gameChar --set on init for updating light blocker
 	-- Define module
 	local lib_tile = {}
 
-	function lib_tile:init(_map, _cam, _defaultTileset, _wallSubTypes, _mapImageFolder)
+	function lib_tile:init(_game, _map, _cam, _defaultTileset, _wallSubTypes, _mapImageFolder)
 		map, cam, defaultTileset, wallSubTypes, mapImageFolder = _map, _cam, _defaultTileset, _wallSubTypes, _mapImageFolder
+		game = _game
 		tStoreIndex, tStoreCols = map.getTileStore()
 		tileSize = map.tileSize
 		halfTileSize = tileSize/2
@@ -34,27 +31,6 @@
 	end
 
 	function lib_tile:onFrame() --called from game or level editor on frame ????
-		local dt = gv.frame.dt
-		lightingUpdateTimer = lightingUpdateTimer + dt
-		lightBlockerUpdateTimer = lightBlockerUpdateTimer + dt
-
-		if lightingUpdateTimer > lightingUpdateRate then
-			lightingUpdateTimer = 0
-			
-			local camTiles = map.getCamTiles()
-			
-			if lightBlockerUpdateTimer > lightBlockerUpdateRate then
-				lightBlockerUpdateTimer = 0
-			
-				for i = 1, #camTiles do
-					camTiles[i]:updateLightValue(true)
-				end
-			else
-				for i = 1, #camTiles do
-					camTiles[i]:updateLightValue(nil)
-				end
-			end
-		end
 	end
 
 	function lib_tile:createTile(_id, _column, _row, _collision, _string)
@@ -67,6 +43,7 @@
 		--print("tile world pos: ", tile.world.x, tile.world.y) --(DEBUG:WORKING)
 		tile.rect = nil
 		tile.lightBlockers = 0
+		tile.visibleToChar = nil
 		
 		local stringLookup = map.saveStringLookup
 		local type = stringLookup[_string] --sets the tile type string to the key name of the matching tileset entry
@@ -75,7 +52,6 @@
 
 		function tile:setWallSubType() --look at neighbouring tiles to set a subtype for this tile
 			local st = wallSubTypes
-
 			local search = {
 				[0] = {x = -1, y = -1}, --search left + up
 				[1] = {x = 1, y = -1}, --search right + up
@@ -143,38 +119,41 @@
 			end
 		end
 
-		function tile:updateLightValue(updateLightBlockers)
-			if (self.rect) then --bypass if not rect
+		function tile:updateLightBlockers() -- updates tile lightvalue depending on light blockers between tile and char
+			self.lightBlockers = 0
+			local charX, charY = game.char.world.x, game.char.world.y
+			local midx, midy = self.mid.x, self.mid.y
+			local dist = util.getDistance(charX, charY, midx, midy)
+			local rayDelta = {x = midx - charX, y = midy - charY}
+			local rayNormal = util.normalizeXY(rayDelta)
+			local raySegment = {x = rayNormal.x * halfTileSize, y = rayNormal.y * halfTileSize}
+			local segmentLength = util.getDistance(0, 0, raySegment.x, raySegment.y)
+			local segments = mceil(dist / segmentLength)
+			for i = 1, segments do
+				local checkPos = {x = charX + rayNormal.x * segmentLength * i, y = charY + rayNormal.y * segmentLength * i}
+				--print(checkPos.x, checkPos.y)
+				--print("checking blockers")
+				local checkTile = map:getTileAtPoint(checkPos)
+				if checkTile ~= self then
+					if checkTile.type == "void" or checkTile.type == "wall" then
+						--found a light blocker
+						self.lightBlockers = self.lightBlockers + 1
+					end
+				end
+			end
+		end
+
+		function tile:updateLightValue()
+			if (self.rect) then --bypass if no rect for the tile
 				self.lightValue = 0
 				for ii = 1, #lighting.store do
+					local midx, midy = self.mid.x, self.mid.y
 					local light = lighting.store[ii]
 					local lightX, lightY = light.x, light.y
-					local rad = light.radius + tileSize
-					local exp, int = light.exponent, light.intensity
-
-					local midx, midy = self.mid.x, self.mid.y
-					local dist = util.getDistance(light.x, light.y, midx, midy)
+					local dist = util.getDistance(lightX, lightY, midx, midy)
 					if dist < light.radius then
-						if updateLightBlockers then
-							self.lightBlockers = 0
-							local rayDelta = {x = midx - light.x, y = midy - light.y}
-							local rayNormal = util.normalizeXY(rayDelta)
-							local raySegment = {x = rayNormal.x * halfTileSize, y = rayNormal.y * halfTileSize}
-							local segmentLength = util.getDistance(0, 0, raySegment.x, raySegment.y)
-							local segments = mceil(dist / segmentLength)
-							for i = 1, segments do
-								local checkPos = {x = lightX + rayNormal.x * segmentLength * i, y = lightY + rayNormal.y * segmentLength * i}
-								--print(checkPos.x, checkPos.y)
-								--print("checking blockers")
-								local checkTile = map:getTileAtPoint(checkPos)
-								if checkTile then
-									if checkTile.type == "void" then
-										--found a light blocker
-										self.lightBlockers = self.lightBlockers + 1
-									end
-								end
-							end
-						end
+						local rad = light.radius + tileSize
+						local exp, int = light.exponent, light.intensity
 						local mod = (2 - self.lightBlockers) / 2
 						self.lightValue = self.lightValue + ( 1 - (dist / rad) ^ exp ) * int * mod
 					end
