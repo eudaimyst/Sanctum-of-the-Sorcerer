@@ -7,9 +7,9 @@
 	--common modules
 	local gv = require("lib.global.variables")
 	local util = require("lib.global.utilities")
-	local lighting = require("lib.entity.light_emitter")
 	local entity = require("lib.entity")
 	local json = require("json")
+    local lighting = require("lib.game.lighting")
 
 	local mceil = math.ceil
 
@@ -30,11 +30,17 @@
 		print("----tiles module initiated----")
 	end
 
-	function lib_tile:onFrame() --called from game or level editor on frame ????
+	local function tileOnFrame(tile) --called though entity method by game.lua
+		if tile.rect then
+			if lighting.doLightingUpdate() then
+				lighting:updateLighting(tile)
+			end
+		end
 	end
 
 	function lib_tile:createTile(_id, _column, _row, _collision, _string)
 		local tile = entity:create(_column * tileSize, _row * tileSize, nil)
+		tile:addOnFrameMethod(tileOnFrame)
 		tile.lightValue = 0
 		tile.col = _collision
 		--tile screen pos is exclusively accessed through its rect
@@ -116,55 +122,6 @@
 			if (self.rect) then
 				self.rect:removeSelf()
 				self.rect = nil
-			end
-		end
-
-		function tile:updateLightBlockers() -- updates tile lightvalue depending on light blockers between tile and char
-			self.lightBlockers = 0
-			local charX, charY = game.char.world.x, game.char.world.y
-			local midx, midy = self.mid.x, self.mid.y
-			local dist = util.getDistance(charX, charY, midx, midy)
-			local rayDelta = {x = midx - charX, y = midy - charY}
-			local rayNormal = util.normalizeXY(rayDelta)
-			local raySegment = {x = rayNormal.x * halfTileSize, y = rayNormal.y * halfTileSize}
-			local segmentLength = util.getDistance(0, 0, raySegment.x, raySegment.y)
-			local segments = mceil(dist / segmentLength)
-			for i = 1, segments do
-				local checkPos = {x = charX + rayNormal.x * segmentLength * i, y = charY + rayNormal.y * segmentLength * i}
-				--print(checkPos.x, checkPos.y)
-				--print("checking blockers")
-				local checkTile = map:getTileAtPoint(checkPos)
-				if checkTile ~= self then
-					if checkTile.type == "void" or checkTile.type == "wall" then
-						--found a light blocker
-						self.lightBlockers = self.lightBlockers + 1
-					end
-				end
-			end
-		end
-
-		function tile:updateLightValue()
-			if (self.rect) then --bypass if no rect for the tile
-				self.lightValue = 0
-				for ii = 1, #lighting.store do
-					local midx, midy = self.mid.x, self.mid.y
-					local light = lighting.store[ii]
-					local lightX, lightY = light.x, light.y
-					local dist = util.getDistance(lightX, lightY, midx, midy)
-					if dist < light.radius then
-						local rad = light.radius + tileSize
-						local exp, int = light.exponent, light.intensity
-						local mod = (2 - self.lightBlockers) / 2
-						self.lightValue = self.lightValue + ( 1 - (dist / rad) ^ exp ) * int * mod
-					end
-				end
-				if self.type == "wall" then
-					for i = 0, 3 do
-						self.rect.wallRects[i]:setFillColor(self.lightValue)
-					end
-				else
-					self.rect:setFillColor(self.lightValue)
-				end
 			end
 		end
 

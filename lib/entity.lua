@@ -34,7 +34,6 @@
     function lib_entity.entityFactory(entity)
 		--print("adding entity functions")
 
-
         function entity:updateLightValue()
             local tile = map:getTileAtPoint(self.world)
             --print(self.id, tile.id, tile.lightValue)
@@ -85,7 +84,7 @@
     function lib_entity:storeObject(entity)
     end
 
-    function lib_entity:create(_x, _y, _updateRectOnFrame) --store = any store be it gameObjects, enemies etc...
+    function lib_entity:create(_x, _y, _receivesLighting, _updateRectOnFrame) --store = any store be it gameObjects, enemies etc...
         entityCount = entityCount + 1
         --print("creating entity with id "..entityCount)
         local updateRectOnFrame = _updateRectOnFrame or true --default to true, pass nil if handling own rect updates
@@ -94,7 +93,8 @@
         local entity = { id = entityCount,
             world = {x = _x or 0, y = _y or 0}, screen = {x = 0, y = 0},
             group = nil, attack = nil,
-            onFrameMethods = {}, markedForDestruction = nil
+            onFrameMethods = {}, markedForDestruction = nil,
+            receivesLighting = _receivesLighting or true
         }
         
         entity.group = display.newGroup() --create a new display group for this entity that will be used for all display objects

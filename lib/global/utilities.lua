@@ -7,6 +7,8 @@
 	--common modules
 	local gc = require("lib.global.constants")
 
+	local matan2 = math.atan2
+
 	--shared modules --all can call each other
 
 	-- Define module
@@ -53,6 +55,14 @@
 		return nil
 	end
 
+	function util.deltaToAngle(x, y)
+		local angle = matan2(y, x) * 180 / math.pi
+		if (angle < 0) then
+			angle = angle + 360
+		end
+		return angle
+	end
+
 	-- This code converts a delta position (the difference between two points in space) to an angle, 
 	-- which is useful for determining where a player is facing when moving from one point to another.
 	function util.deltaPosToAngle(pos1, _pos2)
@@ -61,7 +71,7 @@
 			print("ERROR: deltaPosToAngle() called with invalid parameters")
 			return nil
 		end
-		local angle = math.atan2(pos2.y - pos1.y, pos2.x - pos1.x) * 180 / math.pi
+		local angle = matan2(pos2.y - pos1.y, pos2.x - pos1.x) * 180 / math.pi
 		if (angle < 0) then
 			angle = angle + 360
 		end

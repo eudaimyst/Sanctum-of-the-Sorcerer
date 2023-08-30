@@ -16,6 +16,7 @@ local enemy = require("lib.entity.game_object.puppet.enemy")
 local lfs = require("lfs")
 local spellParams = require("lib.global.spell_params")
 local tiles = require("lib.entity.tile") --to call onFrame to update tiles
+local lighting = require("lib.game.lighting")
 local json = require("json")
 
 
@@ -71,11 +72,12 @@ function game:beginPlay()
 end
 
 function game:onFrame()
-	gameObject:clearMovement()           --sets isMoving to false for all game objects, before being set by key input
+	gameObject:clearMovement()	--sets isMoving to false for all game objects, before being set by key input
 
-	key:onFrame()                        --processes key inputs
-	cam:onFrame()                        --processes camera movement
-	enemy:onFrame()                      --calls enemy lib onFrame for decision making timer
+	key:onFrame()               --processes key inputs
+	cam:onFrame()               --processes camera movement
+	enemy:onFrame()             --calls enemy lib onFrame for decision making timer
+	lighting:onFrame()			--calls enemy lib onFrame for decision making timer
 
 	for _, e in pairs(entity.store) do
 		if not e.markedForDestruction then --entity will be destroyed this frame, do not run its onFrame method

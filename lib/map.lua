@@ -240,31 +240,32 @@
 		return true
 	end
 
+	local t_tile --temp tile reference
 	function map:refreshCamTiles() --gets all tiles within cams bounds and updates their rect
 		local cb = cam.bounds
 		--get cam tiles within cam borders
 		camTiles = self:getTilesBetweenWorldBounds( cb.x1-tileSize, cb.y1-tileSize,
 													cb.x2+tileSize, cb.y2+tileSize )
 		print(#camTiles)
-		local tempTile = nil
+		t_tile = nil
 		for i = 1, #camTiles do
-			tempTile = camTiles[i]
-			tempTile.onScreenCheck = true
-			if (tempTile.rect) then --tile already has rect
-				tempTile:updateRectPos() --update the tiles rect based off cam bounds  
+			t_tile = camTiles[i]
+			t_tile.onScreenCheck = true
+			if (t_tile.rect) then --tile already has rect
+				t_tile:updateRectPos() --update the tiles rect based off cam bounds  
 			else
 				--print("created rect for tile", tempTile.id)
-				tempTile:createRect()
+				t_tile:createRect()
 			end
 		end
 		for i = 1, #lastFrameCamTiles do
-			tempTile = lastFrameCamTiles[i]
-			if (tempTile.onScreenCheck == false) then
-				if (tempTile.rect) then --tiles already has rect
-					tempTile:destroyRect() --destroy the tiles rect
+			t_tile = lastFrameCamTiles[i]
+			if (t_tile.onScreenCheck == false) then
+				if (t_tile.rect) then --tiles already has rect
+					t_tile:destroyRect() --destroy the tiles rect
 				end
 			end
-			tempTile.onScreenCheck = false
+			t_tile.onScreenCheck = false
 		end
 		lastFrameCamTiles = {}
 		for i = 1, #camTiles do

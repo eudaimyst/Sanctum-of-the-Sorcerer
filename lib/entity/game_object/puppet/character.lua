@@ -20,12 +20,14 @@
 		walk = { frames = 4, rate = 4 },
 	} }	
 
+	local char
+
 	function lib_character:create(_params, _hud)
 		hud = _hud
 		print("creating character entity")
 		_params.animations = self.animations --adds the modules defined in the character.lua file to the params to be loaded by puppet module
 
-		local char = puppet:create(_params)
+		char = puppet:create(_params)
 		--print("CHARACTER PARAMS:--------\n" .. json.prettify(char) .. "\n----------------------")
         
 		function char:addSpell(spell, slot) --adds spell with passed params to the slot
@@ -96,9 +98,42 @@
 			end
 		end
 
-		lights.attachToEntity(char)
+		--lights.attachToEntity(char)
 
 		return char
 	end
+	--[[
+	
+	local function checkRayForVisibility(entity, sourceX, sourceY, rayNormalX, rayNormalY, segmentLength, segments)
+		local walls = 0
+		local voids = 0
+		for i = 1, segments do
+			local checkPos = {x = sourceX + rayNormalX * segmentLength * i, y = sourceY + rayNormalY * segmentLength * i}
+			--print(checkPos.x, checkPos.y)
+			--print("checking blockers")
+			local checkTile = map:getTileAtPoint(checkPos)
+			if checkTile ~= entity then
+				if checkTile.type == "void" then
+					--found a light blocker
+					return nil
+				elseif checkTile.type == "wall" then
+					walls = walls + 1
+				end
+			end
+		end
+	end
+
+	function lib_character:updateVision(char, visionSource)
+		local sourceX, sourceY = visionSource.world.x, visionSource.world.y
+		local midx, midy = self.mid.x, self.mid.y
+		dist = util.getDistance(sourceX, sourceY, midx, midy)
+		local rayDelta = {x = midx - sourceX, y = midy - sourceY}
+		local rayNormal = util.normalizeXY(rayDelta)
+		local raySegment = {x = rayNormal.x * halfTileSize, y = rayNormal.y * halfTileSize}
+		local segmentLength = util.getDistance(0, 0, raySegment.x, raySegment.y)
+		local segments = mceil(dist / segmentLength)
+	end
+
+	--]]
 
 	return lib_character
