@@ -59,7 +59,7 @@
         end
  
         function entity:setParams(defaultParams, _params) --copies the params from the passed or default params table to the entity
-            print("setting entity params")
+            --print("setting entity params")
             if (_params) then --if passed a table of params
                 for param, defaultValue in pairs(defaultParams) do --for each param in the default params
                     if (_params[param]) then --if passed param exists

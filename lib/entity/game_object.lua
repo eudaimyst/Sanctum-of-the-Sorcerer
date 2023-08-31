@@ -30,7 +30,6 @@
 
 	-- Define module
 	local lib_gameObject = {}
-    lib_gameObject.store = {}
 
     local defaultParams = {
         name = "default",
@@ -46,6 +45,10 @@
     }
 
     local function gameObjOnFrame(self)
+        if self.name ~= "character" then --isMoving for char is set false earlier as needs gets set true by keyinput in game.lua
+            self.isMoving = false --resets moving variable to be changed by gameObject:move() if called
+        end
+        
         if self.moveTarget then
             --directions were originally intended to be constants and not intended to have their values changed
             --TODO: come up with a proper direction framework that is not accessed as constants
@@ -64,7 +67,7 @@
     end
 
     function lib_gameObject.gameObjectFactory(gameObject)
-		print("adding gameObject functions")
+		--print("adding gameObject functions")
 
         function gameObject:setMoveTarget(pos) --once move target is set, then onFrame will know to call the move function to the constructed moveTarget
             --print(json.prettify(self))
@@ -85,9 +88,9 @@
                 print("can't move while attacking")
                 return
             end
-            if self.name == "character" then
-                --print("moving "..self.name.." with id "..self.id.." in dirrection: "..dir.image)
-            end
+            --[[ if self.name == "character" then
+                print("character is moving", gv.frame.current)
+            end ]]
             self.isMoving = true
             self:setMoveDirection(dir) --sets move direction and updates the facing direction
             
@@ -165,37 +168,25 @@
         
     end
 
-    function lib_gameObject:storeObject(gameObject) --stores gameObject
-        gameObject.objID = #self.store + 1 --creates the object id --NOTE: Different to entity id
-        self.store[gameObject.objID] = gameObject --stores the object in this modules store of object
-    end
-
     function lib_gameObject:create(_params) --creates gameObject
-        print("creating gameObject")
+        --print("creating gameObject")
 
         local gameObject = entity:create() --creates the entity using the entity module and bases the object off of it
         
-		print("setting gameObject params") --entity function
+		--print("setting gameObject params") --entity function
         gameObject:setParams(defaultParams, _params) --sets the params of the object to the passed params or the default params
 		--print("GAME OBJECT PARAMS:--------\n" .. json.prettify(gameObject) .. "\n----------------------")
 
         gameObject.world.x, gameObject.world.y = gameObject.spawnPos.x, gameObject.spawnPos.y --sets the intial world point to the passed x and y or the default x and y
 
         lib_gameObject.gameObjectFactory(gameObject) --adds functions to gameObject
-        lib_gameObject:storeObject(gameObject) --stores gameObject
 
         --gameObject:loadTextures()
 
         gameObject:addOnFrameMethod(gameObjOnFrame)
 
-        print("gameObject created with id: " .. gameObject.objID)
+        print("gameObject created with id: ", gameObject.objID)
         return gameObject
-    end
-
-    function lib_gameObject:clearMovement()
-        for _, obj in ipairs(self.store) do
-            obj.isMoving = false
-        end
     end
 
 	return lib_gameObject

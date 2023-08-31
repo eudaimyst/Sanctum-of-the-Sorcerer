@@ -33,7 +33,6 @@
 
 	
 	local function loadMap(fName, isResource)
-		print("load map pressed")
 		if map:loadMap(fName, isResource) then
 			--cam:moveToPoint(map.worldWidth / 2, map.worldHeight / 2)
 			cam:moveToPoint(map.spawnPoint.x, map.spawnPoint.y)
@@ -99,8 +98,17 @@
 
 		entity:init(sceneGroup, map) --passes group to entity which gets stored for all created entities
 
-		generateGameMap()
 		game.preloadTextures()
+		
+		--generateGameMap() uncomment to generate map on game start
+		
+		--comment this block if generating game map
+		generatingMap = true
+		loadMap("game_level", false)
+		game:beginPlay() --spawns character and sets camera to follow
+		generatingMap = false
+		-----------------------------------------
+		
 	end
 
 	local function onFrame()

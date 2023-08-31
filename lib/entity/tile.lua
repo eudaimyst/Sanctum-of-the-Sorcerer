@@ -9,7 +9,8 @@
 	local util = require("lib.global.utilities")
 	local entity = require("lib.entity")
 	local json = require("json")
-    local lighting = require("lib.game.lighting")
+    local lighting = require("lib.entity.light_emitter")
+	local lightStore --recycled set on update
 
 	local mceil = math.ceil
 
@@ -30,17 +31,8 @@
 		print("----tiles module initiated----")
 	end
 
-	local function tileOnFrame(tile) --called though entity method by game.lua
-		if tile.rect then
-			if lighting.doLightingUpdate() then
-				lighting:updateLighting(tile)
-			end
-		end
-	end
-
 	function lib_tile:createTile(_id, _column, _row, _collision, _string)
 		local tile = entity:create(_column * tileSize, _row * tileSize, nil)
-		tile:addOnFrameMethod(tileOnFrame)
 		tile.lightValue = 0
 		tile.col = _collision
 		--tile screen pos is exclusively accessed through its rect
@@ -48,8 +40,7 @@
 		tile.mid = { x = _column * tileSize + halfTileSize, y = _row * tileSize + halfTileSize }
 		--print("tile world pos: ", tile.world.x, tile.world.y) --(DEBUG:WORKING)
 		tile.rect = nil
-		tile.lightBlockers = 0
-		tile.visibleToChar = nil
+		tile.lightValues = {}
 		
 		local stringLookup = map.saveStringLookup
 		local type = stringLookup[_string] --sets the tile type string to the key name of the matching tileset entry
@@ -111,7 +102,34 @@
 			tile.subTypes = subTypes
 		end
 
-		function tile:updateRectPos() --updates the tiles rect position to match its world position within cam bounds and scaled by camera zoom
+		function tile:storeLightValue(lightID, lightValue) --called by light depending on ray result
+			tile.lightValues[lightID] = lightValue
+			--print("tile, light, value", tile.id, lightID, lightValue)
+			--tile.lightValue = tile.lightValue + lightValue
+		end
+
+		function tile:updateLighting() --called by light emitter on frame determined by rate on all camTiles
+			self.lightValue = 0
+			for lightID, value in pairs(self.lightValues) do --bad expensive way to calc lightvalues for testing
+				lightStore = lighting.getStore()
+				local light = lightStore[lightID]
+				if util.getDistance(self.world.x, self.world.y, light.x, light.y) > light.radius then
+					value = 0
+				else
+					self.lightValue = self.lightValue + value
+				end
+			end
+			if self.type == "wall" then
+				for i = 1, 4 do
+					self.rect[i]:setFillColor(self.lightValue)
+				end
+			else
+				self.rect:setFillColor(self.lightValue)
+			end
+		end
+
+		--updates the tiles rect position to match its world position within cam bounds and scaled by camera zoom
+		function tile:updateRectPos() --called by map:refreshCamTiles() when camTiles are determined
 			if (self.rect) then
 				self.rect.xScale, self.rect.yScale = cam.zoom, cam.zoom
 				self.rect.x, self.rect.y = (self.world.x - cam.bounds.x1) * cam.zoom , (self.world.y - cam.bounds.y1) * cam.zoom

@@ -98,7 +98,7 @@
 			end
 		end
 
-		--lights.attachToEntity(char)
+		lights.attachToEntity(char)
 
 		return char
 	end

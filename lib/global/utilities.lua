@@ -85,6 +85,16 @@
 		return x1, x2, y1, y2
 	end
 
+	function util.withinBounds (x, y, minX, maxX, minY, maxY)
+		if x >= minX and x <= maxX
+		and y >= minY and y <= maxY
+		then
+			return true
+		else
+			return false
+		end
+	end
+
 	function util.compareFuzzy(pos1, pos2, _fuzzyDistance)
 		local fuzzyDistance = _fuzzyDistance or 10
 		if pos1 == nil or pos2 == nil then

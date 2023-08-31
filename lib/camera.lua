@@ -68,6 +68,10 @@
 		self:updateBounds()
 	end
 
+	function cam:getBounds()
+		return self.bounds.x1, self.bounds.x2, self.bounds.y1, self.bounds.y2
+	end
+
 	function cam:setMode(modeStr, target)
 		if modeStr == "follow" then
 			self.mode = self.modes.follow

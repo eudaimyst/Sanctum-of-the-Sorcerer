@@ -53,7 +53,7 @@ local function puppetOnFrame(self)
 end
 
 function lib_puppet.puppetFactory(puppet)
-	print("adding puppet functions")
+	--print("adding puppet functions")
 
 	function puppet:makeRect() --makes game objects rect if doesn't exist
 		--print("making puppet rect, isPuppet = " .. tostring(self.isPuppet))
@@ -96,6 +96,9 @@ function lib_puppet.puppetFactory(puppet)
 	end
 
 	function puppet:updateState() --called onFrame sets state of puppet logically
+		--[[ if self.name == "character" then
+			print("character isMoving", self.isMoving, gv.frame.current)
+		end ]]
 		if (self.currentAttack) then --begin attack has been called
 			self.state = "attack"
 			self.currentAnim = self.currentAttack.animData --sets the appropriate animation data
@@ -268,13 +271,13 @@ function lib_puppet.puppetFactory(puppet)
 		
 	end
 
-	puppet:addOnFrameMethod(puppetOnFrame)
 end
 
 function lib_puppet:create(_params) --creates the game object
-	print("creating puppet")
+	--print("creating puppet")
 
 	local puppet = gameObject:create(_params)  --creates game object for puppet
+	puppet:addOnFrameMethod(puppetOnFrame)
 
 	puppet.directional = true --all puppets are directional
 	puppet.path = "content/game_objects/puppets/" --path for puppets
@@ -282,7 +285,7 @@ function lib_puppet:create(_params) --creates the game object
 	puppet:setParams(defaultParams, _params) --adds puppet params
 	lib_puppet.puppetFactory(puppet) --adds functions to puppet
 
-	print("puppet created with entity id: " .. puppet.id)
+	print("puppet created with entity id: ", puppet.id)
 	return puppet
 end
 

@@ -15,8 +15,7 @@ local enemyParams = require("lib.global.enemy_params")
 local enemy = require("lib.entity.game_object.puppet.enemy")
 local lfs = require("lfs")
 local spellParams = require("lib.global.spell_params")
-local tiles = require("lib.entity.tile") --to call onFrame to update tiles
-local lighting = require("lib.game.lighting")
+local lightEmitter = require("lib.entity.light_emitter")
 local json = require("json")
 
 
@@ -72,12 +71,12 @@ function game:beginPlay()
 end
 
 function game:onFrame()
-	gameObject:clearMovement()	--sets isMoving to false for all game objects, before being set by key input
-
+	--gameObject:clearMovement()	--sets isMoving to false for all game objects, before being set by key input
+	game.char.isMoving = false
 	key:onFrame()               --processes key inputs
 	cam:onFrame()               --processes camera movement
+	lightEmitter:onFrame()		--calls lighting lib on frame for lighting update timer
 	enemy:onFrame()             --calls enemy lib onFrame for decision making timer
-	lighting:onFrame()			--calls enemy lib onFrame for decision making timer
 
 	for _, e in pairs(entity.store) do
 		if not e.markedForDestruction then --entity will be destroyed this frame, do not run its onFrame method
@@ -86,8 +85,6 @@ function game:onFrame()
 			end
 		end
 	end
-
-	tiles:onFrame()
   
 end
 
@@ -95,6 +92,7 @@ function game.init(_cam, _map, _key, _mouse, _hud)
 	print("setting cam and map for game library")
 	key, cam, map, hud, mouse = _key, _cam, _map, _hud, _mouse
 	enemy.init(game, cam)
+	lightEmitter.init(map, cam)
 end
 
 local function loadTextureFrames(i, path, table)
@@ -105,14 +103,14 @@ local function loadTextureFrames(i, path, table)
 			filename = path
 		})
 		if (texture) then
-			print(texture.filename, i, "created")
+			--print(texture.filename, i, "created")
 			table[i] = texture
 		else
-			print("ERROR: no texture created")
+			print("ERROR: no texture created, i, path:", i, path)
 		end
 		return table[i]
 	else
-		print("ERROR: no table pased")
+		print("ERROR: no table pased, i, path:", i, path)
 	end
 end
 
