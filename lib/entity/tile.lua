@@ -113,10 +113,14 @@
 			for lightID, value in pairs(self.lightValues) do --bad expensive way to calc lightvalues for testing
 				lightStore = lighting.getStore()
 				local light = lightStore[lightID]
-				if util.getDistance(self.world.x, self.world.y, light.x, light.y) > light.radius then
-					value = 0
+				if (light) then --check light exists
+					if util.getDistance(self.world.x, self.world.y, light.x, light.y) > light.radius then
+						value = 0
+					else
+						self.lightValue = self.lightValue + value
+					end
 				else
-					self.lightValue = self.lightValue + value
+					lightStore[lightID] = nil --light has been destroyed so remove its lightValue
 				end
 			end
 			if self.type == "wall" then

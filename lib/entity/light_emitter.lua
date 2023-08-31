@@ -54,6 +54,11 @@
 		light.raySegments = math.ceil(light.radius / halfTileSize)
 		light.raySegmentLength = light.radius / light.raySegments
 
+		function light:destroySelf()
+			lightStore[self.id] = nil
+			self = nil
+		end
+
 		function light:updateTilesLightValues()
 			rad, exp, int = light.radius, light.exponent, light.intensity
 			local v
@@ -105,11 +110,10 @@
 			--print(cMinX, cMaxX, cMinY, cMaxY)
 			--print("updating lights: ", #lightStore)
 			lightingUpdateTimer = 0
-			for i = 1, lightCounter do
-				local light = lightStore[i]
+			for _, light in pairs(lightStore) do
 				if util.withinBounds(light.x, light.y, cMinX, cMaxX, cMinY, cMaxY ) then
 					--print("light within bounds, ", light.id)
-					lightStore[i]:updateTilesLightValues()
+					light:updateTilesLightValues()
 				end
 			end
 			camTiles = map.getCamTiles()

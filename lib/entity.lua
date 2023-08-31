@@ -47,7 +47,9 @@
                 self.group = nil
                 self.onFrameMethods = nil
                 lib_entity.store[self.id] = nil
-
+                if self.light then
+                    self.light:destroySelf() --removes light from lightStore
+                end
                 self = nil
             end
             if ( self.onDestroy ) then
