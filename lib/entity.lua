@@ -34,12 +34,6 @@
     function lib_entity.entityFactory(entity)
 		--print("adding entity functions")
 
-        function entity:updateLightValue()
-            local tile = map:getTileAtPoint(self.world)
-            --print(self.id, tile.id, tile.lightValue)
-            self.lightValue = tile.lightValue
-        end
-
         function entity:destroySelf() --called to remove the entity, its group and reference to it
             local function doDestruction()
                 print("destroying entity with id: "..self.id)

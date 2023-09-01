@@ -28,6 +28,15 @@
 	local lib_decal = {	}
 	lib_decal.store = store
 
+	local function decalOnFrame(self) --added to entity methods
+        if self.rect then
+            local tile = map:getTileAtPoint(self.world)
+            --print(self.id, tile.id, tile.lightValue)
+            self.lightValue = tile.lightValue
+			self.rect:setFillColor(self.lightValue)
+        end
+	end
+
 	local function loadDecalTextures()
 		local decalDir = mapImageFolder.."decals/"
 		print("loading decal textures")
@@ -45,6 +54,7 @@
 		--+ saveData.xOff
 		local decal = entity:create( decalPosX, decalPosY )
 		print("decal created at: ", decal.world.x, decal.world.y)
+		decal:addOnFrameMethod(decalOnFrame)
 		
 		print(json.prettify(saveData))
 		local decalTex = decalTextures[decalName]

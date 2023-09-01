@@ -88,7 +88,7 @@ function lib_puppet.puppetFactory(puppet)
 					filename = texture.filename,     -- "filename" property required
 					baseDir = texture.baseDir       -- "baseDir" property required
 				}
-				self.rect:setFillColor(self.lightValue);
+				self.rect:setFillColor(self.lightValue)
 			end
 		else
 			--print("WARNING: rect for", self.name, self.id, "doesn't exist (puppet.lua)")

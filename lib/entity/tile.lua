@@ -41,6 +41,7 @@
 		--print("tile world pos: ", tile.world.x, tile.world.y) --(DEBUG:WORKING)
 		tile.rect = nil
 		tile.lightValues = {}
+		tile.visibleToChar = nil
 		
 		local stringLookup = map.saveStringLookup
 		local type = stringLookup[_string] --sets the tile type string to the key name of the matching tileset entry
@@ -102,7 +103,12 @@
 			tile.subTypes = subTypes
 		end
 
-		function tile:storeLightValue(lightID, lightValue) --called by light depending on ray result
+		function tile:storeLightValue(lightID, lightValue, _isCharLight) --called by light depending on ray result
+			if _isCharLight then
+				tile.tempVisibility = true
+			else
+				tile.tempVisibility = nil
+			end
 			if tile.lightValues[lightID] then
 				if lightValue > tile.lightValues[lightID] then
 					tile.lightValues[lightID] = lightValue
@@ -116,16 +122,21 @@
 
 		function tile:updateLighting() --called by light emitter on frame determined by rate on all camTiles
 			self.lightValue = .2
-			for lightID, value in pairs(self.lightValues) do --bad expensive way to calc lightvalues for testing
-				lightStore = lighting.getStore()
-				local light = lightStore[lightID]
-				if (light) then --check light exists
-					if util.getDistance(self.mid.x, self.mid.y, light.x, light.y) <= light.radius then
-						self.lightValue = self.lightValue + value
+			if (self.tempVisibility) then
+				self.visibleToChar = true
+				for lightID, value in pairs(self.lightValues) do --bad expensive way to calc lightvalues for testing
+					lightStore = lighting.getStore()
+					local light = lightStore[lightID]
+					if (light) then --check light exists
+						if util.getDistance(self.mid.x, self.mid.y, light.x, light.y) <= light.radius then
+							self.lightValue = self.lightValue + value
+						end
+					else
+						lightStore[lightID] = nil --light has been destroyed so remove its lightValue
 					end
-				else
-					lightStore[lightID] = nil --light has been destroyed so remove its lightValue
 				end
+			else
+				self.visibleToChar = nil
 			end
 			if self.type == "wall" then
 				for i = 1, 4 do
@@ -134,7 +145,8 @@
 			else
 				self.rect:setFillColor(self.lightValue)
 			end
-			tile.lightValues = {}
+			self.lightValues = {}
+			self.tempVisibility = nil
 		end
 
 		--updates the tiles rect position to match its world position within cam bounds and scaled by camera zoom

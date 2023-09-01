@@ -62,7 +62,9 @@
             end
         end
         if self.rect then
-            self:updateLightValue()
+            local tile = map:getTileAtPoint(self.world)
+            --print(self.id, tile.id, tile.lightValue)
+            self.lightValue = tile.lightValue
         end
     end
 

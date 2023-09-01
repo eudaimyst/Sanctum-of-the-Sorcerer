@@ -26,6 +26,8 @@
 	local lightStore = {}
 	local lightCounter = 0
 
+	local characterLight
+
 	local function updateLightPos(entity) --
 		entity.light.x, entity.light.y = entity.world.x, entity.world.y
 	end
@@ -100,7 +102,11 @@
 					if (not skipTile) then
 						v = (( 1- ( (dist / rad) ^ exp) ) * int ) - (w * .25)
 						--print("updating lightValue", v, "walls", w)
-						tile:storeLightValue(self.id, v )
+						if light == characterLight then
+							tile:storeLightValue(self.id, v, true )
+						else
+							tile:storeLightValue(self.id, v )
+						end
 						updatedTiles[#updatedTiles+1] = tile
 					end
 				end
@@ -141,9 +147,13 @@
 	end
 
 	function lightEmitter.attachToEntity(entity, _params)
+		
 		entity:addOnFrameMethod(updateLightPos)
 		entity.light = createLight(_params)
 		entity.light.x, entity.light.y = entity.world.x, entity.world.y
+		if entity.name == "character" then
+			characterLight = entity.light
+		end
 	end
 
 	function lightEmitter.init(_map, _cam) --pass libs to module
