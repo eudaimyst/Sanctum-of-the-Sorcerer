@@ -121,9 +121,11 @@
 		end
 
 		function tile:updateLighting() --called by light emitter on frame determined by rate on all camTiles
-			self.lightValue = .2
+			self.lightValue = 0
 			if (self.tempVisibility) then
 				self.visibleToChar = true
+			end
+			if (self.visibleToChar) then
 				for lightID, value in pairs(self.lightValues) do --bad expensive way to calc lightvalues for testing
 					lightStore = lighting.getStore()
 					local light = lightStore[lightID]

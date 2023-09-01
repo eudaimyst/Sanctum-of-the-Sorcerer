@@ -38,7 +38,7 @@
 	local rad, exp, int
 
 	local function createLight(_params)
-		local light = { x = 0, y = 0, radius = 800, intensity = 10, exponent = .1, active = false, path = nil }
+		local light = { x = 0, y = 0, radius = 1080, intensity = 10, exponent = .1, active = false, path = nil }
 		if _params then
 			if _params.x then light.x = _params.x end
 			if _params.y then light.y = _params.y end

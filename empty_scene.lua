@@ -14,8 +14,7 @@
 
 	--create scene
 	local scene = composer.newScene()
-
-	local group = display.newGroup( )
+	local sceneGroup
 
 	local function firstFrame()
 
@@ -26,8 +25,7 @@
 	end
 
 	function scene:create( event ) -- Called when scene's view does not exist.
-		
-		local sceneGroup = self.view
+		sceneGroup = self.view
 		display.setDefault( "background", .09, .09, .09 )
 		-- We need physics started to add bodies
 		physics.start()
@@ -35,38 +33,27 @@
 	end
 
 	function scene:show( event )
-
-		local sceneGroup = self.view
+		sceneGroup = self.view
 		local phase = event.phase
-
 		if phase == "will" then -- Called when scene is still off screen and is about to move on screen
-			
 		elseif phase == "did" then -- Called when scene is now on screen
 			print("scene loaded")
 			firstFrame()
-
-			
 			Runtime:addEventListener( "enterFrame", onFrame ) --listerer for every frame
 		end
 	end
 
 	function scene:hide( event )
-
-		local sceneGroup = self.view
+		sceneGroup = self.view
 		local phase = event.phase
-
 		if event.phase == "will" then -- Called when scene is on screen and is about to move off screen
-			
 		elseif phase == "did" then -- Called when scene is now off screen
-			
 		end
 	end
 
 	function scene:destroy( event )
 		-- Called prior to removal of scene's "view" (sceneGroup)
-
-		local sceneGroup = self.view
-
+		sceneGroup = self.view
 		package.loaded[physics] = nil; physics = nil
 	end
 
