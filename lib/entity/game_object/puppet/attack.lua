@@ -23,7 +23,7 @@
     
 
     local function projOnFrame(self)
-        print("running projectile onFrame for entity: "..self.id)
+        --print("running projectile onFrame for entity: "..self.id)
         self.durationTimer = self.durationTimer + gv.frame.dts
         self.world.x = self.world.x + self.normal.x * self.speed * gv.frame.dts
         self.world.y = self.world.y + self.normal.y * self.speed * gv.frame.dts

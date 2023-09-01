@@ -64,16 +64,16 @@
 		end
 
 		function hud:draw(_char)
+			local scaleOffsetW = (display.contentWidth - display.viewableContentWidth) / 2
+			local scaleOffsetH = (display.contentHeight - display.viewableContentHeight) / 2
 			char = _char
 			local function drawGameOverlay()
-				hud.gameOverlay = display.newRect(hud.group, 0,0, display.actualContentWidth, display.actualContentHeight)
+				hud.gameOverlay = display.newRect(hud.group, 0, 9, display.contentWidth - scaleOffsetW, display.contentHeight - scaleOffsetH)
 				util.zeroAnchors(hud.gameOverlay)
-				hud.gameOverlay:setFillColor(0,0,0,0)
+				hud.gameOverlay:setFillColor(1,1,1,0)
 			end
 
 			local function drawSpellButtonFrame(numButtons, buttonSize, buttonPadding)
-
-
 				local function drawSpellButton(frameRect, pos)
 					
 					local x = frameRect.x + buttonPadding + (pos - 1) * (buttonSize + buttonPadding*2)
@@ -105,8 +105,8 @@
 				local w = numButtons * (buttonSize + (buttonPadding * 2) )
 				local h = buttonSize + buttonPadding * 2
 				hud.spellButtonFrame:resize(w, h)
-				local x = display.actualContentWidth/2 - hud.spellButtonFrame.rect.width/2
-				local y = display.actualContentHeight - hud.spellButtonFrame.rect.height
+				local x = (hud.gameOverlay.width  - hud.spellButtonFrame.rect.width + scaleOffsetW) * .5
+				local y = (hud.gameOverlay.height - hud.spellButtonFrame.rect.height - 10)
 				hud.spellButtonFrame:move(x, y)
 				for i = 1, numButtons do
 					hud.spellButtons[i] = drawSpellButton(hud.spellButtonFrame.rect, i)

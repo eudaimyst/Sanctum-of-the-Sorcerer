@@ -176,7 +176,7 @@
 		decisionTimer = decisionTimer + gv.frame.dt
 		if decisionTimer > decisionRate then
 			makeDecision = true --enemies check this to determine whether to make their next decision
-			print("makeDecision: "..tostring(makeDecision) )
+			--print("makeDecision: "..tostring(makeDecision) )
 			decisionTimer = 0
 		end
 			

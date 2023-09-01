@@ -781,9 +781,9 @@
 					local nx, ny = self.group.x + mouse.delta.x, self.group.y + mouse.delta.y --new position for readability
 
 					if ( nx <= 0) then blockDirection = g.move.left end
-					if ( nx + self.width >= display.actualContentWidth) then blockDirection = g.move.right end
+					if ( nx + self.width >= display.contentWidth) then blockDirection = g.move.right end
 					if ( ny <= 0) then blockDirection = g.move.up end
-					if ( ny + self.height >= display.actualContentHeight) then blockDirection = g.move.down end
+					if ( ny + self.height >= display.contentHeight) then blockDirection = g.move.down end
 
 					if (blockDirection) then
 						if blockDirection == g.move.up or blockDirection == g.move.down then

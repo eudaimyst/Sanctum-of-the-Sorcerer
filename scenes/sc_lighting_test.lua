@@ -213,7 +213,7 @@
 		mouse.registerRightClickListener(onMouseRightClick)
 		local tileGroup = display.newGroup()
 		sceneGroup:insert(tileGroup)
-		local tileCount = {x = math.ceil(display.actualContentWidth/tileSize), y = math.ceil(display.actualContentHeight/tileSize)}
+		local tileCount = {x = math.ceil(display.contentWidth/tileSize), y = math.ceil(display.contentHeight/tileSize)}
 		for row = 1, tileCount.y do
 			for col = 1, tileCount.x do
 				if row == 1 then tileStore[col] = {} end

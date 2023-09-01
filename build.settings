@@ -9,8 +9,8 @@ settings =
 	{
 		-- Supported values for orientation:
 		-- portrait, portraitUpsideDown, landscapeLeft, landscapeRight
-		default = "portrait",
-		supported = { "portrait", },
+		default = "landscapeLeft",
+		supported = { "landscapeLeft", "landscapeRight" },
 	},
 
 	--
@@ -38,9 +38,8 @@ settings =
 	},
 	window = 
 	{
-
-        defaultViewWidth = 1920,
         defaultViewHeight = 1080,
+        defaultViewWidth = 1920,
 	},
 
 	--

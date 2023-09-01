@@ -10,7 +10,7 @@
 
 	-- Define module
 	local cam = {}
-	local halfScreenWidth, halfScreenHeight = display.actualContentWidth / 2, display.actualContentHeight / 2
+	local halfScreenWidth, halfScreenHeight = display.contentWidth / 2, display.contentHeight / 2
 
 	cam.modes = {
 		follow = { target = nil },
@@ -18,7 +18,7 @@
 		debug = { tileSize = 10, scale = 0, scaledBounds = {x1 = 0, y1 = 0, x2 = 0, y2 = 0} }
 	}
 	cam.mode = cam.modes.free
-	cam.bounds = {x1 = 0, y1 = 0, x2 = display.actualContentWidth, y2 = display.actualContentHeight}
+	cam.bounds = {x1 = 0, y1 = 0, x2 = display.contentWidth, y2 = display.contentHeight}
 	cam.midPoint = {x = halfScreenWidth, y = halfScreenHeight}
 	cam.delta = {x = 0, y = 0}
 	cam.zoom = 1

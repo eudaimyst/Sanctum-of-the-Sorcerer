@@ -129,7 +129,7 @@
 			local sectionData = { [1] = { label = "paramaters (copy + paste)", fullHeight = true, collapsable = false, elements = {
 						[1] = { { eType = editor.elementTypes.multiLineText, content = objectParamsString, editable = true } },
 			} } }
-			local width, height = display.actualContentWidth / 2, display.actualContentHeight * 3 / 4
+			local width, height = display.contentWidth / 2, display.contentHeight * 3 / 4
 			local windowParams = {
 				x = width / 2, y = height / 4, width = width, height = height, label = "Save to text",
 				closable = true, movable = true, sceneGroup = sceneGroup, sectionData = sectionData, object = self
@@ -162,7 +162,7 @@
 				[1] = { { eType = editor.elementTypes.button, text = "Load", clickListener = loadParamsFromString} },
 				[2] = { { eType = editor.elementTypes.multiLineText, editable = true } }
 			} } }
-			local width, height = display.actualContentWidth / 2, display.actualContentHeight * 3 / 4
+			local width, height = display.contentWidth / 2, display.contentHeight * 3 / 4
 			local windowParams = {
 				x = width / 2, y = height / 4, width = width, height = height, label = "Load from text",
 				closable = true, movable = true, sceneGroup = sceneGroup, sectionData = sectionData, object = self
@@ -482,7 +482,7 @@
 			} },
 		}
 		local toolbarWindowParams = {
-			x = display.actualContentWidth - 400, y = 20, width = 200, height = 200,
+			x = display.contentWidth - 400, y = 20, width = 200, height = 200,
 			label = "toolbar", closable = false, movable = true,
 			sceneGroup = sceneGroup, sectionData = toolbarWindowSections
 		}

@@ -21,7 +21,7 @@
 	
 	local titleImage = "content/menu/title.png"
 	local sceneGroup
-	local halfScreenX, halfScreenY = display.actualContentWidth / 2, display.actualContentHeight / 2
+	local halfScreenX, halfScreenY = display.contentWidth / 2, display.contentHeight / 2
 
 	local function onPlay()
 		composer.gotoScene( "scenes.sc_game" )
@@ -91,14 +91,14 @@
 			--print(imagePaths.pressedFrame[file])
 		end
 
-		--local maskTest = display.newRect( buttonGroup, halfScreenX, halfScreenY, display.actualContentWidth / 1.5, display.actualContentHeight / 1.5) --rect for testing mask on group
+		--local maskTest = display.newRect( buttonGroup, halfScreenX, halfScreenY, display.contentWidth / 1.5, display.contentHeight / 1.5) --rect for testing mask on group
 		--maskTest:setFillColor( 1 )
 
 		local buttonGroupMask = graphics.newMask( "content/menu_button_mask.png" )
 		buttonGroup:setMask( buttonGroupMask )
 		buttonGroup.maskX, buttonGroup.maskY = halfScreenX, halfScreenY
-		buttonGroup.maskScaleX = display.actualContentWidth/128 / 3
-		buttonGroup.maskScaleY = display.actualContentHeight/128
+		buttonGroup.maskScaleX = display.contentWidth/128 / 3
+		buttonGroup.maskScaleY = display.contentHeight/128
 
 		local function createButton(data)
 

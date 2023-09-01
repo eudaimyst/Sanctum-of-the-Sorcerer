@@ -19,7 +19,7 @@ local function onFrame(event)
     prevFrameTime = current --store current frame time to be accessed on next frame
 end
 
-vars.screen = {width = display.contentWidth, height = display.contentHeight, halfWidth = display.contentWidth/2, halfHeight = display.actualContentHeight/2}
+vars.screen = {width = display.contentWidth, height = display.contentHeight, halfWidth = display.contentWidth/2, halfHeight = display.contentHeight/2}
 
 Runtime:addEventListener( "enterFrame", onFrame )
 

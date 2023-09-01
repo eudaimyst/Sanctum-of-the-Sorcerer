@@ -24,4 +24,5 @@ composer.gotoScene( "scenes.sc_game" )
 
 --composer.gotoScene( "scenes.sc_lighting_test" )
 
+--require("scale_test")
 --require("helping")
