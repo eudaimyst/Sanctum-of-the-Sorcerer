@@ -25,47 +25,9 @@
 
 	local char
 
-	--character visibility variableds and functions
-
-	local visUpdateRate = 200 --ms
-	local visUpdateTimer = 0
-	local visPointCounter = 1
-	local visTilePoints = {}
-	
-	local function setVisiblityPoints(tileSize) --called when character is created
-		for vis_y = 1, display.contentHeight / tileSize do
-			for vis_x = 1, display.contentWidth / tileSize do
-				visTilePoints[visPointCounter] = {x = vis_x, y = vis_y}
-				visPointCounter = visPointCounter + 1
-			end
-		end
-	end
-
-	local function updateVisibility()
-		for i = 1, visPointCounter do
-
-			local visPoint = visTilePoints[i]
-			local rayFinishX, rayFinishY = visPoint.x + cam.bounds.x1, visPoint.y + cam.bounds.y1
-			local rayStartX, rayStartY = char.world.x, char.world.y
-			local rayLength = util.getDistance(rayStartX, rayStartY, rayFinishX, rayFinishY)
-			local rayCheckCount = math.ceil(rayLength/map.halfTileSize)
-			local rayDelta = util.deltaPos({x = rayStartX, y = rayStartY}, {x=rayFinishX, y = rayFinishY})
-			local rayNormal = util.normalizeXY( rayDelta )
-			for i2 = 1, rayCheckCount do
-				local checkPos = {x = rayNormal.x * map.halfTileSize, y = rayNormal.y * map.halfTileSize}
-				local tile = map.getTileAtPoint(checkPos)
-				if tile.type == "void" then
-					
-
-
-
-		end
-
-	end
 
 	function lib_character:create(_params, _hud, _map, _cam)
 		hud, map, cam = _hud, _map, _cam
-		setVisiblityPoints(map.tileSize)
 		print("creating character entity")
 		_params.animations = self.animations --adds the modules defined in the character.lua file to the params to be loaded by puppet module
 
@@ -146,11 +108,6 @@
 	end
 	
 	function lib_character:onFrame()
-		visUpdateTimer = visUpdateTimer + dt
-		if visUpdateTimer > visUpdateRate then
-			visUpdateTimer = 0
-			updateVisibility()
-		end
 	end
 
 
