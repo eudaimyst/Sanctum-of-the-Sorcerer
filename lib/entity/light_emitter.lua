@@ -63,32 +63,45 @@
 			rad, exp, int = light.radius, light.exponent, light.intensity
 			local v
 			--print("light updating", light.id)
+			local startTile = map:getTileAtPoint({ x = light.x, y = light.y })
 
 			local function checkRay(i)
 				prevTileUpdated = nil --reset the prev tile checker for each ray
+				local updatedTiles = {}
 				a = math.rad(self.checkAngle * i)
-				for j = 1, self.raySegments do
-					dist = light.raySegmentLength * j
+				
+				local function tileAlreadyUpdated(_tile)
+					for j = 1, #updatedTiles do
+					end
+					return nil
+				end
+
+				for i2 = 1, self.raySegments do
+					local w = 0 --wall count
+					local skipTile = nil
+					dist = light.raySegmentLength * i2
 					--print("checking ray", j, "/", self.raySegments, "dist: ", dist)
 					x = light.x + math.cos(a) * dist --* math.pi
-					y = light.y + math.sin(a) * -dist --* math.pi
+					y = light.y + math.sin(a) * dist --* math.pi
 					--print("x, y", x, y)
 					tile = map:getTileAtPoint({ x = x, y = y })
-					if tile ~= prevTileUpdated then
-						--print("updating tile ", tile.id)
-						if prevTileUpdated then
-							if tile.type == "wall" or tile.type == "void" then
-								if prevTileUpdated.type == "wall" or prevTileUpdated.type == "void" then
-									--print("found 2 walls in a row, stop checking ray")
-									tile:storeLightValue(self.id, 0 )
-									return
-								end
-							end
+					if tile.type == "void" then --ray checker hits a void tile so stop checking this ray
+						return
+					end
+					--print("updating tile ", tile.id)
+					for i3 = 1, #updatedTiles do
+						local updatedTile = updatedTiles[i3]
+						if updatedTiles[i3] == tile then --tile has already been updated by this ray
+							skipTile = {}
+						elseif updatedTiles[i3].type == "wall" then
+							w = w + 1 --increase wall count
 						end
-						v = ( 1 - ( (dist / rad) ^ exp) ) * int
-						--print("updating lightValue", v)
+					end
+					if (not skipTile) then
+						v = (( 1- ( (dist / rad) ^ exp) ) * int ) - (w * .25)
+						--print("updating lightValue", v, "walls", w)
 						tile:storeLightValue(self.id, v )
-						prevTileUpdated = tile
+						updatedTiles[#updatedTiles+1] = tile
 					end
 				end
 			end

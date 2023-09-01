@@ -86,6 +86,10 @@
 		return tStoreIndex, tStoreCols
 	end
 
+	function map.getTileStoreCols()
+		return tStoreCols
+	end
+
 	function map.getCamTiles()
 		return camTiles
 	end
@@ -255,6 +259,7 @@
 			else
 				--print("created rect for tile", tempTile.id)
 				t_tile:createRect()
+				t_tile:updateLighting()
 			end
 		end
 		for i = 1, #lastFrameCamTiles do

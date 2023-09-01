@@ -35,7 +35,7 @@ function game:spawnChar()
 		spellSlots = 5,
 		spawnPos = map:getSpawnPoint()
 	}
-	self.char = character:create(charParams, hud)
+	self.char = character:create(charParams, hud, map, cam)
 	--print(json.prettify(game.char))
 	enemy:setGameChar(self.char)
 
@@ -75,8 +75,10 @@ function game:onFrame()
 	game.char.isMoving = false
 	key:onFrame()               --processes key inputs
 	cam:onFrame()               --processes camera movement
+	--todo: move timers to here, prevent multiple additions and checking
 	lightEmitter:onFrame()		--calls lighting lib on frame for lighting update timer
 	enemy:onFrame()             --calls enemy lib onFrame for decision making timer
+	character:onFrame() --visibility
 
 	for _, e in pairs(entity.store) do
 		if not e.markedForDestruction then --entity will be destroyed this frame, do not run its onFrame method

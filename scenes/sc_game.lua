@@ -99,9 +99,9 @@
 		entity:init(sceneGroup, map) --passes group to entity which gets stored for all created entities
 
 		game.preloadTextures()
-		
-		--generateGameMap() uncomment to generate map on game start
-		
+
+		--generateGameMap() --uncomment to generate map on game start
+
 		--comment this block if generating game map
 		generatingMap = true
 		loadMap("game_level", false)

@@ -239,7 +239,7 @@
 				for ii = 1, #genRooms do
 					local genRoom = genRooms[ii]
 					local windowAngles = {up = 0, right = 90, down = 180, left = 270}
-					local windoOffset = {up = {x = 0, y = 0.65}, right = {x = 0.35, y = 0}, down = {x = 0, y = 0.35}, left = {x = 0.65, y = 0}}
+					local windoOffset = {up = {x = 0, y = .8}, right = {x = -.8, y = 0}, down = {x = 0, y = -0.8}, left = {x = 0.8, y = 0}}
 					print("drawind windows for room ", genRoom.id)
 					--print(json.prettify(genRoom))
 					local genRoom = roomStore[genRoom.id]

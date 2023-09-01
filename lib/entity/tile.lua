@@ -103,20 +103,24 @@
 		end
 
 		function tile:storeLightValue(lightID, lightValue) --called by light depending on ray result
-			tile.lightValues[lightID] = lightValue
+			if tile.lightValues[lightID] then
+				if lightValue > tile.lightValues[lightID] then
+					tile.lightValues[lightID] = lightValue
+				end
+			else
+				tile.lightValues[lightID] = lightValue
+			end
 			--print("tile, light, value", tile.id, lightID, lightValue)
 			--tile.lightValue = tile.lightValue + lightValue
 		end
 
 		function tile:updateLighting() --called by light emitter on frame determined by rate on all camTiles
-			self.lightValue = 0
+			self.lightValue = .2
 			for lightID, value in pairs(self.lightValues) do --bad expensive way to calc lightvalues for testing
 				lightStore = lighting.getStore()
 				local light = lightStore[lightID]
 				if (light) then --check light exists
-					if util.getDistance(self.world.x, self.world.y, light.x, light.y) > light.radius then
-						value = 0
-					else
+					if util.getDistance(self.mid.x, self.mid.y, light.x, light.y) <= light.radius then
 						self.lightValue = self.lightValue + value
 					end
 				else
@@ -130,6 +134,7 @@
 			else
 				self.rect:setFillColor(self.lightValue)
 			end
+			tile.lightValues = {}
 		end
 
 		--updates the tiles rect position to match its world position within cam bounds and scaled by camera zoom
