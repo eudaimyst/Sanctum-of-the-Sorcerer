@@ -5,12 +5,12 @@
 	-----------------------------------------------------------------------------------------
 
 	--common modules
-	local puppet = require("lib.entity.game_object.puppet")
-	local attack = require("lib.entity.game_object.puppet.attack")
+	local puppet = require("lib.game.entity.game_object.puppet")
+	local attack = require("lib.game.entity.game_object.puppet.attack")
 	local spellParams = require("lib.global.spell_params")
 	local util = require("lib.global.utilities")
 	local json = require("json")
-	local lights = require("lib.entity.light_emitter")
+	local lights = require("lib.game.entity.light_emitter")
 	local gv = require("lib.global.variables")
 
 	local hud, map, cam --set on create

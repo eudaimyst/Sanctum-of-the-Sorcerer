@@ -10,11 +10,11 @@
 	local util = require("lib.global.utilities")
     local attackParams = require("lib.global.attack_params")
     local json = require("json")
-    local entity = require("lib.entity")
+    local entity = require("lib.game.entity")
     local lfs = require("lfs")
     local map = require("lib.map")
     local cam = require("lib.camera")
-    local light = require("lib.entity.light_emitter")
+    local light = require("lib.game.entity.light_emitter")
 
     local basePath = "content/spells"
 
@@ -41,11 +41,13 @@
 
     function lib_attack:new(_params, _puppet) --takes params for the new attack and the puppet that is casting it (puppet used for loading anims)
 
-        local attack = { projectileStore = {} }
+        local attack = { }
+        attack.projectileStore = {}
         for k, v in pairs(attackParams.default) do
             if _params[k] then
                 attack[k] = _params[k]
             else
+                
                 attack[k] = v
             end
         end

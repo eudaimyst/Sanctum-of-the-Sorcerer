@@ -8,7 +8,7 @@
 	local gc = require("lib.global.constants")
 	local gv = require("lib.global.variables")
 	local util = require("lib.global.utilities")
-	local puppet = require("lib.entity.game_object.puppet")
+	local puppet = require("lib.game.entity.game_object.puppet")
 	local json = require("json");
 
 	local game, cam --set by game module on init

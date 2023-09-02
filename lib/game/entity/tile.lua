@@ -7,9 +7,9 @@
 	--common modules
 	local gv = require("lib.global.variables")
 	local util = require("lib.global.utilities")
-	local entity = require("lib.entity")
+	local entity = require("lib.game.entity")
 	local json = require("json")
-    local lighting = require("lib.entity.light_emitter")
+    local lighting = require("lib.game.entity.light_emitter")
 	local lightStore --recycled set on update
 
 	local mceil = math.ceil

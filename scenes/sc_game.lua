@@ -19,10 +19,10 @@
 	local cam = require("lib.camera")
 	local hud = require("lib.game.hud")
 	--[[
-	local gameObj = require("lib.entity.game_object")
+	local gameObj = require("lib.game.entity.game_object")
 	local entity = require("lib.entity")
 	]]
-	local entity = require("lib.entity")
+	local entity = require("lib.game.entity")
 	local game = require("lib.game")
 
 	--create scene

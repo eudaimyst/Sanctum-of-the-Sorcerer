@@ -7,15 +7,15 @@
 --common modules
 local gc = require("lib.global.constants")
 local util = require("lib.global.utilities")
-local gameObject = require("lib.entity.game_object")
-local puppet = require("lib.entity.game_object.puppet")
-local character = require("lib.entity.game_object.puppet.character")
-local entity = require("lib.entity")
+local gameObject = require("lib.game.entity.game_object")
+local puppet = require("lib.game.entity.game_object.puppet")
+local character = require("lib.game.entity.game_object.puppet.character")
+local entity = require("lib.game.entity")
 local enemyParams = require("lib.global.enemy_params")
-local enemy = require("lib.entity.game_object.puppet.enemy")
+local enemy = require("lib.game.entity.game_object.puppet.enemy")
 local lfs = require("lfs")
 local spellParams = require("lib.global.spell_params")
-local lightEmitter = require("lib.entity.light_emitter")
+local lightEmitter = require("lib.game.entity.light_emitter")
 local json = require("json")
 
 
@@ -55,7 +55,7 @@ function game:beginPlay()
 	local function moveInput(direction) --moveListener passed to key module
 		self.char:move(direction)
 		map:refreshCamTiles() --calls updateRect on tiles, creates/destroys rects
-    print("move input done")
+    --print("move input done")
 	end
 
 	self:spawnChar()

@@ -18,7 +18,7 @@ local io = require("io")
 local gc = require("lib.global.constants")
 local gv = require("lib.global.variables")
 local util = require("lib.global.utilities")
-local gameObject = require("lib.entity.game_object")
+local gameObject = require("lib.game.entity.game_object")
 
 local defaultAnimations = {
 	idle = { frames = 4, rate = .8 },

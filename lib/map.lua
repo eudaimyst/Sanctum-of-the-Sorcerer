@@ -7,9 +7,9 @@
 	--common modules
 	local util = require("lib.global.utilities")
 	local fileio = require( "lib.map.fileio")
-	local tiles = require("lib.entity.tile")
+	local tiles = require("lib.game.entity.tile")
 	local json = require("json")
-	local decal = require("lib.entity.decal")
+	local decal = require("lib.game.entity.decal")
 	local cam -- set by init from scene
 	local game
 
@@ -250,7 +250,7 @@
 		--get cam tiles within cam borders
 		camTiles = self:getTilesBetweenWorldBounds( cb.x1-tileSize, cb.y1-tileSize,
 													cb.x2+tileSize, cb.y2+tileSize )
-		print(#camTiles)
+		--print(#camTiles)
 		for i = 1, #camTiles do
 			t_tile = camTiles[i]
 			t_tile.onScreenCheck = true

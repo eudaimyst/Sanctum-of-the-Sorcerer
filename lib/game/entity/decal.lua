@@ -8,8 +8,8 @@
 	local gc = require("lib.global.constants")
 	local gv = require("lib.global.variables")
 	local util = require("lib.global.utilities")
-	local entity = require("lib.entity")
-	local lightEmitter = require("lib.entity.light_emitter")
+	local entity = require("lib.game.entity")
+	local lightEmitter = require("lib.game.entity.light_emitter")
 	local json = require("json")
 
 	local map --set on init()

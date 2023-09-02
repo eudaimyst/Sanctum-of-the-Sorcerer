@@ -21,7 +21,7 @@
 	local gc = require("lib.global.constants")
     local gv = require("lib.global.variables")
 	--local util = require("lib.global.utilities")
-    local entity = require("lib.entity")
+    local entity = require("lib.game.entity")
     local cam = require("lib.camera")
     local map = require("lib.map")
     local util = require("lib.global.utilities")
