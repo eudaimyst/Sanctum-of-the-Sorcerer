@@ -103,12 +103,6 @@
         
         entity.group = display.newGroup() --create a new display group for this entity that will be used for all display objects
 
-        if (self.sceneGroup == nil) then
-            print("ERROR: parentGroup is nil, set parentGroup with lib_entity:setGroup(group) from scene")
-        else
-            self.sceneGroup:insert(entity.group)
-        end
-
         lib_entity.entityFactory(entity) --adds functions to entity
         lib_entity:storeObject(entity) --stores the entity
         self.store[entityCount] = entity --stores the object in this modules store of object

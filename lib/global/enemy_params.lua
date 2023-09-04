@@ -12,10 +12,10 @@
 			sightRange = 500, --distance from char before moving to attack
 			leashTime = 3, --s how long before going back to spawnPos if out of sightRange of char
 			wanderDistance = { min = 100, max = 200 }, --max distance to move when idling
-			attacks = {attack_spin = attackParams.swipe},
+			attacks = { {priority = 0, params = attackParams.tailSwipe} },
 			animations = {
 			idle = { frames = 2, rate = .5 },
-			walk = { frames = 4, rate = 12 }, }
+			walk = { frames = 4, rate = 12 } }
 		}
 
 	return e

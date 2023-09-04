@@ -41,13 +41,14 @@
         windupGlow = false, --whether or not to display a glowing emitter during windup 
     }
 
-    local swipeAnim = { frames = 12, attackFrame = 7 }
-    params.swipe = {
-        name = "spin attack", --checks this folder name for images/emitter
+    params.tailSwipe = {
+        name = "tailSwipe", --checks this folder name for images/emitter
         animation = "attack_spin", --name of animation to play, images stored in puppets content folder
-        animData = swipeAnim,
-        radius = 100, --circular radius of an aoe attack
-        boundAngle = 30, --limits the angle of attack with radius
+        displayType = "animation",
+        range = 50,
+        animData = { frames = 12, attackFrame = 7 },
+        radius = 100,
+        boundAngle = 120,
         windupTime = 0, --how long animation loops windup frames
     }
 

@@ -44,6 +44,7 @@
         moveTarget = nil --target position relative to the game object
     }
 
+    local t_dir, t_nTarget, t_tile --recycled
     local function gameObjOnFrame(self)
         if self.name ~= "character" then --isMoving for char is set false earlier as needs gets set true by keyinput in game.lua
             self.isMoving = false --resets moving variable to be changed by gameObject:move() if called
@@ -52,19 +53,21 @@
         if self.moveTarget then
             --directions were originally intended to be constants and not intended to have their values changed
             --TODO: come up with a proper direction framework that is not accessed as constants
-            local dir = util.deepcopy(self.facingDirection) 
-            local normalTarget = util.normalizeXY(util.deltaPos(self.world, self.moveTarget))
-            dir.x, dir.y = normalTarget.x, normalTarget.y
-            self:move(dir)
+            t_dir = util.deepcopy(self.facingDirection) 
+            t_nTarget = util.normalizeXY(util.deltaPos(self.world, self.moveTarget))
+            t_dir.x, t_dir.y = t_nTarget.x, t_nTarget.y
+            self:move(t_dir)
             if util.compareFuzzy(self.world, self.moveTarget) then
                 self.moveTarget = nil --mark as nil to stop moving
 				--print (self.name, self.id, "has reached its move target")
             end
         end
         if self.rect then
-            local tile = map:getTileAtPoint(self.world)
+            self.rect.x = self.rect.x + self.xOffset
+            self.rect.y = self.rect.y + self.yOffset
+            t_tile = map:getTileAtPoint(self.world)
             --print(self.id, tile.id, tile.lightValue)
-            self.lightValue = tile.lightValue
+            self.lightValue = t_tile.lightValue
         end
     end
 
@@ -75,7 +78,7 @@
             --print(json.prettify(self))
             --print("move target:",self.id, self.world.x, self.world.y)
             if (util.compareFuzzy(self.world, pos)) then
-                print("move target is same as current position")
+                print(self.id, "game object calling setMoveTarget on existing pos")
                 return
             end
             local angle = util.deltaPosToAngle(self.world, pos)
@@ -146,13 +149,13 @@
                 self.rect:setFillColor(self.lightValue)
             --print("updated rect image")
             else
-                print("GAME OBJECT UPDATE RECT IMAGE: rect for "..self.name.."doesn't exist")
+                print("WARNING: rect doesn't exist game obj", self.id)
             end
         end
 
 		function gameObject:makeRect() --makes game objects rect if doesn't exist
             if (self.rect) then
-                print("rect already created")
+                print("calling gameObj:makeRect when it already exists", self.id)
                 return
             end
             self.rect = display.newImageRect(self.group, self.texture.filename, self.texture.baseDir, self.width, self.height)

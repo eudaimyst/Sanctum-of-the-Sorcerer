@@ -37,26 +37,18 @@
 		end
 	end
 
+	local t_dist --recycled distance
 	local function enemyOnFrame(self)
-		--if csx == 1 then print(json.prettify(self)) end
-		--csx = csx + 1
-		--calculating distance is expensive so we will do it once then pass it around where needed
-		local distance = util.getDistance(self.world.x, self.world.y, gameChar.world.x, gameChar.world.y)
-		
-		if (self.rect) then
-			self:updateRectImage()
-		end
-		self:updateSleep(distance)
-		if self.isAsleep == false then
-			if (makeDecision) then
+		if (makeDecision) then
+			t_dist = util.getDistance(self.world.x, self.world.y, gameChar.world.x, gameChar.world.y)
+			self:updateSleep(t_dist) --wakes/sleeps enemy
+			if self.isAsleep == false then
 				--print(tostring(makeDecision))
-				self.currentAction = self:makeDecision(distance)
+				self.currentAction = self:makeDecision(t_dist) --makes a decision and stores the result function as currentAction
 			end
 		end
-		--print("uhh")
-		if self.currentAction then
-			--print("running current action")
-			self.currentAction(self)
+		if self.currentAction then --if a function has been set as the currentAction, run that function
+			self:currentAction()
 		end
 
 	end
@@ -72,6 +64,7 @@
 		enemy.world.x, enemy.world.y = spawnPos.x, spawnPos.y
 		enemy.isVislbe, enemy.isAsleep = false, true
 		enemy.currentAction = nil
+		enemy.currentAttack = nil
 		enemy.timeInCombat = 0
 		
 		function enemy:wakeup() --called on frame when wakeupDistance is met
@@ -80,7 +73,6 @@
 		end
 
 		function enemy:updateSleep(distance)
-			
 			if (self.isAsleep == true) then
 				if (gameChar) then
 					if ( distance < wakeupDistance ) then
@@ -109,12 +101,30 @@
 			end
 		end
 
+		function enemy:decideCurrentAttack()--called from make decision if in sight range
+			--todo: choose the attack with the lowest priority
+			print("huh?")
+			self.currentAttack = self.attacks[1].params
+			print(self.id, " current attack set to ", self.currentAttack.name)
+		end
+		
+		function enemy:beginAttack()
+			--temp pretend attack is completed
+			print(self.id, "attack complete")
+			self.currentAction = self.moveIdle
+		end
+
 		function enemy:moveToAttack()
 			--print("enemy "..self.id.." is moving to attack")
+			t_dist = util.getDistance(self.world.x, self.world.y, gameChar.world.x, gameChar.world.y) --use recycled var
+			if t_dist < self.currentAttack.range then
+				print(self.id, "is within attackRange")
+				self.currentAction = self.beginAttack
+			end
 			if (gameChar) then
-				self:setMoveTarget( { x = gameChar.world.x, y = gameChar.world.y } )
+				self:setMoveTarget( { x = gameChar.world.x, y = gameChar.world.y } ) --gameObject function
 			else
-				print("no char found or no world coords")
+				print("moveToAttack: no char found or no world coords for enemy", self.id)
 			end
 		end
 
@@ -139,10 +149,11 @@
 
 		function enemy:makeDecision(distance) --called from enemies onFrame if decisionTimer > decisionRate
 			--print("enemy "..self.id.." is deciding action")
-			if (self.currentAction) then
+			if (self.currentAction) then --makeDecision does not get called if currentAction is set
 				if ( self.currentAction == self.moveToIdle) then
 					if (distance < self.sightRange ) then
-						--print("setting current action to moveToATtack from idle")
+						print("setting current action to moveToATtack from idle")
+						self:decideCurrentAttack()
 						return self.moveToAttack
 					end
 				elseif (self.currentAction == self.moveToAttack) then
@@ -154,7 +165,8 @@
 			else
 				--print("distance, sightRange: "..distance, tostring(self.sightRange))
 				if (distance < self.sightRange ) then
-					--print("setting current action to due to sight range")
+					print("setting current action to moveToAttack due to sight range")
+					self:decideCurrentAttack()
 					return self.moveToAttack
 				else
 					--print("setting action to idle")
@@ -171,7 +183,7 @@
 		enemy:addOnFrameMethod(enemyOnFrame)
 	end
 
-	function lib_enemy:onFrame() --if called before each enemy on frame, they'll make decision this frame, otherwise next frame
+	function lib_enemy:onFrame() --called by game on frame, timer
 		makeDecision = nil --force makeDecision to be false unless decisionTimer is reached
 		decisionTimer = decisionTimer + gv.frame.dt
 		if decisionTimer > decisionRate then

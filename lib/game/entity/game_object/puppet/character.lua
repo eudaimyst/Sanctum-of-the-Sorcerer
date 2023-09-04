@@ -67,7 +67,7 @@
 			local dir_s = dir.image --gets the direction string for the animation
 
 			local attackPos = spell.animData.attackPos[dir_s] --gets the windup pos from the animation data
-			local offsetPos = { x = self.world.x - attackPos.x, y = self.world.y - attackPos.y}
+			local offsetPos = { x = self.world.x + self.xOffset, attackPos.x, y = self.world.y + self.yOffset - attackPos.y}
 			local delta = util.deltaPos(offsetPos, target) --gets the difference between the characters position and the target position
 
 			local function animCompleteListener() --called when animation is complete
