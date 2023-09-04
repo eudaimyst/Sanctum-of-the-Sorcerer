@@ -16,18 +16,26 @@
     local cam = require("lib.camera")
     local util = require("lib.global.utilities")
     local map --set by init
+    local mround = math.round
 
     -- Define module
 	local lib_entity = {}
     lib_entity.store = {}
     lib_entity.parentGroup = nil --set by setGroup function
+    local entityGroup = display.newGroup()
     local entityCount = 0
+    local zGroups = {}
 
+    local recty --recycling
     local function updateRect(self) --calculate the entities position on the screen based off its world coords
         --needs to be called after cam bounds has been updated on frame or jitters
         if (self.rect) then --do not updateScreenPos if entity has no rect (ie, is not on screen)
             self.rect.xScale, self.rect.yScale = cam.zoom, cam.zoom
             self.rect.x, self.rect.y = (self.world.x - cam.bounds.x1) * cam.zoom , (self.world.y - cam.bounds.y1) * cam.zoom
+            recty = mround(self.rect.y)
+            if recty > 0 and recty < 1080 then
+                zGroups[recty]:insert(self.group)
+            end
         end
     end
 
@@ -113,7 +121,12 @@
     end
 
     function lib_entity:init(sceneGroup, _map) --sets the group for the entity (all modules that extend the entity class will use this)
-        lib_entity.sceneGroup = sceneGroup
+        sceneGroup:insert(entityGroup)
+        --create groups for Z-indexing
+        for i = 1, 1080 do
+            zGroups[i] = display.newGroup()
+            entityGroup:insert(zGroups[i])
+        end
         map = _map
     end
 

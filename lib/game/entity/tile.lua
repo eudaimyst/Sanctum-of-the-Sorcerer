@@ -32,7 +32,7 @@
 	end
 
 	function lib_tile:createTile(_id, _column, _row, _collision, _string)
-		local tile = entity:create(_column * tileSize, _row * tileSize, nil)
+		local tile = entity:create(_column * tileSize, _row * tileSize, nil) --pass nil to not use entity update rect method
 		tile.lightValue = 0
 		tile.col = _collision
 		--tile screen pos is exclusively accessed through its rect

@@ -110,7 +110,7 @@
         name = "earthBolt",
         displayType = "projectile", --"image", "emitter"
         windupTime = 0,
-        duration = 100, --lifetime of the attack
+        --duration = 100, --lifetime of the attack
         displayParams = { [1] = {speed = 300, spins = false, endScale = 1} }, --number of images/emitters to display and their properties
         windupGlow = true,
         element = gc.elements.earth
@@ -119,6 +119,17 @@
         animation = "cast_raise",
         name = "iceStorm",
         windupGlow = true,
+        displayType = "aoe",
+        displayParams = {},
+        isChanneled = true,
+        element = gc.elements.ice
+    }
+    params.iceStormCast = {
+        animation = "cast_raise",
+        name = "iceStorm",
+        windupGlow = true,
+        displayType = "aoe",
+        isChanneled = true,
         element = gc.elements.ice
     }
     params.airBolt = {
