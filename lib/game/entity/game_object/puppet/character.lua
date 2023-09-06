@@ -25,7 +25,6 @@
 
 	local char
 
-
 	function lib_character:create(_params, _hud, _map, _cam)
 		hud, map, cam = _hud, _map, _cam
 		print("creating character entity")
@@ -58,6 +57,11 @@
 			end
 		end
 
+		function char:onTakeDamage()
+			hud:updateHealth(self.currentHP, self.maxHP)
+
+		end
+
 		function char:beginCast( target ) --called from game.lua on mouseclick from mouse listener
 			local spell = self.activeSpell
 
@@ -66,20 +70,15 @@
 			self:setFacingDirection( dir ) --sets the direction of the character to the angle direction
 			local dir_s = dir.image --gets the direction string for the animation
 
-			local attackPos = spell.animData.attackPos[dir_s] --gets the windup pos from the animation data
-			local offsetPos = { x = self.world.x + self.xOffset, attackPos.x, y = self.world.y + self.yOffset - attackPos.y}
-			local delta = util.deltaPos(offsetPos, target) --gets the difference between the characters position and the target position
-
-			local function animCompleteListener() --called when animation is complete
-				self.currentAttack:fire(self)
-				self.currentAttack = nil
-			end
-
+			local windupOffset = spell.animData.attackPos[dir_s] --gets the windup pos from the animation data
+			local spellOrigin = { 	x = self.world.x + self.xOffset - windupOffset.x, --spell origin including offsets
+									y = self.world.y + self.yOffset - windupOffset.y}
+			local delta = util.deltaPos(spellOrigin, target) --gets the difference between the characters position and the target position
 
 			if (spell) then
-				if (not self.currentAttack) then
-					if (not spell.onCooldown) then
-						spell.origin = offsetPos
+				if (not self.currentAttack) then --already casting
+					if (not spell.onCooldown) then --on cooldown, can't cast
+						spell.origin = spellOrigin
 						if (target) then
 							if (spell.displayType == "projectile") then
 								local n = util.normalizeXY(delta)
@@ -87,7 +86,7 @@
 								spell.target = util.factorPos(n, spell.maxDistance) --sets the target to the max distance of the spell
 							end
 						end
-						self:beginAttackAnim(spell, animCompleteListener) --defined in puppet, shared with enemies
+						self:beginAttackAnim(spell) --defined in puppet, shared with enemies
 					end
 				end
 			end

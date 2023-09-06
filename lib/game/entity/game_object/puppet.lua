@@ -135,7 +135,7 @@ function lib_puppet.puppetFactory(puppet)
 		end
 		--print(self.state, self.frameTimer, self.currentAnim.rate)
 		if self.currentAttack then
-			if self.frameTimer >= 1 / self.attackSpeed / anim.frames then --timer is greater than the animations rate
+			if self.frameTimer >= (1 / self.attackSpeed) / anim.frames then --timer is greater than the animations rate
 				self:nextAnimFrame(anim)
 			end
 		else
@@ -160,15 +160,17 @@ function lib_puppet.puppetFactory(puppet)
 	end
 
 	function puppet:nextAttackAnimFrame(anim) --called from nextAnimFrame when in attack state
-		if (self.animFrame == 1) then
-			self:startWindupGlow() --starts windup glow
-		end
-		if (self.animFrame == anim.windupStartFrame) then --reached windup start frame
-			self.attackWindingUp = true --sets attack winding up to true
-		end
-		if (self.animFrame == anim.windupEndFrame) then --reached attack frame
-			if (self.attackWindingUp == true) then
-				self.animFrame = anim.windupStartFrame --sets anim frame to windup start to loop
+		if (self.currentAttack.windupGlow) then --windup position logic
+			if (self.animFrame == 1) then
+				self:startWindupGlow() --starts windup glow
+			end
+			if (self.animFrame == anim.windupStartFrame) then --reached windup start frame
+				self.attackWindingUp = true --sets attack winding up to true
+			end
+			if (self.animFrame == anim.windupEndFrame) then --reached attack frame
+				if (self.attackWindingUp == true) then
+					self.animFrame = anim.windupStartFrame --sets anim frame to windup start to loop
+				end
 			end
 		end
 		if (self.animFrame == anim.attackFrame) then
@@ -177,12 +179,14 @@ function lib_puppet.puppetFactory(puppet)
 		end
 		if (self.animFrame == anim.frames) then --post has finished
 			self.currentAttack = nil --set current attack to nil, picked up by updateState on next loop
+			if (self.attackCompletelistener) then
+				self:attackCompletelistener() --calls complete listener for enemies
+			end
 		end
 	end
 
-	function puppet:beginAttackAnim(attack, attackFrameListener) --called from entended objects to start attack animations
+	function puppet:beginAttackAnim(attack) --called from entended objects to start attack animations
 		self.currentAttack = attack --set to nil once attack is complete, used to determin whether puppet is in attacking state
-		self.attackFrameListener = attackFrameListener --called once animation is complete
 		print("start attack for " .. self.currentAttack.name)
 		self.animFrame = 1
 		self.frameTimer = 0
@@ -190,7 +194,6 @@ function lib_puppet.puppetFactory(puppet)
 	end
 
 	function puppet:loadWindupGlow() --called after puppet is created, loads windup data if present
-		
 		-- Set emitter file path
 		local filePath = system.pathForFile( "content/game_objects/puppets/"..self.name.."/windup/emitter.json")
 		-- Decode the file
@@ -281,6 +284,7 @@ function lib_puppet:create(_params) --creates the game object
 
 	puppet.directional = true --all puppets are directional
 	puppet.path = "content/game_objects/puppets/" --path for puppets
+	puppet.attackTarget = nil
 
 	puppet:setParams(defaultParams, _params) --adds puppet params
 	lib_puppet.puppetFactory(puppet) --adds functions to puppet

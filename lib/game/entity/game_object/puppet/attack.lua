@@ -146,12 +146,18 @@
             print(projOnFrame)
         end
 
-        function attack:fire() --called from puppet when attack anim is complete
+        function attack:fire(puppet) --called from puppet when attack anim is complete
             if (self.displayType == "projectile") then
                 for i = 1, #self.displayParams do
                     self:createProjectile(i)
                 end
+            elseif (self.displayType == "animation") then
+                local dist = util.getDistance(puppet.world.x, puppet.world.y, puppet.attackTarget.world.x, puppet.attackTarget.world.y)
+                if dist <= self.range + 20 then
+                    puppet:dealDamage(puppet.attackTarget, self.damage)
+                end
             end
+            
             print("---------------------attack "..self.name.." fired")
         end
 

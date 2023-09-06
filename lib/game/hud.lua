@@ -44,6 +44,9 @@
 				self.rect.x = x
 				self.rect.y = y
 			end
+			function frame:hide()
+				self.rect.isVisible = false
+			end
 			function frame:resize(w, h)
 				self.rect.width = w
 				self.rect.height = h
@@ -67,6 +70,7 @@
 			local scaleOffsetW = (display.contentWidth - display.viewableContentWidth) / 2
 			local scaleOffsetH = (display.contentHeight - display.viewableContentHeight) / 2
 			char = _char
+
 			local function drawGameOverlay()
 				hud.gameOverlay = display.newRect(hud.group, 0, 9, display.contentWidth - scaleOffsetW, display.contentHeight - scaleOffsetH)
 				util.zeroAnchors(hud.gameOverlay)
@@ -75,12 +79,9 @@
 
 			local function drawSpellButtonFrame(numButtons, buttonSize, buttonPadding)
 				local function drawSpellButton(frameRect, pos)
-					
 					local x = frameRect.x + buttonPadding + (pos - 1) * (buttonSize + buttonPadding*2)
 					local y = frameRect.y + buttonPadding
-					
 					local spellButton = hud.makeButton( x, y, buttonSize)
-
 					function spellButton:setActive(b) --b = bool; true = active, false = inactive 
 						if (b) then
 							self.rect:setStrokeColor(1, 1, 0, 1)
@@ -88,7 +89,6 @@
 							self.rect:setStrokeColor(0)
 						end
 					end
-					
 					function spellButton:assignSpell(spell)
 						print(spell.name, spell.icon)
 						self.icon = display.newImageRect(hud.group, spell.icon, buttonSize, buttonSize)
@@ -100,7 +100,6 @@
 					end
 					return spellButton
 				end
-
 				hud.spellButtonFrame = hud.makeFrame()
 				local w = numButtons * (buttonSize + (buttonPadding * 2) )
 				local h = buttonSize + buttonPadding * 2
@@ -112,11 +111,80 @@
 					hud.spellButtons[i] = drawSpellButton(hud.spellButtonFrame.rect, i)
 				end
 			end
+
+			local function drawHealthFrame()
+				local width = 300
+				local height = 40
+				hud.maxhealthWidth = width
+				local sw = 4 --strokeWidth
+				local cornerRadius = height / 4
+				hud.healthFrame = hud.makeFrame()
+				hud.healthFrame:resize(width, height)
+				local x = hud.gameOverlay.x + 20
+				local y = hud.gameOverlay.height - hud.healthFrame.rect.height - 20
+				hud.healthFrame:move(x, y)
+				hud.healthFrame:hide() --we only use the frame for positioning of the element so hide it
+				local fr = hud.healthFrame.rect --readability
+				hud.healthBG = display.newRoundedRect(hud.group, fr.x+scaleOffsetW, fr.y, width, height, cornerRadius)
+				util.zeroAnchors(hud.healthBG)
+				hud.healthBG:setFillColor(.2, .04, .01)
+				hud.healthBG:setStrokeColor(0)
+				hud.healthBG.strokeWidth = sw
+				hud.healthBar = display.newRoundedRect(	hud.group, fr.x+scaleOffsetW + sw, fr.y + sw, width - sw, height - sw, cornerRadius)
+				util.zeroAnchors(hud.healthBar)
+				hud.healthBar:setFillColor(.4, .08, .02)
+				local opt = {text = tostring(100), x = fr.x + scaleOffsetW + width/2, y = fr.y + height / 2 + 9, align = "center",
+							 width = width, height = height, font = native.systemFont, fontSize = 24 }
+				hud.healthText = display.newText( opt )
+				hud.group:insert(hud.healthText)
+			end
+
+			local function drawCurrencyFrame()
+				local width = 300
+				local height = 200
+				hud.currencyFrame = hud.makeFrame()
+				local o = hud.gameOverlay
+				local f = hud.currencyFrame
+				f:move(o.width - width - 10, o.height - height)
+				f:resize(width, height)
+				local s = 48 --image size
+				local gold = display.newImageRect(hud.group,"content/ui/coin.png",s,s)
+				gold.x = f.rect.x + f.rect.width - s
+				gold.y = f.rect.y + f.rect.height - s
+				local orb = display.newImageRect(hud.group, "content/ui/orb.png",s,s)
+				orb.x = gold.x
+				orb.y = gold.y - s - 10
+				local opt = {text = tostring(0), x = f.rect.x, y = gold.y - 12, align = "right",
+							 width = (width - gold.width) - 40, height = s, font = native.systemFont, fontSize = 24 }
+				hud.goldText = display.newText( opt )
+				util.zeroAnchors(hud.goldText)
+				hud.group:insert(hud.goldText)
+				opt = 		{text = tostring(0), x = f.rect.x, y = orb.y - 12, align = "right",
+							 width = (width - orb.width) - 40, height = s, font = native.systemFont, fontSize = 24 }
+				hud.orbText = display.newText( opt )
+				util.zeroAnchors(hud.orbText)
+				hud.group:insert(hud.orbText)
+			end
+
 			print("drawing hud")
 			drawGameOverlay()
+			drawCurrencyFrame()
 			drawSpellButtonFrame(#char.spells, 48, 10)
+			drawHealthFrame()
 			self.assignSpells()
 		end
+
+		function hud:updateHealth(currentHealth, maxHealth)
+			self.healthBar.width = (currentHealth/maxHealth) * self.maxhealthWidth
+			self.healthText.text = currentHealth
+		end
+		function hud:updateGold(val)
+			self.goldText.text = tostring(val)
+		end
+		function hud:updateOrb(val)
+			self.orbText.text = tostring(val)
+		end
+
 
 		function hud.init(_sceneGroup, _map, _game )
 			print("initialising hud")

@@ -29,6 +29,8 @@ function game:spawnChar()
 	local charParams = {
 		name = "character",
 		width = 128,
+		currentHP = 100,
+		maxHP = 100,
 		height = 128,
 		yOffset = -32,
 		moveSpeed = 180,
@@ -176,11 +178,14 @@ function game.preloadTextures() --called from scene after map loaded but before 
 		for animName, animData in pairs(enemy.animations) do --add the enemy animations to the list of animations to load
 			enemyAnims[animName] = animData
 		end
-		for animName, attackData in pairs(enemy.attacks) do --add the enemy attack animations to the list of animations to load
+		for i = 1, #enemy.attacks do
+			local attackParams = enemy.attacks[i].params
+			local animName = attackParams.animation
+			local animData = attackParams.animData
 			print(animName)
-			enemyAnims[animName] = attackData.animData
+			enemyAnims[animName] = animData
+			puppetTextureStore[enemy.name] = loadTexturesFromAnimData(enemyContent .. enemy.name .. "/", enemyAnims)
 		end
-		puppetTextureStore[enemy.name] = loadTexturesFromAnimData(enemyContent .. enemy.name .. "/", enemyAnims)
 	end
 	-------- Character --------
 	print("loading character textures")

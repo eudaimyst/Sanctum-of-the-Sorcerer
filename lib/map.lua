@@ -94,7 +94,6 @@
 		return camTiles
 	end
 
-
 	function map:getTileAtPoint(pos) --takes pos table with x, y and returns tile at that world pos
 		--print("get tile: ", pos.x, pos.y)
 		if (pos) then
@@ -182,7 +181,8 @@
 
 		local x, y = 1, 1
 		local createTile = tiles.createTile
-		for i = 1, #tileData do --for each tile in the tileData taken from the map file
+		local count = #tileData
+		for i = 1, count do --for each tile in the tileData taken from the map file
 			--print(x, y)
 			local data = tileData[i]
 			local tile = createTile(tiles, i, x, y, data.c, data.s)
@@ -196,11 +196,11 @@
 				x = x + 1 --increase the counter for the x axis
 			end
 		end
-
-		for i = 1, #tStoreIndex do --set subtypes, must be after all tiles created to get neighbour tiles
-			local tile = tStoreIndex[i]
-			if tile.type == "wall" then
-				tile:setWallSubType()
+		local t_tile --recycle
+		for i = 1, count do --set subtypes, must be after all tiles created to get neighbour tiles
+			t_tile = tStoreIndex[i]
+			if t_tile.type == "wall" then
+				t_tile:setWallSubType()
 			end
 		end
 		print(#tStoreIndex.." map tiles created \n ----map creation complete----")

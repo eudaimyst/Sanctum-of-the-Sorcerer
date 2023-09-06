@@ -44,23 +44,20 @@
         moveTarget = nil --target position relative to the game object
     }
 
+    local dts = gv.frame.dts --local ref for performance
+
     local t_dir, t_nTarget, t_tile --recycled
+    --recycled move() vars
+    local t_moveTileX, t_moveTileY, t_moveFactor, t_worldX, t_worldY
+    local t_posDelta, t_newPos = {x=0,y=0}, {x=0,y=0}
+    local t_xCheckPos, t_yCheckPos = {x=0,y=0}, {x=0,y=0}
+            
     local function gameObjOnFrame(self)
         if self.name ~= "character" then --isMoving for char is set false earlier as needs gets set true by keyinput in game.lua
             self.isMoving = false --resets moving variable to be changed by gameObject:move() if called
         end
-        
         if self.moveTarget then
-            --directions were originally intended to be constants and not intended to have their values changed
-            --TODO: come up with a proper direction framework that is not accessed as constants
-            t_dir = util.deepcopy(self.facingDirection) 
-            t_nTarget = util.normalizeXY(util.deltaPos(self.world, self.moveTarget))
-            t_dir.x, t_dir.y = t_nTarget.x, t_nTarget.y
-            self:move(t_dir)
-            if util.compareFuzzy(self.world, self.moveTarget) then
-                self.moveTarget = nil --mark as nil to stop moving
-				--print (self.name, self.id, "has reached its move target")
-            end
+            self:move(self.moveTargetdir)
         end
         if self.rect then
             self.rect.x = self.rect.x + self.xOffset
@@ -74,17 +71,38 @@
     function lib_gameObject.gameObjectFactory(gameObject)
 		--print("adding gameObject functions")
 
+        function gameObject:takeDamage(source, val)
+            self.currentHP = self.currentHP - val
+            if self.onTakeDamage then
+                self:onTakeDamage()
+            end
+        end
+
+        function gameObject:dealDamage(target, val)
+            target:takeDamage(self, val)
+            if self.onDealDamage then
+                self:onDealDamage()
+            end
+        end
+
         function gameObject:setMoveTarget(pos) --once move target is set, then onFrame will know to call the move function to the constructed moveTarget
             --print(json.prettify(self))
             --print("move target:",self.id, self.world.x, self.world.y)
             if (util.compareFuzzy(self.world, pos)) then
-                print(self.id, "game object calling setMoveTarget on existing pos")
+                print(self.id, " already at target position")
+                if self.reachedMoveTarget then
+                    self:reachedMoveTarget()
+                end
                 return
             end
-            local angle = util.deltaPosToAngle(self.world, pos)
-            self:setFacingDirection(util.angleToDirection(angle))
-            --print(self.id, "target dir: ", dir.x, dir.y)
             self.moveTarget = pos
+            --directions were originally intended to be constants and not intended to have their values changed
+            --TODO: come up with a proper direction framework that is not accessed as constants
+            t_dir = util.deepcopy(util.angleToDirection(util.deltaPosToAngle(self.world, self.moveTarget))) 
+            t_nTarget = util.normalizeXY(util.deltaPos(self.world, self.moveTarget))
+            t_dir.x, t_dir.y = t_nTarget.x, t_nTarget.y
+            self.moveTargetdir = t_dir
+            --print(self.id, "target dir: ", dir.x, dir.y)
         end
 
         function gameObject:move(dir) --called each frame from key_input by scene, also onFrame if moveTarget is set
@@ -98,14 +116,34 @@
             end ]]
             self.isMoving = true
             self:setMoveDirection(dir) --sets move direction and updates the facing direction
-            
-            local posDelta = { x = self.moveDirection.x * self.moveSpeed * gv.frame.dts, y = self.moveDirection.y * self.moveSpeed * gv.frame.dts }
-            local newPos = { x = self.world.x + posDelta.x, y = self.world.y + posDelta.y }
-            local newTileX = map:getTileAtPoint( { x = newPos.x, y = self.world.y  } )
-            local newTileY = map:getTileAtPoint( { x = self.world.x, y = newPos.y  } )
-            if newTileX.col == 1 then newPos.x = self.world.x; self.moveTarget = nil end
-            if newTileY.col == 1 then newPos.y = self.world.y; self.moveTarget = nil end
-            self.world.x, self.world.y = newPos.x, newPos.y
+            t_worldX, t_worldY = self.world.x, self.world.y
+            t_moveFactor = self.moveSpeed * gv.frame.dts
+            t_posDelta.x, t_posDelta.y = self.moveDirection.x * t_moveFactor, self.moveDirection.y * t_moveFactor
+            t_newPos.x, t_newPos.y = t_worldX + t_posDelta.x, t_worldY + t_posDelta.y
+            t_xCheckPos.x, t_xCheckPos.y = t_newPos.x, t_worldY
+            t_yCheckPos.x, t_yCheckPos.y = t_worldX, t_newPos.y
+            t_moveTileX = map:getTileAtPoint( t_xCheckPos )
+            t_moveTileY = map:getTileAtPoint( t_yCheckPos )
+            if (t_moveTileX.col == 1) then --if hitting a wall check reset the move target to recalculate move direction
+                t_newPos.x = self.world.x
+                if (self.moveTarget) then
+                    self:setMoveTarget(self.moveTarget)
+                end
+            end
+            if (t_moveTileY.col == 1) then
+                t_newPos.y = self.world.y
+                if (self.moveTarget) then
+                    self:setMoveTarget(self.moveTarget)
+                end
+            end
+            self.world.x, self.world.y = t_newPos.x, t_newPos.y
+            if util.compareFuzzy(self.world, self.moveTarget) then
+                self.moveTarget = nil --mark as nil to stop moving
+                if self.reachedMoveTarget then
+                    self:reachedMoveTarget()
+                end
+				--print (self.name, self.id, "has reached its move target")
+            end
         end
 
         function gameObject:loadTextures() --called when created
@@ -160,7 +198,6 @@
             end
             self.rect = display.newImageRect(self.group, self.texture.filename, self.texture.baseDir, self.width, self.height)
             self.rect.x, self.rect.y = self.world.x + self.xOffset, self.world.y + self.yOffset
-
 		end
 
 		function gameObject:destroyRect() --destroys rect if exists
@@ -169,8 +206,6 @@
                 self.rect = nil
             end
 		end
-
-        
     end
 
     function lib_gameObject:create(_params) --creates gameObject

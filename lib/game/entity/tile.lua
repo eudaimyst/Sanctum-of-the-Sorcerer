@@ -17,6 +17,7 @@
 	local game, map, cam, defaultTileset, wallSubTypes, mapImageFolder
 	local tStoreIndex, tStoreCols
 	local tileSize, halfTileSize
+	local stringLookup --to set tile type
 
 	local gameChar --set on init for updating light blocker
 	-- Define module
@@ -25,6 +26,7 @@
 	function lib_tile:init(_game, _map, _cam, _defaultTileset, _wallSubTypes, _mapImageFolder)
 		map, cam, defaultTileset, wallSubTypes, mapImageFolder = _map, _cam, _defaultTileset, _wallSubTypes, _mapImageFolder
 		game = _game
+		stringLookup = map.saveStringLookup
 		tStoreIndex, tStoreCols = map.getTileStore()
 		tileSize = map.tileSize
 		halfTileSize = tileSize/2
@@ -43,7 +45,6 @@
 		tile.lightValues = {}
 		tile.visibleToChar = nil
 		
-		local stringLookup = map.saveStringLookup
 		local type = stringLookup[_string] --sets the tile type string to the key name of the matching tileset entry
 		tile.type = type
 		tile.imageTexture = defaultTileset[type].texture --imageFileLocation for this tile

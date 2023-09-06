@@ -38,7 +38,7 @@
         range = -1, --maximum distance for attack target
         channelTime = -1, --sticks between main and post for the channel duration until cancelled
         windupTime = 0.5, --how long animation loops windup frames
-        windupGlow = false, --whether or not to display a glowing emitter during windup 
+        windupGlow = nil, --whether or not to display a glowing emitter during windup 
     }
 
     params.tailSwipe = {
