@@ -53,14 +53,17 @@
     local t_xCheckPos, t_yCheckPos = {x=0,y=0}, {x=0,y=0}
             
     local function gameObjOnFrame(self)
+        --todo: check if char not name for performance
         if self.name ~= "character" then --isMoving for char is set false earlier as needs gets set true by keyinput in game.lua
             self.isMoving = false --resets moving variable to be changed by gameObject:move() if called
         end
+
         if self.moveTarget then
             self:move(self.moveTargetdir)
         end
+        
         if self.rect then
-            self.rect.x = self.rect.x + self.xOffset
+            self.rect.x = self.rect.x + self.xOffset --doesnt need to be done on frame
             self.rect.y = self.rect.y + self.yOffset
             t_tile = map:getTileAtPoint(self.world)
             --print(self.id, tile.id, tile.lightValue)
@@ -124,17 +127,14 @@
             t_yCheckPos.x, t_yCheckPos.y = t_worldX, t_newPos.y
             t_moveTileX = map:getTileAtPoint( t_xCheckPos )
             t_moveTileY = map:getTileAtPoint( t_yCheckPos )
-            if (t_moveTileX.col == 1) then --if hitting a wall check reset the move target to recalculate move direction
+            self.hitWall = false
+            if (t_moveTileX.col == 1) then --if hitting a wall set a flag for enemy idle state to check
                 t_newPos.x = self.world.x
-                if (self.moveTarget) then
-                    self:setMoveTarget(self.moveTarget)
-                end
+                self.hitWall = true
             end
             if (t_moveTileY.col == 1) then
                 t_newPos.y = self.world.y
-                if (self.moveTarget) then
-                    self:setMoveTarget(self.moveTarget)
-                end
+                self.hitWall = true
             end
             self.world.x, self.world.y = t_newPos.x, t_newPos.y
             --check if reached move target
@@ -217,7 +217,7 @@
         gameObject.world.x, gameObject.world.y = gameObject.spawnPos.x, gameObject.spawnPos.y --sets the intial world point to the passed x and y or the default x and y
 
         lib_gameObject.gameObjectFactory(gameObject) --adds functions to gameObject
-
+        
         --gameObject:loadTextures()
 
         gameObject:addOnFrameMethod(gameObjOnFrame)

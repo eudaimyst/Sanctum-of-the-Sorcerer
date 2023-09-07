@@ -54,7 +54,7 @@
 		onStateEnd = function(self) --called when this state is changed from this state
 		end,
 		onFrame = function(self) --called every fram when this state is active
-			if (not self.moveTarget) then --set an idle move target if one is not set
+			if ((not self.moveTarget) or (self.hitWall)) then --set an idle move target if one is not set
 				wanderDist, spawnPos = self.wanderDistance, self.spawnPos
 				local targetPos = { x = spawnPos.x + getWanderPoint(), y = spawnPos.y + getWanderPoint() }
 				self:setMoveTarget(targetPos) --game object function
@@ -84,13 +84,17 @@
 		onFrame = function(self) --called every fram when this state is activet_dist = util.getDistance(self.world.x, self.world.y, gameChar.world.x, gameChar.world.y) --use recycled var
 			if self.primedAttack then
 				updatePositions(self)
-				updateDistance()
-				if dist <= self.primedAttack.range then
-					print(self.id, "is within attackRange, firing", self.primedAttack.name)
-					--fire attack
-					self.moveTarget = nil
-					self:beginAttackAnim(self.primedAttack)
-					self.primedAttack = nil
+				if self.moveTarget == nil then --if moveTarget is nilled by game object, set it to the target position
+					self:setMoveTarget( { x = targetWorld.x, y = targetWorld.y } ) --gameObject function
+				else
+					updateDistance()
+					if dist <= self.primedAttack.range then
+						print(self.id, "is within attackRange, firing", self.primedAttack.name)
+						--fire attack
+						self.moveTarget = nil
+						self:beginAttackAnim(self.primedAttack)
+						self.primedAttack = nil
+					end
 				end
 			end
 		end,

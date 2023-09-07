@@ -26,15 +26,16 @@
     local entityCount = 0
     local zGroups = {}
 
-    local recty --recycling
-    local function updateRect(self) --calculate the entities position on the screen based off its world coords
-        --needs to be called after cam bounds has been updated on frame or jitters
-        if (self.rect) then --do not updateScreenPos if entity has no rect (ie, is not on screen)
-            self.rect.xScale, self.rect.yScale = cam.zoom, cam.zoom
-            self.rect.x, self.rect.y = (self.world.x - cam.bounds.x1) * cam.zoom , (self.world.y - cam.bounds.y1) * cam.zoom
-            recty = mround(self.rect.y)
-            if recty > 0 and recty < 1080 then
-                zGroups[recty]:insert(self.group)
+    local rectY, selfRect, selfWorld, camBounds, camZoom --recycling
+    local function updateRect(self) --update the rects position on screen, needs to be called after cam bounds has been updated on frame or jitters
+        if (self.rect) then --do not update rect values if entity has no rect (ie, is not on screen)
+            selfRect, selfWorld, camBounds, camZoom = self.rect, self.world, cam.bounds, cam.zoom
+            selfRect.xScale, selfRect.yScale = camZoom, camZoom
+            selfRect.x, selfRect.y = (selfWorld.x - camBounds.x1) * camZoom , (selfWorld.y - camBounds.y1) * camZoom
+            --insert into correct zGroup based on y position
+            rectY = mround(selfRect.y)
+            if rectY > 0 and rectY < 1080 then
+                zGroups[rectY]:insert(self.group)
             end
         end
     end
