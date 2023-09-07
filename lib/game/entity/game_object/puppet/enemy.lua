@@ -11,6 +11,7 @@
 	local puppet = require("lib.game.entity.game_object.puppet")
 	local attack = require("lib.game.entity.game_object.puppet.attack")
 	local json = require("json");
+	local states = require("lib.game.entity.game_object.puppet.enemy.enemy_states")
 
 	local game, cam --set by game module on init
 
@@ -22,9 +23,9 @@
 	lib_enemy.enemyStore = {}
 	local wakeupDistance = 2000 --enemies wake up when the char gets this close
 
-	local decisionTimer = 0
-	local decisionRate = 100 --(ms) how often to decide next action to take
-	local makeDecision = nil
+	local stateUpdateTimer = 0 --timer for updating enemy state
+	local stateUpdateRate = 500 --(ms) how often to updatestate
+	local doStateUpdate = nil --set to true when enemy should update its state
 
 	local moveTargetFuzzy = 10
 
@@ -37,179 +38,88 @@
 		end
 	end
 
-	local t_dist --recycled distance
-	local function enemyOnFrame(self)
-		if (makeDecision or self.forceMakeDecision) then
-			self.forceMakeDecision = nil --clear flag
-			t_dist = util.getDistance(self.world.x, self.world.y, gameChar.world.x, gameChar.world.y)
-			self:updateSleep(t_dist) --wakes/sleeps enemy
-			if self.isAsleep == false then
-				if (self.currentAction == nil) then
-					--print(tostring(makeDecision))
-					self:makeDecision(t_dist)(self) --makes a decision and call the resulting function
-				end
+	local function updateOnScreen(enemy) --called on frame if enemy is not asleep
+		if enemy.onScreen then -- check if enemy goes outside of camera bounds
+			if not checkBounds(enemy.world, cam.bounds) then
+				print("setting enemy "..enemy.id.." to not visible")
+				enemy.onScreen = false
+				enemy:destroyRect()
+			end
+		else --check if enemy enters cameraBounds
+			if checkBounds(enemy.world, cam.bounds) then
+				print("setting enemy "..enemy.id.." to visible")
+				enemy.onScreen = true
+				enemy:makeRect()
 			end
 		end
-		if (self.currentAction == self.moveToAttack) then
-			if self.currentAttack == nil then
-				t_dist = util.getDistance(self.world.x, self.world.y, gameChar.world.x, gameChar.world.y) --use recycled var
-				if t_dist < self.primedAttack.range then
-					print(self.id, "is within attackRange")
-					self:fireAttack()
-				end
-			end 
+	end
+
+	local t_dist --recycled distance
+
+	local function enemyOnFrame(self)
+		--runs every stateUpdateRate
+		if (doStateUpdate) then
+			if self.enemyState.onStateUpdate then
+				self.enemyState.onStateUpdate(self)
+			end
+		end
+		--runs every frame
+		if self.enemyState ~= states.sleep then --enemy is not asleep
+			if self.enemyState.onFrame then
+				self.enemyState.onFrame(self)
+			end
+			updateOnScreen(self)
 		end
 	end
 
 	function lib_enemy:create(_params) --called by game module to create enemy from saveData
 		--print("creating enemy entity at: " .. _params.world.x .. ", " .. _params.world.y .. "")
-		local enemy = puppet:create(_params)
+		local self = puppet:create(_params)
 		for k, v in pairs(_params) do
-			enemy[k] = v
+			self[k] = v
 		end
 		local spawnPos = _params.spawnPos
-		enemy.spawnPos = spawnPos
-		enemy.world.x, enemy.world.y = spawnPos.x, spawnPos.y
-		enemy.isVisible, enemy.isAsleep = false, true
-		enemy.currentAction = nil
-		enemy.primedAttack = nil
-		enemy.timeInCombat = 0
-		enemy.attackTarget = gameChar
+		self.enemyState = states.sleep --start in sleeping state
+		self.spawnPos = spawnPos
+		self.world.x, self.world.y = spawnPos.x, spawnPos.y
+		self.onScreen = false
+		self.primedAttack = nil
+		self.timeInCombat = 0
+		self.attackTarget = gameChar
+		self.wakeupDistance = wakeupDistance
 
 		for i = 1, #_params.attacks do
-			enemy.attacks[i] = attack:new(_params.attacks[i].params, self)
+			self.attacks[i] = attack:new(_params.attacks[i].params, self)
 		end
 		
-		function enemy:wakeup() --called on frame when wakeupDistance is met
+		function self:wakeup() --called on frame when wakeupDistance is met
 			print("enemy "..self.id.." is waking up")
 			self.isAsleep = false
 		end
 
-		function enemy:updateSleep(distance)
-			if (self.isAsleep == true) then
-				if (gameChar) then
-					if ( distance < wakeupDistance ) then
-						print("waking up enemy "..self.id)
-						self.isAsleep = false
-					end
-				end
-			else --enemy is awake
-				if ( distance > wakeupDistance ) then
-					print("putting enemy "..self.id.." to sleep")
-					self.isAsleep = true
-				end
-				if self.isVisible then -- check if enemy goes outside of camera bounds
-					if not checkBounds(self.world, cam.bounds) then
-						print("setting enemy "..self.id.." to not visible")
-						self.isVisible = false
-						self:destroyRect()
-					end
-				else --check if enemy enters cameraBounds
-					if checkBounds(self.world, cam.bounds) then
-						print("setting enemy "..self.id.." to visible")
-						self.isVisible = true
-						self:makeRect()
-					end
-				end
+		function self:setState(state) --sets the state and calls the relevant state functions
+			print(self.id, "setting state to", state.name, "from", self.enemyState.name)
+			
+			if self.enemyState.onStateEnd then --calls the end function for the current state
+				self.enemyState.onStateEnd(self)
 			end
-		end
 
-		function enemy:primeAttack()--called from make decision if in sight range
-			--todo: choose the attack with the lowest priority
-			print("huh?")
-			self.primedAttack = self.attacks[1]
-			print(self.id, " primed attack set to ", self.primedAttack.name)
-		end
-
-		function enemy:reachedMoveTarget() --called by game_object.lua when move target reached
-			if self.currentAction == self.moveToAttack then
-				t_dist = util.getDistance(self.world.x, self.world.y, gameChar.world.x, gameChar.world.y) --use recycled var
-				if t_dist < self.primedAttack.range then
-					print(self.id, "is within attackRange")
-					self:fireAttack()
-				end
+			if state.onStateStart then --calls the start function for the new state
+				state.onStateStart(self)
 			end
-			self.currentAction = nil
-			self.forceMakeDecision = true
+			self.enemyState = state --sets the state to the new state
 		end
 
-		function enemy:attackCompletelistener() --called by puppet when anim is complete
-			self.primedAttack = nil
-			self.currentAction = nil
-			self.forceMakeDecision = true
-		end
-
-		function enemy:fireAttack()
-			self.moveTarget = nil
-			self:beginAttackAnim(self.primedAttack)
-		end
-
-		function enemy:moveToAttack()
-			--print("enemy "..self.id.." is moving to attack")
-			if (gameChar) then
-				self:setMoveTarget( { x = gameChar.world.x, y = gameChar.world.y } ) --gameObject function
-			else
-				print("moveToAttack: no char found or no world coords for enemy", self.id)
-			end
-		end
-
-		function enemy:moveIdle() --called on frame if this function is the currentAction set by makeDecision
-			if (not self.moveTarget) then
-				--print("setting idle target for "..self.id)
-				local function getWanderPoint()
-					local r = math.random(self.wanderDistance.min, self.wanderDistance.max)
-					if math.random() > 0.5 then
-						return r
-					else
-						return r * -1
-					end
-				end
-				local targetPos = { x = self.spawnPos.x + getWanderPoint(), y = self.spawnPos.y + getWanderPoint() }
-				--local targetPos = { x = self.spawnPos.x, y = self.spawnPos.y }
-				--print(self.name, self.id, "move idle target pos:", targetPos.x, targetPos.y)
-				self:setMoveTarget(targetPos) --game object function
-			end
-		end
-
-		function enemy:makeDecision(distance) --called from enemies onFrame if decisionTimer > decisionRate
-			--print("enemy "..self.id.." is deciding action")
-			if (self.currentAction) then
-				if ( self.currentAction == self.moveToIdle) then
-					if (distance < self.sightRange ) then
-						print(self.kd, "setting current action to moveToATtack from idle")
-						--self:decideCurrentAttack()
-						return self.moveToAttack
-					end
-				elseif (self.currentAction == self.moveToAttack) then
-					if (self.timeInCombat > self.leashTime) then
-						--print("setting current action to moveToIdle due to leashing")
-						return self.moveIdle
-					end
-				end
-			else
-				--print("distance, sightRange: "..distance, tostring(self.sightRange))
-				if (distance < self.sightRange ) then
-					print(self.id, "setting current action to moveToAttack due to sight range")
-					self:primeAttack()
-					return self.moveToAttack
-				else
-					return self.moveIdle
-				end
-			end
-		end
-
-		enemy:addOnFrameMethod(enemyOnFrame)
+		self:addOnFrameMethod(enemyOnFrame)
 	end
 
 	function lib_enemy:onFrame() --called by game on frame, timer
-		makeDecision = nil --force makeDecision to be false unless decisionTimer is reached
-		decisionTimer = decisionTimer + gv.frame.dt
-		if decisionTimer > decisionRate then
-			makeDecision = true --enemies check this to determine whether to make their next decision
-			--print("makeDecision: "..tostring(makeDecision) )
-			decisionTimer = 0
+		doStateUpdate = nil --force makeDecision to be false unless decisionTimer is reached
+		stateUpdateTimer = stateUpdateTimer + gv.frame.dt
+		if stateUpdateTimer > stateUpdateRate then
+			doStateUpdate = {} --enemies check this to determine whether to make their next decision
+			stateUpdateTimer = 0
 		end
-			
 	end
 
 	function lib_enemy:setGameChar(char)

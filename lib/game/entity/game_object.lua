@@ -137,12 +137,9 @@
                 end
             end
             self.world.x, self.world.y = t_newPos.x, t_newPos.y
+            --check if reached move target
             if util.compareFuzzy(self.world, self.moveTarget) then
                 self.moveTarget = nil --mark as nil to stop moving
-                if self.reachedMoveTarget then
-                    self:reachedMoveTarget()
-                end
-				--print (self.name, self.id, "has reached its move target")
             end
         end
 

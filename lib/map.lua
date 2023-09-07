@@ -45,22 +45,24 @@
 	local camTiles = {} --tiles within camera bounds
 	local lastFrameCamTiles = {} --tiles within cameraBounds on previous frame
 	local tileSize = 0  --set by createMapTiles from params 
+	local mapWidth, mapHeight --set by params
 	local tStoreCols, tStoreIndex = {}, {} --set by createMaptiles
 
 	local mapImageFolder = "content/map/"
 
+	local t_x, t_y --recycled tile coords
 	local function worldPointToTileCoords(_x, _y) --takes x y in world coords and returns tile coords
 		--print("worldPointToTileCoords:", _x, _y)
-		local x, y = mfloor(_x / tileSize), mfloor( _y / tileSize)
+		t_x, t_y = mfloor(_x / tileSize), mfloor( _y / tileSize)
 		--clamp the returned tile coords to the map size
-		if x > map.width then x = map.width; print("WARNING: point outside bounds (worldPointToTileCoords)")
-		elseif x < 1 then x = 1; print("WARNING: point outside bounds (worldPointToTileCoords)")
+		if t_x > mapWidth then t_x = mapWidth; print("WARNING: point outside bounds (worldPointToTileCoords)")
+		elseif t_x < 1 then t_x = 1; print("WARNING: point outside bounds (worldPointToTileCoords)")
 		end
-		if y > map.height then y = map.height; print("WARNING: point outside bounds (worldPointToTileCoords)")
-		elseif y < 1 then y = 1; print("WARNING: point outside bounds (worldPointToTileCoords)")
+		if t_y > mapHeight then t_y = mapHeight; print("WARNING: point outside bounds (worldPointToTileCoords)")
+		elseif t_y < 1 then t_y = 1; print("WARNING: point outside bounds (worldPointToTileCoords)")
 		end
 		--print("result:", x, y)
-		return x, y
+		return t_x, t_y
 	end
 	
 	local function setColor(tileList, color)
@@ -97,8 +99,8 @@
 	function map:getTileAtPoint(pos) --takes pos table with x, y and returns tile at that world pos
 		--print("get tile: ", pos.x, pos.y)
 		if (pos) then
-			local x, y = worldPointToTileCoords(pos.x, pos.y)
-			return tStoreCols[x][y]
+			t_x, t_y = worldPointToTileCoords(pos.x, pos.y)
+			return tStoreCols[t_x][t_y]
 		else
 			print("no point passed, can not get tile")
 		end
@@ -165,6 +167,7 @@
 
 		--TODO: clean this up by copying all params to module
 		self.width, self.height = self.params.width, self.params.height
+		mapWidth, mapHeight = self.width, self.height
 		self.tileSize = self.params.tileSize
 		tileSize = self.tileSize
 		self.tileset = defaultTileset
