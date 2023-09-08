@@ -53,10 +53,10 @@
 		local decalPosX, decalPosY = tile.mid.x + tileSize*saveData.xOff/2, tile.mid.y + tileSize*saveData.yOff/2
 		--+ saveData.xOff
 		local decal = entity:create( decalPosX, decalPosY )
-		print("decal created at: ", decal.world.x, decal.world.y)
+		--print("decal created at: ", decal.world.x, decal.world.y)
+		--print(json.prettify(saveData))
 		decal:addOnFrameMethod(decalOnFrame)
 		
-		print(json.prettify(saveData))
 		local decalTex = decalTextures[decalName]
 		local decalSize = decalData[decalName].scale * tileSize
 		decal.rect = display.newImageRect(decalGroup, decalTex.filename, decalTex.baseDir, decalSize, decalSize);

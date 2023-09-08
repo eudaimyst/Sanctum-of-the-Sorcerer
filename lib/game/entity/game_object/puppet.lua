@@ -52,7 +52,7 @@ local function puppetOnFrame(self)
 	end
 end
 
-function lib_puppet.puppetFactory(puppet)
+function lib_puppet.factory(puppet)
 	--print("adding puppet functions")
 
 	function puppet:makeRect() --makes game objects rect if doesn't exist
@@ -61,7 +61,7 @@ function lib_puppet.puppetFactory(puppet)
 			--print("rect already created")
 			return
 		end
-		--print(self.id.." (id): "..self.name, self.facingDirection.image, self.state, self.animFrame)
+		print(self.id.." (id): "..self.name, self.facingDirection.image, self.state, self.animFrame)
 		local texture = lib_puppet.textureStore[self.name][self.facingDirection.image][self.state][self.animFrame-1]
 		self.rect = display.newImageRect(self.group, texture.filename, texture.baseDir, self.width, self.height)
 		self.rect.x, self.rect.y = self.world.x + self.xOffset, self.world.y + self.yOffset
@@ -287,7 +287,7 @@ function lib_puppet:create(_params) --creates the game object
 	puppet.attackTarget = nil
 
 	puppet:setParams(defaultParams, _params) --adds puppet params
-	lib_puppet.puppetFactory(puppet) --adds functions to puppet
+	lib_puppet.factory(puppet) --adds functions to puppet
 
 	print("puppet created with entity id: ", puppet.id)
 	return puppet

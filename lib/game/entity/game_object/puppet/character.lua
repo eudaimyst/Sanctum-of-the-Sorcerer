@@ -18,21 +18,27 @@
 	local dt = gv.frame.dt--recycled delta time
 
 	-- Define module
-	local lib_character = { animations = { --used for loading textures
-		idle = { frames = 4, rate = .8 },
-		walk = { frames = 4, rate = 4 },
-	} }	
+	local lib_character = {
+		animations = { --used for loading textures in game module
+			idle = { frames = 4, rate = .8 },
+			walk = { frames = 4, rate = 4 }}}
+	
+	local defaultParams = {
+		name = "character",
+		width = 128,
+		currentHP = 100,
+		maxHP = 100,
+		height = 128,
+		yOffset = -32,
+		moveSpeed = 180,
+		spellSlots = 5,
+		spawnPos = {x=display.contentWidth/2, y=display.contentHeight/2},
+		animations = lib_character.animations --used for puppet anim module
+	}
 
 	local char
 
-	function lib_character:create(_params, _hud, _map, _cam)
-		hud, map, cam = _hud, _map, _cam
-		print("creating character entity")
-		_params.animations = self.animations --adds the modules defined in the character.lua file to the params to be loaded by puppet module
-
-		char = puppet:create(_params)
-		--print("CHARACTER PARAMS:--------\n" .. json.prettify(char) .. "\n----------------------")
-        
+	function lib_character.factory(char) --adds methods to the character entity
 		function char:addSpell(spell, slot) --adds spell with passed params to the slot
 			print("adding spell: "..spell.name)
 			self.animations[spell.animation] = spell.animData
@@ -91,6 +97,16 @@
 				end
 			end
 		end
+	end
+
+	function lib_character:create(_params, _hud, _map, _cam)
+		hud, map, cam = _hud, _map, _cam
+		print("creating character entity")
+
+		char = puppet:create(_params)
+		--print("CHARACTER PARAMS:--------\n" .. json.prettify(char) .. "\n----------------------")
+        char:setParams(defaultParams, _params)
+		self.factory(char)
 
 		char:makeRect() --creates rect on creation
 		char:loadWindupGlow() --creates windup glow emitter on creation

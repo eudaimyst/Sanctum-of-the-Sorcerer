@@ -27,6 +27,7 @@
     local zGroups = {}
 
     local rectY, selfRect, selfWorld, camBounds, camZoom --recycling
+    
     local function updateRect(self) --update the rects position on screen, needs to be called after cam bounds has been updated on frame or jitters
         if (self.rect) then --do not update rect values if entity has no rect (ie, is not on screen)
             selfRect, selfWorld, camBounds, camZoom = self.rect, self.world, cam.bounds, cam.zoom

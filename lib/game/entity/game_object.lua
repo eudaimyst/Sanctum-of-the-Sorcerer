@@ -44,14 +44,12 @@
         moveTarget = nil --target position relative to the game object
     }
 
-    local dts = gv.frame.dts --local ref for performance
-
     local t_dir, t_nTarget, t_tile --recycled
     --recycled move() vars
     local t_moveTileX, t_moveTileY, t_moveFactor, t_worldX, t_worldY
     local t_posDelta, t_newPos = {x=0,y=0}, {x=0,y=0}
     local t_xCheckPos, t_yCheckPos = {x=0,y=0}, {x=0,y=0}
-            
+    local selfRect, selfCol --recycled
     local function gameObjOnFrame(self)
         --todo: check if char not name for performance
         if self.name ~= "character" then --isMoving for char is set false earlier as needs gets set true by keyinput in game.lua
@@ -63,15 +61,21 @@
         end
         
         if self.rect then
-            self.rect.x = self.rect.x + self.xOffset --doesnt need to be done on frame
-            self.rect.y = self.rect.y + self.yOffset
+            selfRect = self.rect
+            if self.col then
+                selfCol = self.col
+                selfCol.minX, selfCol.maxX = self.x - self.halfColWidth, self.x + self.halfColWidth
+                selfCol.minY, selfCol.maxY = self.y - self.halfColHeight, self.y + self.halfColHeight
+            end
+            selfRect.x = selfRect.x + self.xOffset --doesnt need to be done on frame
+            selfRect.y = selfRect.y + self.yOffset
             t_tile = map:getTileAtPoint(self.world)
             --print(self.id, tile.id, tile.lightValue)
             self.lightValue = t_tile.lightValue
         end
     end
 
-    function lib_gameObject.gameObjectFactory(gameObject)
+    function lib_gameObject.factory(gameObject)
 		--print("adding gameObject functions")
 
         function gameObject:takeDamage(source, val)
@@ -110,8 +114,8 @@
 
         function gameObject:move(dir) --called each frame from key_input by scene, also onFrame if moveTarget is set
             
-            if (self.currentAttack) then --puppets use this logic for movement
-                print("can't move while attacking")
+            if (self.currentAttack) then --todo:add check if attack allows moving
+                --print("can't move while attacking")
                 return
             end
             --[[ if self.name == "character" then
@@ -204,19 +208,17 @@
             end
 		end
     end
-
+    
     function lib_gameObject:create(_params) --creates gameObject
         --print("creating gameObject")
 
         local gameObject = entity:create() --creates the entity using the entity module and bases the object off of it
         
-		--print("setting gameObject params") --entity function
-        gameObject:setParams(defaultParams, _params) --sets the params of the object to the passed params or the default params
-		--print("GAME OBJECT PARAMS:--------\n" .. json.prettify(gameObject) .. "\n----------------------")
-
+		gameObject:setParams(defaultParams, _params) --sets the params of the object to the passed params or the default params
+		
         gameObject.world.x, gameObject.world.y = gameObject.spawnPos.x, gameObject.spawnPos.y --sets the intial world point to the passed x and y or the default x and y
 
-        lib_gameObject.gameObjectFactory(gameObject) --adds functions to gameObject
+        lib_gameObject.factory(gameObject) --adds functions to gameObject
         
         --gameObject:loadTextures()
 

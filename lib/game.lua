@@ -26,18 +26,10 @@ local cam, map, key, mouse, hud --set on init()
 
 function game:spawnChar()
 	print("char getting spawn point from map: ")
-	local charParams = {
-		name = "character",
-		width = 128,
-		currentHP = 100,
-		maxHP = 100,
-		height = 128,
-		yOffset = -32,
-		moveSpeed = 180,
-		spellSlots = 5,
+	local params = {
 		spawnPos = map:getSpawnPoint()
 	}
-	self.char = character:create(charParams, hud, map, cam)
+	self.char = character:create(params, hud, map, cam)
 	--print(json.prettify(game.char))
 	enemy:setGameChar(self.char)
 
