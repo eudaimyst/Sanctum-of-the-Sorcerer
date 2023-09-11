@@ -189,7 +189,7 @@
 	    if event.type == "down" then
 			----left click
 			if (event.isPrimaryButtonDown) then --mouse clicked
-				--print("mouse pressed")
+				print("mouse pressed")
 				if (M.pressed == false) then --only if mouse not held down
 					M.pressed = true --set to true so don't register mouse being held down
 					--print("mouse clicked at pos: "..event.x..", "..event.y)
@@ -238,7 +238,7 @@
 			end
 	    end
 		if event.type == "up" then
-			--print("mouse released")
+			print("mouse released")
 			M.pressed = false --so can check for next click
 			M.delta.x, M.delta.y = 0, 0
 		end

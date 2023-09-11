@@ -27,6 +27,7 @@
     local util = require("lib.global.utilities")
     local json = require("json")
     local lfs = require("lfs")
+    local collision = require("lib.game.entity.game_object.collision")
 
 	-- Define module
 	local lib_gameObject = {}
@@ -34,7 +35,7 @@
     local defaultParams = {
         name = "default",
         currentHP = 10, maxHP = 10, level = 0, element = nil, --gameplay data
-        moveSpeed = 100,
+        moveSpeed = 100, colWidth = 50, colHeight = 50, col = {minX=0,maxX=0,minY=0,maxY=0},
         width = 96, height = 96, xOffset = 0, yOffset = 0, --display data
         image = "default.png", path = "content/game_objects/", fName = "",
         spawnPos = { x = 0, y = 0 },
@@ -49,27 +50,33 @@
     local t_moveTileX, t_moveTileY, t_moveFactor, t_worldX, t_worldY
     local t_posDelta, t_newPos = {x=0,y=0}, {x=0,y=0}
     local t_xCheckPos, t_yCheckPos = {x=0,y=0}, {x=0,y=0}
-    local selfRect, selfCol --recycled
+    local t_xOff, t_yOff
+    local selfRect, selfCol, selfWorld, hcw, hch --recycled
+
     local function gameObjOnFrame(self)
         --todo: check if char not name for performance
         if self.name ~= "character" then --isMoving for char is set false earlier as needs gets set true by keyinput in game.lua
             self.isMoving = false --resets moving variable to be changed by gameObject:move() if called
         end
+    
+        t_xOff, t_yOff = self.xOffset, self.yOffset --locals for performance
+        selfWorld = self.world
 
         if self.moveTarget then
             self:move(self.moveTargetdir)
         end
+
+        if self.colID then --object has been registered for collisions
+            selfCol, hcw, hch = self.col, self.halfColWidth, self.halfColHeight --performance locals
+            selfCol.minX, selfCol.maxX = selfWorld.x - hcw - t_xOff, selfWorld.x + hcw - t_xOff
+            selfCol.minY, selfCol.maxY = selfWorld.y - hch - t_yOff, selfWorld.y + hch - t_yOff
+        end
         
-        if self.rect then
+        if self.rect then --object is on screen
             selfRect = self.rect
-            if self.col then
-                selfCol = self.col
-                selfCol.minX, selfCol.maxX = self.x - self.halfColWidth, self.x + self.halfColWidth
-                selfCol.minY, selfCol.maxY = self.y - self.halfColHeight, self.y + self.halfColHeight
-            end
-            selfRect.x = selfRect.x + self.xOffset --doesnt need to be done on frame
-            selfRect.y = selfRect.y + self.yOffset
-            t_tile = map:getTileAtPoint(self.world)
+            selfRect.x = selfRect.x + t_xOff --doesnt need to be done on frame
+            selfRect.y = selfRect.y + t_yOff
+            t_tile = map:getTileAtPoint(selfWorld)
             --print(self.id, tile.id, tile.lightValue)
             self.lightValue = t_tile.lightValue
         end
@@ -113,33 +120,56 @@
         end
 
         function gameObject:move(dir) --called each frame from key_input by scene, also onFrame if moveTarget is set
-            
+            local function setColDirMultiplier(dirAxis)
+                if dirAxis < 0 then return -1
+                else return 1
+                end
+            end
+
             if (self.currentAttack) then --todo:add check if attack allows moving
-                --print("can't move while attacking")
                 return
             end
-            --[[ if self.name == "character" then
-                print("character is moving", gv.frame.current)
-            end ]]
-            self.isMoving = true
+            self.isMoving = true --prevents spell casting, set to false in onFrame method
             self:setMoveDirection(dir) --sets move direction and updates the facing direction
+
+            --------calculate the new position to move to
             t_worldX, t_worldY = self.world.x, self.world.y
             t_moveFactor = self.moveSpeed * gv.frame.dts
-            t_posDelta.x, t_posDelta.y = self.moveDirection.x * t_moveFactor, self.moveDirection.y * t_moveFactor
+            t_posDelta.x, t_posDelta.y = self.moveDirection.x * t_moveFactor, self.moveDirection.y * t_moveFactor --moveDir gets recreated for enemies
             t_newPos.x, t_newPos.y = t_worldX + t_posDelta.x, t_worldY + t_posDelta.y
-            t_xCheckPos.x, t_xCheckPos.y = t_newPos.x, t_worldY
-            t_yCheckPos.x, t_yCheckPos.y = t_worldX, t_newPos.y
-            t_moveTileX = map:getTileAtPoint( t_xCheckPos )
+
+            --------check for wall collisions at the new position
+            hcw, hch = self.halfColWidth, self.halfColHeight
+            --we check each direction seperately so we can null the movement in that direction easily without affecting the other
+            --todo: look into if we only need one tile check (probably can)
+            local colMultX = setColDirMultiplier(self.moveDirection.x) --inverts the collision multiplier depending on direction of movement
+            local colMultY = setColDirMultiplier(self.moveDirection.y)
+            t_xCheckPos.x, t_xCheckPos.y = t_newPos.x + hcw * colMultX, t_worldY --x and y positions to check for tiles
+            t_yCheckPos.x, t_yCheckPos.y = t_worldX, t_newPos.y + hch * colMultY
+            t_moveTileX = map:getTileAtPoint( t_xCheckPos ) --get the tile at new position (plus collision)
             t_moveTileY = map:getTileAtPoint( t_yCheckPos )
             self.hitWall = false
-            if (t_moveTileX.col == 1) then --if hitting a wall set a flag for enemy idle state to check
-                t_newPos.x = self.world.x
-                self.hitWall = true
+            if (t_moveTileX.col == 1) then --if the tile we want to move to has collision
+                t_newPos.x = self.world.x --nil the movement vector in the direction of the tile
+                self.hitWall = true --set a flag, checked by enemy idle state
             end
-            if (t_moveTileY.col == 1) then
+            if (t_moveTileY.col == 1) then --
                 t_newPos.y = self.world.y
                 self.hitWall = true
             end
+            --------check for entity collisions at the new position
+            if (collision.checkCollisionAtPoint(t_xCheckPos.x, t_yCheckPos.y)) then
+                if (self.name == "character") then
+                    print("collision from objects")
+                end
+                return
+            else
+                if (self.name == "character") then
+                    --print("no collision from objects")
+                end
+            end
+
+            ------set the new position
             self.world.x, self.world.y = t_newPos.x, t_newPos.y
             --check if reached move target
             if util.compareFuzzy(self.world, self.moveTarget) then
@@ -215,7 +245,7 @@
         local gameObject = entity:create() --creates the entity using the entity module and bases the object off of it
         
 		gameObject:setParams(defaultParams, _params) --sets the params of the object to the passed params or the default params
-		
+        gameObject.halfColWidth, gameObject.halfColHeight = gameObject.colWidth/2, gameObject.colHeight/2
         gameObject.world.x, gameObject.world.y = gameObject.spawnPos.x, gameObject.spawnPos.y --sets the intial world point to the passed x and y or the default x and y
 
         lib_gameObject.factory(gameObject) --adds functions to gameObject
@@ -223,8 +253,9 @@
         --gameObject:loadTextures()
 
         gameObject:addOnFrameMethod(gameObjOnFrame)
+        
+        collision.registerObject(gameObject)
 
-        print("gameObject created with id: ", gameObject.objID)
         return gameObject
     end
 
