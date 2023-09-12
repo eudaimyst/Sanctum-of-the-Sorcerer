@@ -54,6 +54,9 @@
                 if self.light then
                     self.light:destroySelf() --removes light from lightStore
                 end
+                if self.col then
+                    self:deregisterCollision()
+                end
                 self = nil
             end
             if ( self.onDestroy ) then

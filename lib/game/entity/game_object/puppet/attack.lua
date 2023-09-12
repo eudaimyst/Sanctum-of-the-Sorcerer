@@ -15,6 +15,7 @@
     local map = require("lib.map")
     local cam = require("lib.camera")
     local light = require("lib.game.entity.light_emitter")
+    local collision = require("lib.game.entity.game_object.collision")
 
     local basePath = "content/spells"
 
@@ -23,26 +24,44 @@
     
 
     local function projOnFrame(self)
-        --print("running projectile onFrame for entity: "..self.id)
-        self.durationTimer = self.durationTimer + gv.frame.dts
-        self.world.x = self.world.x + self.normal.x * self.speed * gv.frame.dts
-        self.world.y = self.world.y + self.normal.y * self.speed * gv.frame.dts
-        if (map:getTileAtPoint(self.world).col == 1) or (self.durationTimer > self.duration) then
+        local function destroy()
             for i = 1, #self.emitters do
                 print("removing emitter"..i)
                 self.emitters[i]:stop()
                 self.emitters[i]:removeSelf()
             end
             self:destroySelf()
+        end
+        --print("running projectile onFrame for entity: "..self.id)
+        self.durationTimer = self.durationTimer + gv.frame.dts
+        self.world.x = self.world.x + self.normal.x * self.speed * gv.frame.dts
+        self.world.y = self.world.y + self.normal.y * self.speed * gv.frame.dts
+        if (map:getTileAtPoint(self.world).col == 1)
+        or (self.durationTimer > self.duration) then
+            destroy()
             return
         end
+        local hitObjects = collision.getObjectsAtPoint(self.world.x, self.world.y)
+        for i = 1, #hitObjects do
+            local hitObject = hitObjects[i]
+            local alreadyHit = false
+            for ii = 1, #self.hitObjects do
+                if hitObject == self.hitObjects[ii] then
+                    alreadyHit = true
+                end
+            end
+            if alreadyHit == false then
+                self.hitObjects[#self.hitObjects+1] = hitObject
+                self.source:dealDamage(hitObject, self.damage)
+            end
+        end
+
         self:updateDisplayPos()
     end
 
     function lib_attack:new(_params, _puppet) --takes params for the new attack and the puppet that is casting it (puppet used for loading anims)
 
-        local attack = { }
-        attack.projectileStore = {}
+        local attack = {}
         for k, v in pairs(attackParams.default) do
             if _params[k] then
                 attack[k] = _params[k]
@@ -96,17 +115,19 @@
             print("attack "..self.name.." set to inactive")
         end
 
-        function attack:createProjectile(index) --called by attack:fire() for projectile attacks
+        function attack:createProjectile(index, source) --called by attack:fire() for projectile attacks
             print("creating attack projectile")
-            attack.projectileStore[#attack.projectileStore+1] = entity:create(self.origin.x, self.origin.y)
-            local projectile = attack.projectileStore[#attack.projectileStore]
+            local projectile = entity:create(self.origin.x, self.origin.y)
             light.attachToEntity(projectile, {radius = 400, intensity = 1, exponent = .3} )
+            projectile.source = source
             projectile.isProjectile = true
             projectile.displayParams = attack.displayParams[index]
             projectile.speed = attack.displayParams[index].speed
+            projectile.damage = attack.damage
             projectile.durationTimer = 0
             projectile.normal = {x = attack.normal.x, y = attack.normal.y}
             projectile.duration = projectile.speed * self.maxDistance / 100000
+            projectile.hitObjects = {} --store the objects hit by the projectile so we don't register multiple hits
             print("projectile duration: "..projectile.duration)
 
             function projectile:updateDisplayPos()
@@ -149,7 +170,7 @@
         function attack:fire(puppet) --called from puppet when attack anim is complete
             if (self.displayType == "projectile") then
                 for i = 1, #self.displayParams do
-                    self:createProjectile(i)
+                    self:createProjectile(i, puppet)
                 end
             elseif (self.displayType == "animation") then
                 local dist = util.getDistance(puppet.world.x, puppet.world.y, puppet.attackTarget.world.x, puppet.attackTarget.world.y)

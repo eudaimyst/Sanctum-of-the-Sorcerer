@@ -32,6 +32,7 @@
 		yOffset = -32,
 		moveSpeed = 180,
 		spellSlots = 5,
+		--colWidth = 40, colHeight = 40,
 		spawnPos = {x=display.contentWidth/2, y=display.contentHeight/2},
 		animations = lib_character.animations --used for puppet anim module
 	}

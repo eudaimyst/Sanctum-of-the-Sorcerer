@@ -35,7 +35,7 @@
     local defaultParams = {
         name = "default",
         currentHP = 10, maxHP = 10, level = 0, element = nil, --gameplay data
-        moveSpeed = 100, colWidth = 50, colHeight = 50, col = {minX=0,maxX=0,minY=0,maxY=0},
+        moveSpeed = 100, colWidth = 50, colHeight = 50,
         width = 96, height = 96, xOffset = 0, yOffset = 0, --display data
         image = "default.png", path = "content/game_objects/", fName = "",
         spawnPos = { x = 0, y = 0 },
@@ -66,10 +66,9 @@
             self:move(self.moveTargetdir)
         end
 
-        if self.colID then --object has been registered for collisions
-            selfCol, hcw, hch = self.col, self.halfColWidth, self.halfColHeight --performance locals
-            selfCol.minX, selfCol.maxX = selfWorld.x - hcw - t_xOff, selfWorld.x + hcw - t_xOff
-            selfCol.minY, selfCol.maxY = selfWorld.y - hch - t_yOff, selfWorld.y + hch - t_yOff
+        if self.col then --object has been registered for collisions
+            --if self.name == "character" then print("updating col for character") end
+            collision.updatePos(self)
         end
         
         if self.rect then --object is on screen
@@ -87,6 +86,8 @@
 
         function gameObject:takeDamage(source, val)
             self.currentHP = self.currentHP - val
+            print("--------DAMAGE--------")
+            print(self.name, "took", val, "damage from", source.name)
             if self.onTakeDamage then
                 self:onTakeDamage()
             end
@@ -150,22 +151,24 @@
             t_moveTileY = map:getTileAtPoint( t_yCheckPos )
             self.hitWall = false
             if (t_moveTileX.col == 1) then --if the tile we want to move to has collision
-                t_newPos.x = self.world.x --nil the movement vector in the direction of the tile
+                t_newPos.x = t_worldX --nil the movement vector in the direction of the tile
                 self.hitWall = true --set a flag, checked by enemy idle state
             end
             if (t_moveTileY.col == 1) then --
-                t_newPos.y = self.world.y
+                t_newPos.y = t_worldY
                 self.hitWall = true
             end
             --------check for entity collisions at the new position
-            if (collision.checkCollisionAtPoint(t_xCheckPos.x, t_yCheckPos.y)) then
-                if (self.name == "character") then
-                    print("collision from objects")
+            if self.col then
+                local colCheckX = {  minX = t_newPos.x - hcw, maxX = t_newPos.x + hcw,
+                                    minY = t_worldY - hch, maxY = t_worldY + hch }
+                local colCheckY = {  minX = t_worldX - hcw, maxX = t_worldX + hcw,
+                                    minY = t_newPos.y - hch, maxY = t_newPos.y + hch }
+                if collision.checkCollisionAtBounds(self, colCheckX.minX, colCheckX.maxX, colCheckX.minY, colCheckX.maxY) then
+                    t_newPos.x = t_worldX --nil the movement vector in the direction of the collision
                 end
-                return
-            else
-                if (self.name == "character") then
-                    --print("no collision from objects")
+                if collision.checkCollisionAtBounds(self, colCheckY.minX, colCheckY.maxX, colCheckY.minY, colCheckY.maxY) then
+                    t_newPos.y = t_worldY --nil the movement vector in the direction of the collision
                 end
             end
 
@@ -222,21 +225,27 @@
             end
         end
 
-		function gameObject:makeRect() --makes game objects rect if doesn't exist
+		function gameObject:makeRect() --makes game objects rect if doesn't exist, overriden by puppet
             if (self.rect) then
                 print("calling gameObj:makeRect when it already exists", self.id)
                 return
             end
             self.rect = display.newImageRect(self.group, self.texture.filename, self.texture.baseDir, self.width, self.height)
             self.rect.x, self.rect.y = self.world.x + self.xOffset, self.world.y + self.yOffset
+            collision.registerObject(self)
 		end
 
 		function gameObject:destroyRect() --destroys rect if exists
             if (self.rect) then
                 self.rect:removeSelf()
                 self.rect = nil
+                collision.deregisterObject(self)
             end
 		end
+
+        function gameObject:deregisterCollision() --called from entity when destroying self, should use a onDestroy call instead
+            collision.deregisterObject(self)
+        end
     end
     
     function lib_gameObject:create(_params) --creates gameObject
@@ -254,7 +263,6 @@
 
         gameObject:addOnFrameMethod(gameObjOnFrame)
         
-        collision.registerObject(gameObject)
 
         return gameObject
     end

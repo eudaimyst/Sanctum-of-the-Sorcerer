@@ -74,30 +74,30 @@
 
 	function lib_enemy:create(_params) --called by game module to create enemy from saveData
 		--print("creating enemy entity at: " .. _params.world.x .. ", " .. _params.world.y .. "")
-		local self = puppet:create(_params)
+		local enemy = puppet:create(_params)
 		for k, v in pairs(_params) do
-			self[k] = v
+			enemy[k] = v
 		end
 		local spawnPos = _params.spawnPos
-		self.enemyState = states.sleep --start in sleeping state
-		self.spawnPos = spawnPos
-		self.world.x, self.world.y = spawnPos.x, spawnPos.y
-		self.onScreen = false
-		self.primedAttack = nil
-		self.timeInCombat = 0
-		self.attackTarget = gameChar
-		self.wakeupDistance = wakeupDistance
+		enemy.enemyState = states.sleep --start in sleeping state
+		enemy.spawnPos = spawnPos
+		enemy.world.x, enemy.world.y = spawnPos.x, spawnPos.y
+		enemy.onScreen = false
+		enemy.primedAttack = nil
+		enemy.timeInCombat = 0
+		enemy.attackTarget = gameChar
+		enemy.wakeupDistance = wakeupDistance
 
 		for i = 1, #_params.attacks do
-			self.attacks[i] = attack:new(_params.attacks[i].params, self)
+			enemy.attacks[i] = attack:new(_params.attacks[i].params, enemy)
 		end
 		
-		function self:wakeup() --called on frame when wakeupDistance is met
+		function enemy:wakeup() --called on frame when wakeupDistance is met
 			print("enemy "..self.id.." is waking up")
 			self.isAsleep = false
 		end
 
-		function self:setState(state) --sets the state and calls the relevant state functions
+		function enemy:setState(state) --sets the state and calls the relevant state functions
 			print(self.id, "setting state to", state.name, "from", self.enemyState.name)
 			
 			if self.enemyState.onStateEnd then --calls the end function for the current state
@@ -110,7 +110,13 @@
 			self.enemyState = state --sets the state to the new state
 		end
 
-		self:addOnFrameMethod(enemyOnFrame)
+		function enemy:onTakeDamage()
+			if self.currentHP <= 0 then
+				self:destroySelf()
+			end
+		end
+
+		enemy:addOnFrameMethod(enemyOnFrame)
 	end
 
 	function lib_enemy:onFrame() --called by game on frame, timer

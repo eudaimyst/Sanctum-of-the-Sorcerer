@@ -13,6 +13,7 @@
 			leashTime = 3, --s how long before going back to spawnPos if out of sightRange of char
 			wanderDistance = { min = 100, max = 200 }, --max distance to move when idling
 			attacks = { {priority = 0, params = attackParams.tailSwipe} },
+			colWidth = 30, colHeight = 30,
 			attackSpeed = 2,
 			animations = {
 			idle = { frames = 2, rate = .5 },

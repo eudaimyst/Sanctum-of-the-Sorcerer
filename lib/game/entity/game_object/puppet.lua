@@ -19,6 +19,7 @@ local gc = require("lib.global.constants")
 local gv = require("lib.global.variables")
 local util = require("lib.global.utilities")
 local gameObject = require("lib.game.entity.game_object")
+local collision = require("lib.game.entity.game_object.collision")
 
 local defaultAnimations = {
 	idle = { frames = 4, rate = .8 },
@@ -65,6 +66,7 @@ function lib_puppet.factory(puppet)
 		local texture = lib_puppet.textureStore[self.name][self.facingDirection.image][self.state][self.animFrame-1]
 		self.rect = display.newImageRect(self.group, texture.filename, texture.baseDir, self.width, self.height)
 		self.rect.x, self.rect.y = self.world.x + self.xOffset, self.world.y + self.yOffset
+		collision.registerObject(self)
 
 	end
 

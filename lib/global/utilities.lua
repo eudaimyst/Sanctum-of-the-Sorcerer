@@ -78,6 +78,24 @@
 		return angle
 	end
 
+	function util.checkOverlap(o1minX, o1maxX, o1minY, o1maxY, o2minX, o2maxX, o2minY, o2maxY)
+		if (o1minX > o2minX and o1minX < o2maxX)
+		or (o1maxX > o2minX and o1maxX < o2maxX)
+		or (o1minX < o2minX and o1maxX > o2maxX)
+		or (o1minX > o2minX and o1maxX < o2maxX) then
+			if (o1minY > o2minY and o1minY < o2maxY) then
+				return true
+			elseif (o1maxY > o2minY and o1maxY < o2maxY) then
+				return true
+			elseif (o1minY < o2minY and o1maxY > o2maxY) then
+				return true
+			elseif (o1minY > o2minY and o1maxY < o2maxY) then
+				return true
+			end
+		end
+		return false
+	end
+
 	function util.sortBounds (x1, x2, y1, y2)
 		local t
 		if (x1 > x2) then t = x2; x2 = x1; x1 = t end
