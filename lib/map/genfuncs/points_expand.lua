@@ -101,7 +101,7 @@
 			pointsExpand.expandRooms, pointsExpand.setRoomNeighbours, pointsExpand.makeRoomWalls, pointsExpand.makeDoors,
 			pointsExpand.setFinalMapColours,
 			pointsExpand.setMapRooms, --after mapgen is complete, set the mapRooms
-			pointsExpand.makeDecals
+			pointsExpand.makeDecals, pointsExpand.makeObjects
 		}
 
 		print("starting generation function points expand")
@@ -266,8 +266,35 @@
 			end
 		end
 		makeWindows()
+
 		mapgen.decals = decals
 
+	end
+
+	function pointsExpand:makeObjects()
+		local barrelRadius = {min = 50, max = 250}
+		local barrels = {}
+		for i = 1, #mapRooms do
+			local room = mapRooms[i]
+			local b = room.worldBounds
+			local minX, maxX, minY, maxY = b.min.x, b.max.x, b.min.y, b.max.y
+			local corners = {{x=minX, y=minY, xD=1, yD=1}, {x=maxX, y=minY, xD=-1, yD=1 },
+							{ x=minX, y=maxY, xD=1, yD=-1},{x=maxX, y=maxY, xD=-1, yD=-1}}
+			for i2 = 1, #corners do
+				local corner = corners[i2]
+				local radius = math.random(barrelRadius.min, barrelRadius.max)
+				local area = 3.14159*(radius*radius)
+				local count = math.floor(area/10000)
+				print("making", count, "barrels")
+				for i3 = 1, count do
+					local barrel = {x=nil, y=nil}
+					barrel.x = math.random( -radius, radius) * corner.xD + corner.x
+					barrel.y = math.random( -radius, radius) * corner.yD + corner.y
+					barrels[#barrels+1] = barrel
+				end
+			end
+		end
+		mapgen.barrels = barrels
 	end
 
 	function pointsExpand:setMapRooms()
@@ -380,8 +407,6 @@
 		for i = 1, #mapRooms do
 			mapRooms[i].difficulty = setRoomDifficulty(mapRooms[i])
 		end
-
-
 	end
 	
 	function pointsExpand:createroom(startPoint) --startpoint is a table that has x and y tile coords to start the room generation

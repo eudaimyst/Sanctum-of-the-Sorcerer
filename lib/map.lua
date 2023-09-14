@@ -220,6 +220,7 @@
 
 
 
+
 	function map:loadMap(_fName, isResource)
 		print("loadMap called from map lib")
 		local filePath
@@ -240,6 +241,7 @@
 		self.worldWidth, self.worldHeight = saveData.width * self.params.tileSize, saveData.height * self.params.tileSize --width and height in pixels
 		self.enemies = saveData.enemies
 		self.decalSavedata = saveData.decals
+		self.barrelSaveData = saveData.barrels
 		
 		self:createMapTiles(saveData.tiles) --call function to create tiles
 		self.tileData = saveData.tiles --store tileData to redraw map without reloading

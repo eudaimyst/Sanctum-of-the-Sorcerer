@@ -69,6 +69,7 @@
 		rooms = self.rooms,
 		enemies = self.enemies,
 		decals = self.decals,
+		barrels = self.barrels,
 		startPoint = self.startPoint, endPoint = self.endPoint, level = self.params.level}
 		return saveParams
 	end
