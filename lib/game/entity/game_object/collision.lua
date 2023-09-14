@@ -20,8 +20,8 @@
 	local function cleanStore()
 		local newStore = {}
 		t_id = 1
-		for i = 1, #store do
-			t_object = store[i]
+		for _, v in pairs(store) do
+			t_object = v
 			if t_object then
 				newStore[t_id] = t_object
 				t_object.col.id = t_id
@@ -39,7 +39,8 @@
 	function collision.registerObject(object)
 		t_id = #store+1
 		store[t_id] = object
-		object.col = { id = t_id, minX = 0, maxX = 0, minY = 0, maxY = 0 }
+		object.col = { id = t_id, minX = 0, maxX = 0, minY = 0, maxY = 0, midX = 0, midY = 0, radius = 0 }
+		object.col.radius = object.halfColWidth + object.halfColHeight / 2
 		collision.updatePos(object)
 		print(object.id, object.name, "registered to collision store at position", t_id)
 	end
@@ -55,6 +56,7 @@
 	local objCol, objWorld, hch, hcw
 	function collision.updatePos(object)
 		objWorld, objCol, hcw, hch = object.world, object.col, object.halfColWidth, object.halfColHeight --performance locals
+		objCol.midX, objCol.midY = objWorld.x, objWorld.y
 		objCol.minX, objCol.maxX = objWorld.x - hcw, objWorld.x + hcw
 		objCol.minY, objCol.maxY = objWorld.y - hch, objWorld.y + hch
 	end
@@ -93,6 +95,17 @@
 			end
 		end
 		return false
+	end
+	function collision.getObjectsByDistance(dist, x, y)
+		local objects = {}
+		for i = 1, #store do
+			t_object = store[i]
+			t_col = t_object.col
+			if util.getDistance(x, y, t_col.midX,t_col.midY) < t_col.radius + dist then
+				objects[#objects+1] = t_object
+			end
+		end
+		return objects
 	end
 
 	return collision

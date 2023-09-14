@@ -30,6 +30,7 @@
 		maxHP = 100,
 		height = 128,
 		yOffset = -32,
+		attackSpeed = 1.3,
 		moveSpeed = 180,
 		spellSlots = 5,
 		--colWidth = 40, colHeight = 40,

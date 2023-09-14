@@ -87,7 +87,7 @@
         function gameObject:takeDamage(source, val)
             self.currentHP = self.currentHP - val
             print("--------DAMAGE--------")
-            print(self.name, "took", val, "damage from", source.name)
+            print(self.name, self.id, "took", val, "damage from", source.name, source.id)
             if self.onTakeDamage then
                 self:onTakeDamage()
             end

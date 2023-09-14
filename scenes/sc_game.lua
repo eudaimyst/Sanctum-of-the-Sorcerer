@@ -100,14 +100,15 @@
 
 		game.preloadTextures()
 
-		--generateGameMap() --uncomment to generate map on game start
+		generateGameMap() --uncomment to generate map on game start
 
 		--comment this block if generating game map
-		generatingMap = true
+		
+		--[[ generatingMap = true
 		loadMap("game_level", false)
 		game:beginPlay() --spawns character and sets camera to follow
 		generatingMap = false
-		-----------------------------------------
+		 ]]-----------------------------------------
 		
 	end
 

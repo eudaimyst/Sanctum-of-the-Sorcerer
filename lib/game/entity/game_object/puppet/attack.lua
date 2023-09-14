@@ -41,18 +41,21 @@
             destroy()
             return
         end
-        local hitObjects = collision.getObjectsAtPoint(self.world.x, self.world.y)
+        local hitObjects = collision.getObjectsByDistance(32, self.world.x, self.world.y)
         for i = 1, #hitObjects do
             local hitObject = hitObjects[i]
-            local alreadyHit = false
-            for ii = 1, #self.hitObjects do
-                if hitObject == self.hitObjects[ii] then
-                    alreadyHit = true
+            if hitObject ~= self.source.col then
+                local alreadyHit = false
+                for ii = 1, #self.hitObjects do
+                    if hitObject == self.hitObjects[ii] then
+                        alreadyHit = true
+                    end
                 end
-            end
-            if alreadyHit == false then
-                self.hitObjects[#self.hitObjects+1] = hitObject
-                self.source:dealDamage(hitObject, self.damage)
+                if alreadyHit == false then
+                    self.hitObjects[#self.hitObjects+1] = hitObject
+
+                    self.source:dealDamage(hitObject, self.damage)
+                end
             end
         end
 
