@@ -45,6 +45,11 @@ function game.spawnEnemy(enemySaveData)
 	enemy:create(ratParams)
 end
 
+function game.spawnObject(saveData)
+	local params = {spawnPos = { x = saveData.x, y = saveData.y } }
+	gameObject:create(params)
+end
+
 function game:beginPlay()
 	local function moveInput(direction) --moveListener passed to key module
 		self.char:move(direction)
@@ -56,6 +61,10 @@ function game:beginPlay()
 
 	for i = 1, #map.enemies do
 		self.spawnEnemy(map.enemies[i])
+	end
+	print("creating",#map.barrelSaveData,"barrels")
+	for i = 1, #map.barrelSaveData do
+		self.spawnObject(map.barrelSaveData[i])
 	end
 
 	hud:draw(self.char)
