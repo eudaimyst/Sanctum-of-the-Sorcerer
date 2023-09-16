@@ -255,8 +255,9 @@
 		M.old.x, M.old.y = M.x, M.y --use mouse position on previous frame for raytrace coords
 
 		--debug mouse values
-		debug.updateText("mousePos", math.floor(M.x)..", "..math.floor(M.y))
-		debug.updateText("mouseDelta", math.round(M.delta.x)..", "..math.round(M.delta.y))
+
+		--[[ debug.updateText("mousePos", math.floor(M.x)..", "..math.floor(M.y))
+		debug.updateText("mouseDelta", math.round(M.delta.x)..", "..math.round(M.delta.y)) ]]
 
 
 	end
