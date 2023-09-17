@@ -232,14 +232,14 @@
             end
             self.rect = display.newImageRect(self.group, self.texture.filename, self.texture.baseDir, self.width, self.height)
             self.rect.x, self.rect.y = self.world.x + self.xOffset, self.world.y + self.yOffset
-            collision.registerObject(self)
+            --collision.registerObject(self)
 		end
 
 		function gameObject:destroyRect() --destroys rect if exists
             if (self.rect) then
                 self.rect:removeSelf()
                 self.rect = nil
-                collision.deregisterObject(self)
+                --collision.deregisterObject(self)
             end
 		end
 

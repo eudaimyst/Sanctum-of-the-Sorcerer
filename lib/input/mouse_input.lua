@@ -170,7 +170,7 @@
 
 		----movement
 		M.x, M.y = event.x, event.y --set position based on event data
-		checkCollisionRay()
+		--checkCollisionRay()
 
 		----scrolling
 	    if event.type == "scroll" then
