@@ -40,7 +40,7 @@
 		--tile screen pos is exclusively accessed through its rect
 		tile.x, tile.y = _column, _row
 		tile.mid = { x = _column * tileSize + halfTileSize, y = _row * tileSize + halfTileSize }
-		--print("tile world pos: ", tile.world.x, tile.world.y) --(DEBUG:WORKING)
+		--print("tile world pos: ", tile.x, tile.y) --(DEBUG:WORKING)
 		tile.rect = nil
 		tile.lightValues = {}
 		tile.visibleToChar = nil
@@ -156,7 +156,7 @@
 		function tile:updateRectPos() --called by map:refreshCamTiles() when camTiles are determined
 			if (self.rect) then
 				self.rect.xScale, self.rect.yScale = cam.zoom, cam.zoom
-				self.rect.x, self.rect.y = (self.world.x - cam.bounds.x1) * cam.zoom , (self.world.y - cam.bounds.y1) * cam.zoom
+				self.rect.x, self.rect.y = (self.x - cam.bounds.x1) * cam.zoom , (self.y - cam.bounds.y1) * cam.zoom
 			end
 		end
 

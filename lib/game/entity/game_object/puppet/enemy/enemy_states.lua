@@ -10,15 +10,16 @@
 	local util = require("lib.global.utilities")
 	local json = require("json")
 
-	local dist, selfWorld, targetWorld --recycled distance, self world pos, target pos
+	local _dist, _selfX, _selfY, _target, _targetX, _targetY --recycled
 
 	
 	local function updatePositions(self)
-		selfWorld, targetWorld = self.world, self.attackTarget.world --todo: target into cam position and attack target for diff functions
+		_selfX, _selfY = self.x, self.y
+		_target = self.attackTarget
+		_targetX, _targetY = _target.x, _target.y --todo: target into cam position and attack target for diff functions
 	end
 	local function updateDistance()
-		--print(selfWorld.x, selfWorld.y, targetWorld.x, targetWorld.y)
-		dist = util.getDistance(selfWorld.x, selfWorld.y, targetWorld.x, targetWorld.y)
+		_dist = util.getDistance(_selfX, _selfY, _targetX, _targetY)
 	end
 	
 	local mrand = math.random
@@ -40,7 +41,7 @@
 	local function shouldSleep(self)
 		updatePositions(self)
 		updateDistance()
-		if (dist > self.wakeupDistance) then --put to sleep if outside of wakeupDistance
+		if (_dist > self.wakeupDistance) then --put to sleep if outside of wakeupDistance
 			return {} --faster true
 		else
 			return nil --faster false
@@ -64,7 +65,7 @@
 			if shouldSleep(self) then
 				self:setState(states.sleep)
 			end
-			if (dist < self.sightRange ) then --distance and positions updated in shouldSleep
+			if (_dist < self.sightRange ) then --distance and positions updated in shouldSleep
 				print(self.id, "setting state from idle to combat")
 				self:setState(states.combat)
 			end
@@ -77,18 +78,18 @@
 			self.primedAttack = self.attacks[1]
 			print(self.id, " primed attack set to ", self.primedAttack.name)
 			updatePositions(self)
-			self:setMoveTarget( { x = targetWorld.x, y = targetWorld.y } ) --gameObject function
+			self:setMoveTarget( { x = _targetX, y = _targetY } ) --gameObject function
 		end,
 		onStateEnd = function(self) --called when this state is changed from this state
 		end,
-		onFrame = function(self) --called every fram when this state is activet_dist = util.getDistance(self.world.x, self.world.y, gameChar.world.x, gameChar.world.y) --use recycled var
+		onFrame = function(self) --called every fram when this state is activet_dist = util.getDistance(self.x, self.y, gameChar.x, gameChar.y) --use recycled var
 			if self.primedAttack then
 				updatePositions(self)
 				if self.moveTarget == nil then --if moveTarget is nilled by game object, set it to the target position
-					self:setMoveTarget( { x = targetWorld.x, y = targetWorld.y } ) --gameObject function
+					self:setMoveTarget( { x = _targetX, y = _targetY } ) --gameObject function
 				else
 					updateDistance()
-					if dist <= self.primedAttack.range then
+					if _dist <= self.primedAttack.range then
 						print(self.id, "is within attackRange, firing", self.primedAttack.name)
 						--fire attack
 						self.moveTarget = nil
@@ -101,7 +102,7 @@
 		onStateUpdate = function(self) --called on stateUpdateRate when this state is active
 			if self.primedAttack then --if an attack is primed, continue to move towards target
 				updatePositions(self)
-				self:setMoveTarget( { x = targetWorld.x, y = targetWorld.y } ) --gameObject function
+				self:setMoveTarget( { x = _targetX, y = _targetY } ) --gameObject function
 			else --if attack has been primed stop trying to move towards target
 				if self.currentAttack == nil then --current attack is set to nil when attack is complete
 					self:setState(states.combat) --reset the state to re-prime an attack

@@ -26,13 +26,13 @@
     local entityCount = 0
     local zGroups = {}
 
-    local rectY, selfRect, selfWorld, camBounds, camZoom --recycling
+    local rectY, selfRect, camBounds, camZoom --recycling
     
     local function updateRect(self) --update the rects position on screen, needs to be called after cam bounds has been updated on frame or jitters
         if (self.rect) then --do not update rect values if entity has no rect (ie, is not on screen)
-            selfRect, selfWorld, camBounds, camZoom = self.rect, self.world, cam.bounds, cam.zoom
+            selfRect, camBounds, camZoom = self.rect, cam.bounds, cam.zoom
             selfRect.xScale, selfRect.yScale = camZoom, camZoom
-            selfRect.x, selfRect.y = (selfWorld.x - camBounds.x1) * camZoom , (selfWorld.y - camBounds.y1) * camZoom
+            selfRect.x, selfRect.y = (self.x - camBounds.x1) * camZoom , (self.y - camBounds.y1) * camZoom
             --insert into correct zGroup based on y position
             rectY = mround(selfRect.y)
             if rectY > 0 and rectY < 1080 then
@@ -100,7 +100,7 @@
         --(ie tiles as we dont want to call 10,000 unecessary functions on frame)
 
         local entity = { id = entityCount,
-            world = {x = _x or 0, y = _y or 0}, screen = {x = 0, y = 0},
+            x = _x or 0, y = _y or 0,
             group = nil, attack = nil,
             onFrameMethods = {}, markedForDestruction = nil,
             receivesLighting = _receivesLighting or true

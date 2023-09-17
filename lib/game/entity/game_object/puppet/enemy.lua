@@ -73,7 +73,7 @@
 	end
 
 	function lib_enemy:create(_params) --called by game module to create enemy from saveData
-		--print("creating enemy entity at: " .. _params.world.x .. ", " .. _params.world.y .. "")
+		--print("creating enemy entity at: " .. _params.x .. ", " .. _params.y .. "")
 		local enemy = puppet:create(_params)
 		for k, v in pairs(_params) do
 			enemy[k] = v
@@ -81,7 +81,7 @@
 		local spawnPos = _params.spawnPos
 		enemy.enemyState = states.sleep --start in sleeping state
 		enemy.spawnPos = spawnPos
-		enemy.world.x, enemy.world.y = spawnPos.x, spawnPos.y
+		enemy.x, enemy.y = spawnPos.x, spawnPos.y
 		enemy.onScreen = false
 		enemy.primedAttack = nil
 		enemy.timeInCombat = 0

@@ -96,14 +96,10 @@
 		return camTiles
 	end
 
-	function map:getTileAtPoint(pos) --takes pos table with x, y and returns tile at that world pos
+	function map:getTileAtPoint(x, y) --takes pos table with x, y and returns tile at that world pos
 		--print("get tile: ", pos.x, pos.y)
-		if (pos) then
-			t_x, t_y = worldPointToTileCoords(pos.x, pos.y)
-			return tStoreCols[t_x][t_y]
-		else
-			print("no point passed, can not get tile")
-		end
+		t_x, t_y = worldPointToTileCoords(x, y)
+		return tStoreCols[t_x][t_y]
 	end
 
 	function map:getTilesBetweenWorldBounds(x1, y1, x2, y2) --takes bounds in world position and returns table of tiles

@@ -53,12 +53,13 @@
 		removeFromStore(object.col.id)
 	end
 
-	local objCol, objWorld, hch, hcw
+	local _objCol, _hch, _hcw, _x, _y
 	function collision.updatePos(object)
-		objWorld, objCol, hcw, hch = object.world, object.col, object.halfColWidth, object.halfColHeight --performance locals
-		objCol.midX, objCol.midY = objWorld.x, objWorld.y
-		objCol.minX, objCol.maxX = objWorld.x - hcw, objWorld.x + hcw
-		objCol.minY, objCol.maxY = objWorld.y - hch, objWorld.y + hch
+		_objCol, _hcw, _hch = object.col, object.halfColWidth, object.halfColHeight --performance locals
+		_x, _y = object.x, object.y
+		_objCol.x, _objCol.y = _x, _y
+		_objCol.minX, _objCol.maxX = _x - _hcw, _x + _hcw
+		_objCol.minY, _objCol.maxY = _y - _hch, _y + _hch
 	end
 
 	local t_col
@@ -101,7 +102,7 @@
 		for i = 1, #store do
 			t_object = store[i]
 			t_col = t_object.col
-			if util.getDistance(x, y, t_col.midX,t_col.midY) < t_col.radius + dist then
+			if util.getDistance(x, y, t_col.x,t_col.y) < t_col.radius + dist then
 				objects[#objects+1] = t_object
 			end
 		end

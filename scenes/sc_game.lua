@@ -121,7 +121,7 @@
 			debug.updateText( "entities", #entity.store)
 			debug.updateText( "camBoundMin", math.floor(cam.bounds.x1)..","..math.floor(cam.bounds.y1) )
 			debug.updateText( "camBoundMax", math.floor(cam.bounds.x2)..","..math.floor(cam.bounds.y2) )
-			debug.updateText( "charWorldPos", game.char.world.x..","..game.char.world.y )
+			debug.updateText( "charWorldPos", game.char.x..","..game.char.y )
 			-]]
 			game:onFrame()
 		end

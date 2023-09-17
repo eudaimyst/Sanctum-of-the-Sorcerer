@@ -34,14 +34,14 @@
         end
         --print("running projectile onFrame for entity: "..self.id)
         self.durationTimer = self.durationTimer + gv.frame.dts
-        self.world.x = self.world.x + self.normal.x * self.speed * gv.frame.dts
-        self.world.y = self.world.y + self.normal.y * self.speed * gv.frame.dts
-        if (map:getTileAtPoint(self.world).col == 1)
+        self.x = self.x + self.normal.x * self.speed * gv.frame.dts
+        self.y = self.y + self.normal.y * self.speed * gv.frame.dts
+        if (map:getTileAtPoint(self.x, self.y).col == 1)
         or (self.durationTimer > self.duration) then
             destroy()
             return
         end
-        local hitObjects = collision.getObjectsByDistance(32, self.world.x, self.world.y)
+        local hitObjects = collision.getObjectsByDistance(32, self.x, self.y)
         for i = 1, #hitObjects do
             local hitObject = hitObjects[i]
             if hitObject ~= self.source.col then
@@ -135,10 +135,10 @@
 
             function projectile:updateDisplayPos()
                 for i = 1, #self.rects do
-                    self.rects[i].x, self.rects[i].y = (self.world.x - cam.bounds.x1) * cam.zoom , (self.world.y - cam.bounds.y1) * cam.zoom
+                    self.rects[i].x, self.rects[i].y = (self.x - cam.bounds.x1) * cam.zoom , (self.y - cam.bounds.y1) * cam.zoom
                 end
                 for i = 1, #self.emitters do
-                    self.emitters[i].x, self.emitters[i].y = (self.world.x - cam.bounds.x1) * cam.zoom , (self.world.y - cam.bounds.y1) * cam.zoom
+                    self.emitters[i].x, self.emitters[i].y = (self.x - cam.bounds.x1) * cam.zoom , (self.y - cam.bounds.y1) * cam.zoom
                     --print("setting emitter "..i.." to "..self.screen.x..", "..self.screen.y)
                 end
             end
@@ -176,7 +176,7 @@
                     self:createProjectile(i, puppet)
                 end
             elseif (self.displayType == "animation") then
-                local dist = util.getDistance(puppet.world.x, puppet.world.y, puppet.attackTarget.world.x, puppet.attackTarget.world.y)
+                local dist = util.getDistance(puppet.x, puppet.y, puppet.attackTarget.x, puppet.attackTarget.y)
                 if dist <= self.range + 20 then
                     puppet:dealDamage(puppet.attackTarget, self.damage)
                 end

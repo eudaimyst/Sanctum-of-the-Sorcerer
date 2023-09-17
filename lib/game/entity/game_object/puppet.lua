@@ -65,7 +65,7 @@ function lib_puppet.factory(puppet)
 		print(self.id.." (id): "..self.name, self.facingDirection.image, self.state, self.animFrame)
 		local texture = lib_puppet.textureStore[self.name][self.facingDirection.image][self.state][self.animFrame-1]
 		self.rect = display.newImageRect(self.group, texture.filename, texture.baseDir, self.width, self.height)
-		self.rect.x, self.rect.y = self.world.x + self.xOffset, self.world.y + self.yOffset
+		self.rect.x, self.rect.y = self.x + self.xOffset, self.y + self.yOffset
 		collision.registerObject(self)
 
 	end

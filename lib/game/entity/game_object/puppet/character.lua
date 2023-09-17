@@ -79,8 +79,8 @@
 			local dir_s = dir.image --gets the direction string for the animation
 
 			local windupOffset = spell.animData.attackPos[dir_s] --gets the windup pos from the animation data
-			local spellOrigin = { 	x = self.world.x + self.xOffset - windupOffset.x, --spell origin including offsets
-									y = self.world.y + self.yOffset - windupOffset.y}
+			local spellOrigin = { 	x = self.x + self.xOffset - windupOffset.x, --spell origin including offsets
+									y = self.y + self.yOffset - windupOffset.y}
 			local delta = util.deltaPos(spellOrigin, target) --gets the difference between the characters position and the target position
 
 			if (spell) then

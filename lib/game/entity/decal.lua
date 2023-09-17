@@ -30,7 +30,7 @@
 
 	local function decalOnFrame(self) --added to entity methods
         if self.rect then
-            local tile = map:getTileAtPoint(self.world)
+            local tile = map:getTileAtPoint(self.x, self.y)
             --print(self.id, tile.id, tile.lightValue)
             self.lightValue = tile.lightValue
 			self.rect:setFillColor(self.lightValue)
@@ -53,7 +53,7 @@
 		local decalPosX, decalPosY = tile.mid.x + tileSize*saveData.xOff/2, tile.mid.y + tileSize*saveData.yOff/2
 		--+ saveData.xOff
 		local decal = entity:create( decalPosX, decalPosY )
-		--print("decal created at: ", decal.world.x, decal.world.y)
+		--print("decal created at: ", decal.x, decal.y)
 		--print(json.prettify(saveData))
 		decal:addOnFrameMethod(decalOnFrame)
 		
@@ -67,8 +67,8 @@
 
 		if decalData[decalName].light then
 			local lightParams = {
-				x = decal.world.x,
-				y = decal.world.y,
+				x = decal.x,
+				y = decal.y,
 				radius = 400,
 				intensity = 5,
 				exponent = .1,

@@ -84,11 +84,11 @@
 	end
 
 	function cam:followUpdate()
-		self:moveToPoint(self.target.world.x, self.target.world.y)
+		self:moveToPoint(self.target.x, self.target.y)
 	end
 
 	function cam:onFrame()
-		--print("target x, y: ", self.target.world.x, self.target.world.y)
+		--print("target x, y: ", self.target.x, self.target.y)
 		if (self.mode == self.modes.follow) and (self.target) then
 			cam:followUpdate()
 		end

@@ -29,7 +29,7 @@
 	local characterLight
 
 	local function updateLightPos(entity) --
-		entity.light.x, entity.light.y = entity.world.x, entity.world.y
+		entity.light.x, entity.light.y = entity.x, entity.y
 	end
 
 	--------recycled vars for updateTilesLightValues
@@ -65,7 +65,7 @@
 			rad, exp, int = light.radius, light.exponent, light.intensity
 			local v
 			--print("light updating", light.id)
-			local startTile = map:getTileAtPoint({ x = light.x, y = light.y })
+			local startTile = map:getTileAtPoint(light.x,light.y)
 
 			local function checkRay(i)
 				prevTileUpdated = nil --reset the prev tile checker for each ray
@@ -86,7 +86,7 @@
 					x = light.x + math.cos(a) * dist --* math.pi
 					y = light.y + math.sin(a) * dist --* math.pi
 					--print("x, y", x, y)
-					tile = map:getTileAtPoint({ x = x, y = y })
+					tile = map:getTileAtPoint( x, y )
 					if tile.type == "void" then --ray checker hits a void tile so stop checking this ray
 						return
 					end
@@ -150,7 +150,7 @@
 		
 		entity:addOnFrameMethod(updateLightPos)
 		entity.light = createLight(_params)
-		entity.light.x, entity.light.y = entity.world.x, entity.world.y
+		entity.light.x, entity.light.y = entity.x, entity.y
 		if entity.name == "character" then
 			characterLight = entity.light
 		end
