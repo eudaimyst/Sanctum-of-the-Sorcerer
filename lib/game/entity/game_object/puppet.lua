@@ -13,9 +13,7 @@
 -- Animation / directional facing logic
 -----------------------------------------------------------------------------------------
 local json = require("json")
-local io = require("io")
 --common modules
-local gc = require("lib.global.constants")
 local gv = require("lib.global.variables")
 local util = require("lib.global.utilities")
 local gameObject = require("lib.game.entity.game_object")
@@ -55,48 +53,7 @@ end
 
 function lib_puppet.factory(puppet)
 	--print("adding puppet functions")
-
-	function puppet:makeRect() --makes game objects rect if doesn't exist
-		--print("making puppet rect, isPuppet = " .. tostring(self.isPuppet))
-		if (self.rect) then
-			--print("rect already created")
-			return
-		end
-		print(self.id.." (id): "..self.name, self.facingDirection.image, self.state, self.animFrame)
-		local texture = lib_puppet.textureStore[self.name][self.facingDirection.image][self.state][self.animFrame-1]
-		self.rect = display.newImageRect(self.group, texture.filename, texture.baseDir, self.width, self.height)
-		self.rect.x, self.rect.y = self.x + self.xOffset, self.y + self.yOffset
-		collision.registerObject(self)
-
-	end
-
-	function puppet:updateRectImage() --overrides gameObject function - called to update image of rect
-		--print(json.prettify(self.textures))
-		if (self.rect) then
-			local s_dir = self.facingDirection.image
-			local anim = nil
-			if (self.state == "attack") then
-				if (self.currentAttack) then
-					anim = self.currentAttack.animation
-				end
-			else
-				anim = self.state
-			end
-			--print(s_dir, anim, self.animFrame)
-			if (anim) then
-				local texture = lib_puppet.textureStore[self.name][s_dir][anim][self.animFrame-1]
-				self.rect.fill = {
-					type = "image",
-					filename = texture.filename,     -- "filename" property required
-					baseDir = texture.baseDir       -- "baseDir" property required
-				}
-				self.rect:setFillColor(self.lightValue)
-			end
-		else
-			--print("WARNING: rect for", self.name, self.id, "doesn't exist (puppet.lua)")
-		end
-	end
-
+	
 	function puppet:updateState() --called onFrame sets state of puppet logically
 		--[[ if self.name == "character" then
 			print("character isMoving", self.isMoving, gv.frame.current)

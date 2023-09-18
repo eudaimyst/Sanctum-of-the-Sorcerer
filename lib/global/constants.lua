@@ -18,6 +18,9 @@
 		left = {x = -1,y = 0, angle = 180, image = "left"},
 		upLeft = {x = -.666,y = -.666, angle = 225, image = "up_left"},
 	}
+	M.dirKeys = { --for picking a random direction
+		"up", "upRight", "right", "downRight", "down", "downLeft", "left", "upLeft"
+	}
 	M.dirFileStrings = { --for fast iteration through direction strings when loading textures
 		"up", "up_right", "right", "down_right", "down", "down_left", "left", "up_left"
 	}

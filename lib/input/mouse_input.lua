@@ -170,7 +170,7 @@
 
 		----movement
 		M.x, M.y = event.x, event.y --set position based on event data
-		print("mouse event: time, x, y:", event.time, event.x, event.y)
+		--print("mouse event: time, x, y:", event.time, event.x, event.y)
 		--checkCollisionRay()
 
 		----scrolling

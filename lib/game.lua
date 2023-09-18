@@ -12,6 +12,7 @@ local puppet = require("lib.game.entity.game_object.puppet")
 local character = require("lib.game.entity.game_object.puppet.character")
 local entity = require("lib.game.entity")
 local enemyParams = require("lib.global.enemy_params")
+local gameObjParams = require("lib.global.game_object_params")
 local enemy = require("lib.game.entity.game_object.puppet.enemy")
 local lfs = require("lfs")
 local spellParams = require("lib.global.spell_params")
@@ -45,9 +46,18 @@ function game.spawnEnemy(enemySaveData)
 	enemy:create(ratParams)
 end
 
+local _obj
 function game.spawnObject(saveData)
-	local params = {spawnPos = { x = saveData.x, y = saveData.y } }
-	gameObject:create(params)
+	local crateParams = util.deepcopy(gameObjParams.crate)
+	crateParams.spawnPos = { x = saveData.x, y = saveData.y }
+	local ranDir = math.random(1, 8)
+	local ranDirKey = gc.dirKeys[ranDir]
+	crateParams.facingDirection = gc.move[ranDirKey]
+	if map:getTileAtPoint(saveData.x, saveData.y).col == 0 then
+		_obj = gameObject:create(crateParams)
+		_obj:makeRect()
+		print("created crate with id: ",_obj.id, "facing dir", _obj.facingDirection.image)
+	end
 end
 
 function game:beginPlay()
@@ -78,7 +88,6 @@ function game:onFrame()
 	game.char.isMoving = false
 	key:onFrame()               --processes key inputs
 	cam:onFrame()               --processes camera movement
-	--todo: move timers to here, prevent multiple additions and checking
 	lightEmitter:onFrame()		--calls lighting lib on frame for lighting update timer
 	enemy:onFrame()             --calls enemy lib onFrame for decision making timer
 	character:onFrame() --visibility
@@ -170,22 +179,32 @@ local function loadTexturesFromAnimData(path, anims) --the animdata and the anim
 end
 
 function game.preloadTextures() --called from scene after map loaded but before beginPlay
+	-------- GameObjects --------
+	print("loading game object textures")
+	local textureStore = {}
+	local gameObjectContent = "content/game_objects/"
+	for _, _gameObject in pairs(gameObjParams) do
+		local gameObjectAnims = {}
+		for animName, animData in pairs(_gameObject.animations) do --add the game object animations to the list of animations to load
+			gameObjectAnims[animName] = animData
+		end
+		textureStore[_gameObject.name] = loadTexturesFromAnimData(gameObjectContent .. _gameObject.name .. "/", gameObjectAnims)
+	end
 	-------- Enemies --------
 	print("loading enemy textures")
-	local puppetTextureStore = {}
 	local enemyContent = "content/game_objects/puppets/enemies/"
-	for _, enemy in pairs(enemyParams) do
+	for _, _enemy in pairs(enemyParams) do
 		local enemyAnims = {}
-		for animName, animData in pairs(enemy.animations) do --add the enemy animations to the list of animations to load
+		for animName, animData in pairs(_enemy.animations) do --add the enemy animations to the list of animations to load
 			enemyAnims[animName] = animData
 		end
-		for i = 1, #enemy.attacks do
-			local attackParams = enemy.attacks[i].params
+		for i = 1, #_enemy.attacks do
+			local attackParams = _enemy.attacks[i].params
 			local animName = attackParams.animation
 			local animData = attackParams.animData
 			print(animName)
 			enemyAnims[animName] = animData
-			puppetTextureStore[enemy.name] = loadTexturesFromAnimData(enemyContent .. enemy.name .. "/", enemyAnims)
+			textureStore[_enemy.name] = loadTexturesFromAnimData(enemyContent .. _enemy.name .. "/", enemyAnims)
 		end
 	end
 	-------- Character --------
@@ -198,10 +217,10 @@ function game.preloadTextures() --called from scene after map loaded but before 
 	for animName, animData in pairs(spellParams.animations) do --add the spell animations to the list of animations to load
 		charAnims[animName] = animData
 	end
-	puppetTextureStore["character"] = loadTexturesFromAnimData(charContent, charAnims)
+	textureStore["character"] = loadTexturesFromAnimData(charContent, charAnims)
 
 	--set the textures store for the puppet module
-	puppet.textureStore = puppetTextureStore
+	gameObject.setTextureStore(textureStore)
 end
 
 function game.mouseClick(x, y) --mouseClick called from mouse input listener, can't pass self

@@ -27,7 +27,6 @@
 		print(k, v)
 	end
 
-
 	local function firstFrame()
 		mapgen:init(sceneGroup)
 

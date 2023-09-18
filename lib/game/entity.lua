@@ -69,17 +69,12 @@
  
         function entity:setParams(defaultParams, _params) --copies the params from the passed or default params table to the entity
             --print("setting entity params")
-            if (_params) then --if passed a table of params
-                for param, defaultValue in pairs(defaultParams) do --for each param in the default params
-                    if (_params[param]) then --if passed param exists
-                        self[param] = _params[param] --overide the default param
-                    else
-                        self[param] = defaultValue --set the default value
-                    end
-                end
-            else --no params passed
-                for param, defaultValue in pairs(defaultParams) do  --for each param in the default params
-                    self[param] = defaultValue --set the default value
+            for k, v in pairs(defaultParams) do --for each param in the default params
+                if (_params[k]) then --if passed param exists
+                    self[k] = _params[k] --overide the default param
+                    --print("overriding default param "..k.." with "..tostring(_params[k]))
+                else
+                    self[k] = v --set the default value
                 end
             end
         end

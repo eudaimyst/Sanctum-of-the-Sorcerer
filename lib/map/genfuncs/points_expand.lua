@@ -121,7 +121,6 @@
 
 	function pointsExpand:setSections()
 		local trueW, trueH = #tCols - params.edgeInset*2, #tRows - params.edgeInset*2 --subtract the insets
-		local rem
 		for i = 0, params.numRoomsX do --start at 0 to draw line at start of first section
 			sectionsPosX[i+1] = params.edgeInset + math.round((trueW / params.numRoomsX) * i)
 		end
@@ -219,84 +218,6 @@
 		end
 	end
 
-	function pointsExpand:makeDecals()
-		local decals = {}
-
-		local function makeDecal(_params)
-			local decal = { [_params.savestring] = {
-				x = _params.tileX, y = _params.tileY, --tile x and y
-				xOff = _params.xOffset, yOff = _params.yOffset, --offsets are in tile units as we only save the tile x and y and don't know the game tile size
-				angle = _params.angle --as decals are static we only pass an angle, otherwise it should be a game object
-			} } 
-			decals[#decals+1] = decal
-		end
-
-		local function makeWindows()
-			local windowSpacing = 6
-			local cornerOffset = 4
-			--create windows only on side rooms
-			for side, genRooms in pairs(mapEdgeRooms) do
-				for ii = 1, #genRooms do
-					local genRoom = genRooms[ii]
-					local windowAngles = {up = 0, right = 90, down = 180, left = 270}
-					local windoOffset = {up = {x = 0, y = .8}, right = {x = -.8, y = 0}, down = {x = 0, y = -0.8}, left = {x = 0.8, y = 0}}
-					print("drawind windows for room ", genRoom.id)
-					--print(json.prettify(genRoom))
-					local genRoom = roomStore[genRoom.id]
-					local wallTiles = genRoom.wallTiles[side] --get the walltiles from the roomStore (genRoom)
-					local wallLength = #wallTiles
-					local windowTiles = {}
-					local windowsLength = math.floor( (wallLength - cornerOffset * 2) ) + 1 --length of wall that can contain windows
-					local windowCount = math.ceil(windowsLength / windowSpacing)
-					local actualWindowSpacing = windowsLength / windowCount
-					print("wCount", windowCount, "wLengths", wallLength, windowsLength )
-					for i = 1, windowCount + 1 do
-						local windowPos = cornerOffset + ( math.round(actualWindowSpacing * (i - 1)) )
-						windowTiles[i] = wallTiles[windowPos]
-					end
-					setColor(windowTiles, "white")
-					print("setting "..#windowTiles.." windows")
-					for i = 1, #windowTiles do
-						local tile = windowTiles[i]
-						local window = { tileX = tile.x, tileY = tile.y, angle = windowAngles[side], savestring = "win",
-										 xOffset = windoOffset[side].x, yOffset = windoOffset[side].y}
-						makeDecal(window)
-					end
-				end
-			end
-		end
-		makeWindows()
-
-		mapgen.decals = decals
-
-	end
-
-	function pointsExpand:makeObjects()
-		local barrelRadius = {min = 50, max = 250}
-		local barrels = {}
-		for i = 1, #mapRooms do
-			local room = mapRooms[i]
-			local b = room.worldBounds
-			local minX, maxX, minY, maxY = b.min.x, b.max.x, b.min.y, b.max.y
-			local corners = {{x=minX, y=minY, xD=1, yD=1}, {x=maxX, y=minY, xD=-1, yD=1 },
-							{ x=minX, y=maxY, xD=1, yD=-1},{x=maxX, y=maxY, xD=-1, yD=-1}}
-			for i2 = 1, #corners do
-				local corner = corners[i2]
-				local radius = math.random(barrelRadius.min, barrelRadius.max)
-				local area = 3.14159*(radius*radius)
-				local count = math.floor(area/10000)
-				print("making", count, "barrels")
-				for i3 = 1, count do
-					local barrel = {x=nil, y=nil}
-					barrel.x = math.random( -radius, radius) * corner.xD + corner.x
-					barrel.y = math.random( -radius, radius) * corner.yD + corner.y
-					barrels[#barrels+1] = barrel
-				end
-			end
-		end
-		mapgen.barrels = barrels
-	end
-
 	function pointsExpand:setMapRooms()
 
 		local directions = { "up", "down", "left", "right" }
@@ -344,7 +265,7 @@
 				local mapRoom = nil
 				if #mapEdges > 0 then --we call createMapRoom for each map edge the room is bordering
 					for j = 1, #mapEdges do
-						mapRoom = createMapRoom(genRoom.id, x1 , y1, x2, y2, mapEdges[j]) --makes the maps version of the room
+						mapRoom = createMapRoom(genRoom.id, x1, y1, x2, y2, mapEdges[j]) --makes the maps version of the room
 					end
 				else
 					mapRoom = createMapRoom(genRoom.id, x1, y1, x2, y2)
@@ -408,7 +329,87 @@
 			mapRooms[i].difficulty = setRoomDifficulty(mapRooms[i])
 		end
 	end
-	
+
+	function pointsExpand:makeDecals()
+		local decals = {}
+
+		local function makeDecal(_params)
+			local decal = { [_params.savestring] = {
+				x = _params.tileX, y = _params.tileY, --tile x and y
+				xOff = _params.xOffset, yOff = _params.yOffset, --offsets are in tile units as we only save the tile x and y and don't know the game tile size
+				angle = _params.angle --as decals are static we only pass an angle, otherwise it should be a game object
+			} } 
+			decals[#decals+1] = decal
+		end
+
+		local function makeWindows()
+			local windowSpacing = 6
+			local cornerOffset = 4
+			--create windows only on side rooms
+			for side, genRooms in pairs(mapEdgeRooms) do
+				for ii = 1, #genRooms do
+					local genRoom = genRooms[ii]
+					local windowAngles = {up = 0, right = 90, down = 180, left = 270}
+					local windoOffset = {up = {x = 0, y = .8}, right = {x = -.8, y = 0}, down = {x = 0, y = -0.8}, left = {x = 0.8, y = 0}}
+					print("drawind windows for room ", genRoom.id)
+					--print(json.prettify(genRoom))
+					local genRoom = roomStore[genRoom.id]
+					local wallTiles = genRoom.wallTiles[side] --get the walltiles from the roomStore (genRoom)
+					local wallLength = #wallTiles
+					local windowTiles = {}
+					local windowsLength = math.floor( (wallLength - cornerOffset * 2) ) + 1 --length of wall that can contain windows
+					local windowCount = math.ceil(windowsLength / windowSpacing)
+					local actualWindowSpacing = windowsLength / windowCount
+					print("wCount", windowCount, "wLengths", wallLength, windowsLength )
+					for i = 1, windowCount + 1 do
+						local windowPos = cornerOffset + ( math.round(actualWindowSpacing * (i - 1)) )
+						windowTiles[i] = wallTiles[windowPos]
+					end
+					setColor(windowTiles, "white")
+					print("setting "..#windowTiles.." windows")
+					for i = 1, #windowTiles do
+						local tile = windowTiles[i]
+						local window = { tileX = tile.x, tileY = tile.y, angle = windowAngles[side], savestring = "win",
+										 xOffset = windoOffset[side].x, yOffset = windoOffset[side].y}
+						makeDecal(window)
+					end
+				end
+			end
+		end
+		makeWindows()
+
+		mapgen.decals = decals
+
+	end
+
+	function pointsExpand:makeObjects()
+		local barrelRadius = {min = 50, max = 250}
+		local barrels = {}
+		for i = 1, #mapRooms do
+			local room = mapRooms[i]
+			local b = room.worldBounds
+			local minX, maxX, minY, maxY = b.min.x, b.max.x, b.min.y, b.max.y
+			local corners = {{x=minX*12.8, y=minY*12.8, xD=1, yD=1}, {x=maxX*12.8, y=minY*12.8, xD=-1, yD=1 },
+							{ x=minX*12.8, y=maxY*12.8, xD=1, yD=-1},{x=maxX*12.8, y=maxY*12.8, xD=-1, yD=-1}}
+			for i2 = 1, #corners do
+				local corner = corners[i2]
+				print("corner", i2, "x, y: ", corner.x, corner.y)
+				local radius = math.random(barrelRadius.min, barrelRadius.max)
+				local area = 3.14159*(radius*radius)
+				local count = math.floor(area/20000)
+				print("making", count, "barrels")
+				for i3 = 1, count do
+					local barrel = {}
+					barrel.x = corner.x + math.random( -radius, radius) * corner.xD 
+					barrel.y = corner.y + math.random( -radius, radius) * corner.yD
+					barrels[#barrels+1] = barrel
+					print("made barrel", i3,"at x, y: ", barrel.x, barrel.y)
+				end
+			end
+		end
+		mapgen.barrels = barrels
+	end
+
 	function pointsExpand:createroom(startPoint) --startpoint is a table that has x and y tile coords to start the room generation
 	
 		local room = {}

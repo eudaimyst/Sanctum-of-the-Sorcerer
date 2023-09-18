@@ -32,26 +32,17 @@
 	-- Define module
 	local lib_gameObject = {}
 
-    local defaultParams = {
-        name = "default",
-        currentHP = 10, maxHP = 10, level = 0, element = nil, --gameplay data
-        moveSpeed = 100, colWidth = 50, colHeight = 50,
-        width = 96, height = 96, xOffset = 0, yOffset = 0, --display data
-        image = "default.png", path = "content/game_objects/", fName = "",
-        spawnPos = { x = 0, y = 0 },
-        moveTargetX = 0, moveTargetY = 0,
-        directional = false, moveDirection = gc.move.down, facingDirection = gc.move.down,
-        isMoving = false,
-        lightValue = 0,
-        moveTarget = nil --target position relative to the game object
-    }
+    local textureStore = {} --stores all textures for objects and children, indexed by name, direction, state, frame
 
-    local _dir, _nTargetX, _nTargetY, _tile --recycled
+    local _dir, _anim --recycled
+    local _nTargetX, _nTargetY, _tile
     local _moveTileX, _moveTileY, _moveFactor, _worldX, _worldY
     local _posDeltaX, _posDeltaY, _newPosX, _newPosY
     local _xCheckPosX, _xCheckPosY, _yCheckPosX, _yCheckPosY --for checking collision on each axis
     local _xOff, _yOff, _selfRect, _hcw, _hch --recycled
     local _xColCheck, _yColCheck = {minX=0,maxX=0,minY=0,maxY=0}, {minX=0,maxX=0,minY=0,maxY=0}
+
+    local _tex --recycled for makeRect
 
     local function gameObjOnFrame(self)
         --todo: check if char not name for performance
@@ -78,6 +69,10 @@
             --print(self.id, tile.id, tile.lightValue)
             self.lightValue = _tile.lightValue
         end
+    end
+
+    function lib_gameObject.setTextureStore(store)
+        textureStore = store
     end
 
     function lib_gameObject.factory(gameObject)
@@ -181,20 +176,6 @@
             end
         end
 
-        function gameObject:loadTextures() --called when created
-            if (self.directional) then
-                self.textures = {}
-                
-                for dir, _ in pairs(gc.move) do
-                    self.textures[dir] = graphics.newTexture({type="image", filename=self.path..self.name.."/"..dir..".png", baseDir=system.ResourceDirectory})
-                end
-                self.texture = self.textures[self.facingDirection] --sets initial texture from current direction in stored table
-            else
-                self.texture = graphics.newTexture({type="image", filename=self.path..self.name..".png", baseDir=system.ResourceDirectory}) --set initial texture
-            end
-            
-        end
-
         function gameObject:setMoveDirection(dir) --sets move direction and forces updating facing direction
             self.moveDirection = dir
             self:setFacingDirection(dir)
@@ -208,32 +189,40 @@
         function gameObject:updateRectImage() --called to update image of rect, override by puppets
             --print(json.prettify(self.textures))
             if (self.rect) then
-                local texture
-                local s_dir = self.facingDirection.image
-                local dirTex = self.textures[s_dir]
-                if (self.directional) then
-                    --print(self.facingDirection.image)
-                    texture = dirTex
-                    else
-                    texture = self.texture
+                _dir = self.facingDirection.image
+                _anim = nil
+                if (self.state == "attack") then
+                    if (self.currentAttack) then
+                        _anim = self.currentAttack.animation
+                    end
+                else
+                    _anim = self.state
                 end
-                self:destroyRect()
-                self:makeRect()
-                self.rect:setFillColor(self.lightValue)
-            --print("updated rect image")
+                --print(s_dir, anim, self.animFrame)
+                if (_anim) then
+                    _tex = textureStore[self.name][_dir][_anim][self.animFrame-1]
+                    self.rect.fill = {
+                        type = "image",
+                        filename = _tex.filename,     -- "filename" property required
+                        baseDir = _tex.baseDir       -- "baseDir" property required
+                    }
+                    self.rect:setFillColor(self.lightValue)
+                end
             else
-                print("WARNING: rect doesn't exist game obj", self.id)
+                --print("WARNING: rect doesn't exist game obj", self.id, self.name)
             end
         end
 
-		function gameObject:makeRect() --makes game objects rect if doesn't exist, overriden by puppet
+		function gameObject:makeRect() --makes game objects rect if doesn't exist
             if (self.rect) then
                 print("calling gameObj:makeRect when it already exists", self.id)
                 return
             end
-            self.rect = display.newImageRect(self.group, self.texture.filename, self.texture.baseDir, self.width, self.height)
+            print(self.name,self.facingDirection.image,self.state,self.animFrame-1)
+            _tex = textureStore[self.name][self.facingDirection.image][self.state][self.animFrame-1]
+            self.rect = display.newImageRect(self.group, _tex.filename, _tex.baseDir, self.width, self.height)
             self.rect.x, self.rect.y = self.x + self.xOffset, self.y + self.yOffset
-            --collision.registerObject(self)
+            collision.registerObject(self)
 		end
 
 		function gameObject:destroyRect() --destroys rect if exists
@@ -249,6 +238,22 @@
         end
     end
     
+    local defaultParams = {
+        name = "default",
+        currentHP = 10, maxHP = 10, level = 0, element = nil, --gameplay data
+        moveSpeed = 100, colWidth = 50, colHeight = 50,
+        width = 96, height = 96, xOffset = 0, yOffset = 0, --display data
+        image = "default.png", path = "content/game_objects/", fName = "",
+        spawnPos = { x = 0, y = 0 },
+        moveTargetX = 0, moveTargetY = 0,
+        state = "idle", --current state of the puppet, used to determine which animation to play, set by updateState()
+	    animFrame = 1,
+        directional = false, moveDirection = gc.move.down, facingDirection = gc.move.down,
+        isMoving = false,
+        lightValue = 0,
+        moveTarget = nil --target position relative to the game object
+    }
+
     function lib_gameObject:create(_params) --creates gameObject
         --print("creating gameObject")
 
@@ -259,8 +264,6 @@
         gameObject.x, gameObject.y = gameObject.spawnPos.x, gameObject.spawnPos.y --sets the intial world point to the passed x and y or the default x and y
 
         lib_gameObject.factory(gameObject) --adds functions to gameObject
-        
-        --gameObject:loadTextures()
 
         gameObject:addOnFrameMethod(gameObjOnFrame)
         
