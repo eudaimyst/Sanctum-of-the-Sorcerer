@@ -255,6 +255,7 @@
 		for i = 1, #camTiles do
 			t_tile = camTiles[i]
 			t_tile.onScreenCheck = true
+			--print(i, tostring(t_tile.rect))
 			if (t_tile.rect) then --tile already has rect
 				t_tile:updateRectPos() --update the tiles rect based off cam bounds  
 			else

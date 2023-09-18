@@ -45,11 +45,12 @@
         moveTarget = nil --target position relative to the game object
     }
 
-    local _dir, _nTarget, _tile --recycled
+    local _dir, _nTargetX, _nTargetY, _tile --recycled
     --recycled move() vars
     local _moveTileX, _moveTileY, _moveFactor, _worldX, _worldY
-    local _posDelta, _newPos, _xCheckPos, _yCheckPos = {x=0,y=0}, {x=0,y=0}, {x=0,y=0}, {x=0,y=0}
-    local _xOff, _yOff, _selfRect, _selfWorld, _hcw, _hch --recycled
+    local _posDeltaX, _posDeltaY, _newPosX, _newPosY
+    local _xCheckPosX, _xCheckPosY, _yCheckPosX, _yCheckPosY --for checking collision on each axis
+    local _xOff, _yOff, _selfRect, _hcw, _hch --recycled
     local _xColCheck, _yColCheck = {minX=0,maxX=0,minY=0,maxY=0}, {minX=0,maxX=0,minY=0,maxY=0}
 
     local function gameObjOnFrame(self)
@@ -59,7 +60,6 @@
         end
     
         _xOff, _yOff = self.xOffset, self.yOffset --locals for performance
-        _selfWorld = self.world
 
         if self.moveTarget then
             self:move(self.moveTargetdir)
@@ -102,7 +102,7 @@
         function gameObject:setMoveTarget(pos) --once move target is set, then onFrame will know to call the move function to the constructed moveTarget
             --print(json.prettify(self))
             --print("move target:",self.id, self.x, self.y)
-            if (util.compareFuzzy(self.world, pos)) then
+            if (util.compareFuzzy(self.x, self.y, pos.x, pos.y)) then
                 print(self.id, " already at target position")
                 if self.reachedMoveTarget then
                     self:reachedMoveTarget()
@@ -112,9 +112,9 @@
             self.moveTarget = pos
             --directions were originally intended to be constants and not intended to have their values changed
             --TODO: come up with a proper direction framework that is not accessed as constants
-            _dir = util.deepcopy(util.angleToDirection(util.deltaPosToAngle({x = self.x, y = self.y}, self.moveTarget))) 
-            _nTarget = util.normalizeXY(util.deltaPos(self.world, self.moveTarget))
-            _dir.x, _dir.y = _nTarget.x, _nTarget.y
+            _dir = util.deepcopy(util.angleToDirection(util.deltaPosToAngle(self.x, self.y, pos.x, pos.y))) 
+            _nTargetX, _nTargetY = util.normalizeXY(util.deltaPos(self.x, self.y, pos.x, pos.y))
+            _dir.x, _dir.y = _nTargetX, _nTargetY
             self.moveTargetdir = _dir
             --print(self.id, "target dir: ", dir.x, dir.y)
         end
@@ -135,8 +135,8 @@
             --------calculate the new position to move to
             _worldX, _worldY = self.x, self.y
             _moveFactor = self.moveSpeed * gv.frame.dts
-            _posDelta.x, _posDelta.y = self.moveDirection.x * _moveFactor, self.moveDirection.y * _moveFactor --moveDir gets recreated for enemies
-            _newPos.x, _newPos.y = _worldX + _posDelta.x, _worldY + _posDelta.y
+            _posDeltaX, _posDeltaY = util.factorPos(self.moveDirection.x, self.moveDirection.y, _moveFactor) --moveDir gets recreated for enemies
+            _newPosX, _newPosY = _worldX + _posDeltaX, _worldY + _posDeltaY
 
             --------check for wall collisions at the new position
             _hcw, _hch = self.halfColWidth, self.halfColHeight
@@ -144,38 +144,40 @@
             --todo: look into if we only need one tile check (probably can)
             local colMultX = setColDirMultiplier(self.moveDirection.x) --inverts the collision multiplier depending on direction of movement
             local colMultY = setColDirMultiplier(self.moveDirection.y)
-            _xCheckPos.x, _xCheckPos.y = _newPos.x + _hcw * colMultX, _worldY --x and y positions to check for tiles
-            _yCheckPos.x, _yCheckPos.y = _worldX, _newPos.y + _hch * colMultY
-            _moveTileX = map:getTileAtPoint( _xCheckPos.x, _xCheckPos.y ) --get the tile at new position (plus collision)
-            _moveTileY = map:getTileAtPoint( _yCheckPos.x, _yCheckPos.y )
+            _xCheckPosX, _xCheckPosY = _newPosX + _hcw * colMultX, _worldY --x and y positions to check for tiles
+            _yCheckPosX, _yCheckPosY = _worldX, _newPosY + _hch * colMultY
+            _moveTileX = map:getTileAtPoint( _xCheckPosX, _xCheckPosY ) --get the tile at new position (plus collision)
+            _moveTileY = map:getTileAtPoint( _yCheckPosX, _yCheckPosY )
             self.hitWall = false
             if (_moveTileX.col == 1) then --if the tile we want to move to has collision
-                _newPos.x = _worldX --nil the movement vector in the direction of the tile
+                _newPosX = _worldX --nil the movement vector in the direction of the tile
                 self.hitWall = true --set a flag, checked by enemy idle state
             end
             if (_moveTileY.col == 1) then --
-                _newPos.y = _worldY
+                _newPosY = _worldY
                 self.hitWall = true
             end
             --------check for entity collisions at the new position
             if self.col then
-                _xColCheck.minX, _xColCheck.maxX = _newPos.x - _hcw, _newPos.x + _hcw
+                _xColCheck.minX, _xColCheck.maxX = _newPosX - _hcw, _newPosX + _hcw
                 _xColCheck.minY, _xColCheck.maxY = _worldY - _hch, _worldY + _hch
                 _yColCheck.minX, _yColCheck.maxX = _worldX - _hcw, _worldX + _hcw
-                _yColCheck.minY, _yColCheck.maxY = _newPos.y - _hch, _newPos.y + _hch
+                _yColCheck.minY, _yColCheck.maxY = _newPosY - _hch, _newPosY + _hch
                 if collision.checkCollisionAtBounds(self, _xColCheck.minX, _xColCheck.maxX, _xColCheck.minY, _xColCheck.maxY) then
-                    _newPos.x = _worldX --nil the movement vector in the direction of the collision
+                    _newPosX = _worldX --nil the movement vector in the direction of the collision
                 end
                 if collision.checkCollisionAtBounds(self, _yColCheck.minX, _yColCheck.maxX, _yColCheck.minY, _yColCheck.maxY) then
-                    _newPos.y = _worldY --nil the movement vector in the direction of the collision
+                    _newPosY = _worldY --nil the movement vector in the direction of the collision
                 end
             end
 
             ------set the new position
-            self.x, self.y = _newPos.x, _newPos.y
+            self.x, self.y = _newPosX, _newPosY
             --check if reached move target
-            if util.compareFuzzy(self.world, self.moveTarget) then
-                self.moveTarget = nil --mark as nil to stop moving
+            if self.moveTarget then
+                if util.compareFuzzy(self.x, self.y, self.moveTarget.x, self.moveTarget.y) then
+                    self.moveTarget = nil --mark as nil to stop moving
+                end
             end
         end
 

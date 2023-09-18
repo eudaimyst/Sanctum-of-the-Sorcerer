@@ -50,7 +50,7 @@
 	function lib_decal:create(decalName, saveData, tileSize)
 		local tStoreCols = map.getTileStoreCols()
 		local tile = tStoreCols[saveData.x][saveData.y]
-		local decalPosX, decalPosY = tile.mid.x + tileSize*saveData.xOff/2, tile.mid.y + tileSize*saveData.yOff/2
+		local decalPosX, decalPosY = tile.midX + tileSize*saveData.xOff/2, tile.midY + tileSize*saveData.yOff/2
 		--+ saveData.xOff
 		local decal = entity:create( decalPosX, decalPosY )
 		--print("decal created at: ", decal.x, decal.y)

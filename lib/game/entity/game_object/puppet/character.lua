@@ -73,7 +73,7 @@
 		function char:beginCast( target ) --called from game.lua on mouseclick from mouse listener
 			local spell = self.activeSpell
 
-			local angle = util.deltaPosToAngle( self.world, target ) --sets the angle of the character to the target
+			local angle = util.deltaPosToAngle( self.x, self.y, target.x, target.y ) --sets the angle of the character to the target
 			local dir = util.angleToDirection(angle)
 			self:setFacingDirection( dir ) --sets the direction of the character to the angle direction
 			local dir_s = dir.image --gets the direction string for the animation
@@ -81,7 +81,7 @@
 			local windupOffset = spell.animData.attackPos[dir_s] --gets the windup pos from the animation data
 			local spellOrigin = { 	x = self.x + self.xOffset - windupOffset.x, --spell origin including offsets
 									y = self.y + self.yOffset - windupOffset.y}
-			local delta = util.deltaPos(spellOrigin, target) --gets the difference between the characters position and the target position
+			local deltaX, deltaY = util.deltaPos(spellOrigin.x, spellOrigin.y, target.x, target.y) --gets the difference between the characters position and the target position
 
 			if (spell) then
 				if (not self.currentAttack) then --already casting
@@ -89,9 +89,10 @@
 						spell.origin = spellOrigin
 						if (target) then
 							if (spell.displayType == "projectile") then
-								local n = util.normalizeXY(delta)
-								spell.normal = n --sets the normal used for its movement
-								spell.target = util.factorPos(n, spell.maxDistance) --sets the target to the max distance of the spell
+								local nx, ny = util.normalizeXY(deltaX,deltaY)
+								spell.normal = {x = nx, y = ny} --sets the normal used for its movement
+								local tx, ty = util.factorPos(nx, ny, spell.maxDistance)
+								spell.target = {x = tx, y = ty} --sets the target to the max distance of the spell
 							end
 						end
 						self:beginAttackAnim(spell) --defined in puppet, shared with enemies

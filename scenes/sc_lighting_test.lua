@@ -97,12 +97,21 @@
 		end
 		return l
 	end
-
+	
+	--recycled vars for light calc
+	local _midx, _midy, _dist
+	local _rayStartX, rayStartY
+	local _rayEndX, rayEndY
+	local _rayDeltaX, _rayDeltaY
+	local _rayNormalX, _rayNormalY
+	local _raySegmentX, _raySegmentY, _segmentLength, _segments
+	local _checkPosX, _checkPosY, _checkTile
+	local _rad, _mod
 	local function createTile(col, row)
 		local x, y = (col-1) * tileSize, (row-1) * tileSize
 		local tile = display.newRect( x + 2, y + 2, tileSize - 2, tileSize - 2 )
 		tile.x, tile.y = x, y
-		tile.mid = {x = x + tileSize / 2, y = y + tileSize / 2}
+		tile.midX, tile.midY = x + tileSize / 2, y + tileSize / 2
 		tile.lightValue = .3
 		tile.lightBlockers = 0
 		tile.col = false
@@ -112,35 +121,35 @@
 
 		function tile:calcLightValue(updateBlockers)
 			if light then
-				local midx, midy = self.mid.x, self.mid.y
-				local dist = util.getDistance(light.x, light.y, midx, midy)
-				if dist > light.radius then
+				_midx, _midy = self.midX, self.midY
+				_dist = util.getDistance(light.x, light.y, _midx, _midy)
+				if _dist > light.radius then
 					self.lightValue = 0
 				else
 					if updateBlockers then
 						print("updating blockers")
 						self.lightBlockers = 0
-						local rayStart = {x = light.x, y = light.y}
-						local rayEnd = {x = midx, y = midy}
-						local rayDelta = {x = rayEnd.x - rayStart.x, y = rayEnd.y - rayStart.y}
-						local rayNormal = util.normalizeXY(rayDelta)
-						local raySegment = {x = rayNormal.x * tileSize/2, y = rayNormal.y * tileSize/4}
-						local segmentLength = util.getDistance(0, 0, raySegment.x, raySegment.y)
-						local segments = mceil(dist / segmentLength)
-						for i = 1, segments do
-							local checkPos = {x = rayStart.x + rayNormal.x * segmentLength * i, y = rayStart.y + rayNormal.y * segmentLength * i}
-							local checkTile = getTileAtPoint(checkPos.x, checkPos.y)
-							if checkTile then
-								if checkTile.col == true then
+						_rayStartX, rayStartY = light.x, light.y
+						_rayEndX, rayEndY = _midx, _midy
+						_rayDeltaX, _rayDeltaY = _rayEndX - _rayStartX, rayEndY - rayStartY
+						_rayNormalX, _rayNormalY = util.normalizeXY(_rayDeltaX, _rayDeltaY)
+						_raySegmentX, _raySegmentY = _rayNormalX * tileSize/2, _rayNormalY * tileSize/4
+						_segmentLength = util.getDistance(0, 0, _raySegmentX, _raySegmentY)
+						_segments = mceil(_dist / _segmentLength)
+						for i = 1, _segments do
+							_checkPosX, _checkPosY = _rayStartX + _rayNormalX * _segmentLength * i, rayStartY + _rayNormalY * _segmentLength * i
+							_checkTile = getTileAtPoint(_checkPosX, _checkPosY)
+							if _checkTile then
+								if _checkTile.col == true then
 									--found a light blocker
 									self.lightBlockers = self.lightBlockers + 1
 								end
 							end
 						end
 					end
-					local rad = light.radius + tileSize
-					local mod = (2 - self.lightBlockers) / 2
-					self.lightValue = light.intensity * ( ( 1 - (dist / rad) ^ light.exponent ) * light.intensity * mod )
+					_rad = light.radius + tileSize
+					_mod = (2 - self.lightBlockers) / 2
+					self.lightValue = light.intensity * ( ( 1 - (_dist / _rad) ^ light.exponent ) * light.intensity * _mod )
 				end
 			end
 		end
@@ -233,7 +242,8 @@
 	local function onFrame()
 		if startPos and finishPos then
 			if moveNormal == nil then
-				moveNormal = util.normalizeXY({ x = finishPos.x - startPos.x, y = finishPos.y - startPos.y })
+				moveNormal = {x = nil, y = nil}
+				moveNormal.x, moveNormal.y = util.normalizeXY(finishPos.x - startPos.x, finishPos.y - startPos.y)
 			end
 			local nx = light.x + moveNormal.x * gv.frame.dt * moveSpeed
 			local ny = light.y + moveNormal.y * gv.frame.dt * moveSpeed
@@ -249,7 +259,7 @@
 					updateTileLights(nil)
 				end
 			end
-			if util.compareFuzzy(light, finishPos) then
+			if util.compareFuzzy(light.x, light.y, finishPos.x, finishPos.y) then
 				startPos = nil
 			end
 		end

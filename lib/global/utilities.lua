@@ -7,7 +7,12 @@
 	--common modules
 	local gc = require("lib.global.constants")
 
-	local matan2 = math.atan2
+	local mAtan2 = math.atan2
+	local mSqrt = math.sqrt
+	local mPi = 3.1415926535898
+	local mAbs = math.abs
+	local mPow = math.pow
+	local mCeil = math.ceil
 
 	--shared modules --all can call each other
 
@@ -56,7 +61,7 @@
 	end
 
 	function util.deltaToAngle(x, y)
-		local angle = matan2(y, x) * 180 / math.pi
+		local angle = mAtan2(y, x) * 180 / mPi
 		if (angle < 0) then
 			angle = angle + 360
 		end
@@ -65,25 +70,24 @@
 
 	-- This code converts a delta position (the difference between two points in space) to an angle, 
 	-- which is useful for determining where a player is facing when moving from one point to another.
-	function util.deltaPosToAngle(pos1, _pos2)
-		local pos2 = _pos2 or { x = 0, y = 0 }
-		if not pos1 or not pos2 then
-			print("ERROR: deltaPosToAngle() called with invalid parameters")
-			return nil
-		end
-		local angle = matan2(pos2.y - pos1.y, pos2.x - pos1.x) * 180 / math.pi
+	function util.deltaPosToAngle(pos1X, pos1Y, pos2X, pos2Y)
+		local angle = mAtan2(pos2Y - pos1Y, pos2X - pos1X) * 180 / mPi
 		if (angle < 0) then
 			angle = angle + 360
 		end
 		return angle
 	end
 
+	-- returns true if two objects overlap, false otherwise
 	function util.checkOverlap(o1minX, o1maxX, o1minY, o1maxY, o2minX, o2maxX, o2minY, o2maxY)
+		-- check if the two objects overlap in the x direction
 		if (o1minX > o2minX and o1minX < o2maxX)
 		or (o1maxX > o2minX and o1maxX < o2maxX)
 		or (o1minX < o2minX and o1maxX > o2maxX)
 		or (o1minX > o2minX and o1maxX < o2maxX) then
+			-- check if the two objects overlap in the y direction
 			if (o1minY > o2minY and o1minY < o2maxY) then
+				-- if they overlap in both directions, return true
 				return true
 			elseif (o1maxY > o2minY and o1maxY < o2maxY) then
 				return true
@@ -93,17 +97,18 @@
 				return true
 			end
 		end
+		-- if we didn't return true, the objects do not overlap
 		return false
 	end
 
-	function util.sortBounds (x1, x2, y1, y2)
+	function util.sortBounds(x1, x2, y1, y2)
 		local t
 		if (x1 > x2) then t = x2; x2 = x1; x1 = t end
 		if (y1 > y2) then t = y2; y2 = y1; y1 = t end
 		return x1, x2, y1, y2
 	end
 
-	function util.withinBounds (x, y, minX, maxX, minY, maxY)
+	function util.withinBounds(x, y, minX, maxX, minY, maxY)
 		if x >= minX and x <= maxX
 		and y >= minY and y <= maxY
 		then
@@ -113,14 +118,10 @@
 		end
 	end
 
-	function util.compareFuzzy(pos1, pos2, _fuzzyDistance)
+	function util.compareFuzzy(pos1x, pos1y, pos2x, pos2y, _fuzzyDistance)
 		local fuzzyDistance = _fuzzyDistance or 10
-		if pos1 == nil or pos2 == nil then
-			return false
-		end
-		
-		if pos1.x <= pos2.x + fuzzyDistance and pos1.x >= pos2.x - fuzzyDistance
-		and pos1.y <= pos2.y + fuzzyDistance and pos1.y >= pos2.y - fuzzyDistance then
+		if pos1x <= pos2x + fuzzyDistance and pos1x >= pos2x - fuzzyDistance
+		and pos1y <= pos2y + fuzzyDistance and pos1y >= pos2y - fuzzyDistance then
 			return true
 		else
 			return false
@@ -140,25 +141,21 @@
 	-- This function will calculate the distance between two points.
 	-- @return Returns the distance between the two points.
 	function util.getDistance(pos1x, pos1y, pos2x, pos2y)
-		local distance = math.abs( math.sqrt( math.pow( pos1x - pos2x, 2 ) + math.pow( pos1y - pos2y, 2 ) ) )
+		local distance = mAbs( mSqrt( mPow( pos1x - pos2x, 2 ) + mPow( pos1y - pos2y, 2 ) ) )
 		return distance
 	end
 
-	function util.normalizeXY(pos) --takes a table with x, y and returns a table with x, y normalised to 1 unit vector
-		if pos then
-			local magnitude = math.sqrt(math.pow(pos.x, 2) + math.pow( pos.y, 2 ))
-			return { x = pos.x / magnitude, y = pos.y / magnitude }
-		else
-			print("ERROR: util.normalized pass with no position")
-		end
+	function util.normalizeXY(x, y) --takes a table with x, y and returns a table with x, y normalised to 1 unit vector
+		local magnitude = mSqrt(mPow(x, 2) + mPow( y, 2 ))
+		return x / magnitude, y / magnitude
 	end
 
-	function util.deltaPos(pos1, pos2)
-		return { x = pos2.x - pos1.x, y = pos2.y - pos1.y }
+	function util.deltaPos(pos1X, pos1Y, pos2X, pos2Y)
+		return pos2X - pos1X, pos2Y - pos1Y
 	end
 
-	function util.factorPos(pos, factor)
-		return { x = pos.x * factor, y = pos.y * factor }
+	function util.factorPos(posX, posY, factor)
+		return posX * factor, posY * factor
 	end
 
 	--https://copyprogramming.com/howto/how-to-get-an-actual-copy-of-a-table-in-lua#how-to-get-an-actual-copy-of-a-table-in-lua

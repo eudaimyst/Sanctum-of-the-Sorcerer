@@ -40,13 +40,13 @@
 
 	local function updateOnScreen(enemy) --called on frame if enemy is not asleep
 		if enemy.onScreen then -- check if enemy goes outside of camera bounds
-			if not checkBounds(enemy.world, cam.bounds) then
+			if not checkBounds({x = enemy.x, y = enemy.y}, cam.bounds) then
 				print("setting enemy "..enemy.id.." to not visible")
 				enemy.onScreen = false
 				enemy:destroyRect()
 			end
 		else --check if enemy enters cameraBounds
-			if checkBounds(enemy.world, cam.bounds) then
+			if checkBounds({x = enemy.x, y = enemy.y}, cam.bounds) then
 				print("setting enemy "..enemy.id.." to visible")
 				enemy.onScreen = true
 				enemy:makeRect()

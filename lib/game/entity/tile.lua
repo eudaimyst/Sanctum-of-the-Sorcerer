@@ -38,9 +38,9 @@
 		tile.lightValue = 0
 		tile.col = _collision
 		--tile screen pos is exclusively accessed through its rect
-		tile.x, tile.y = _column, _row
-		tile.mid = { x = _column * tileSize + halfTileSize, y = _row * tileSize + halfTileSize }
-		--print("tile world pos: ", tile.x, tile.y) --(DEBUG:WORKING)
+		tile.mapX, tile.mapY = _column, _row
+		tile.midX, tile.midY = _column * tileSize + halfTileSize, _row * tileSize + halfTileSize
+		--print("tile world pos: ", tile.mapX, tile.y) --(DEBUG:WORKING)
 		tile.rect = nil
 		tile.lightValues = {}
 		tile.visibleToChar = nil
@@ -63,11 +63,11 @@
 			for subID = 0, 3, 1 do
 				subTypes[subID] = st.error --set default to error
 
-				local searchCol = self.x+search[subID].x --columns of the tiles to search
-				local searchRow = self.y+search[subID].y --rows
-				--print("checking wall type at col, row: "..searchCol..", "..searchRow.." for tile xy "..self.x..", "..self.y)
-				local Xtype = tStoreCols[searchCol][self.y].type --get tile type to left/right
-				local Ytype = tStoreCols[self.x][searchRow].type --get tile type above/below
+				local searchCol = self.mapX+search[subID].x --columns of the tiles to search
+				local searchRow = self.mapY+search[subID].y --rows
+				--print("checking wall type at col, row: "..searchCol..", "..searchRow.." for tile xy "..self.mapX..", "..self.y)
+				local Xtype = tStoreCols[searchCol][self.mapY].type --get tile type to left/right
+				local Ytype = tStoreCols[self.mapX][searchRow].type --get tile type above/below
 
 				if (Xtype == "wall" ) then 
 					if (Ytype == "wall") then
@@ -131,7 +131,7 @@
 					lightStore = lighting.getStore()
 					local light = lightStore[lightID]
 					if (light) then --check light exists
-						if util.getDistance(self.mid.x, self.mid.y, light.x, light.y) <= light.radius then
+						if util.getDistance(self.midX, self.midY, light.x, light.y) <= light.radius then
 							self.lightValue = self.lightValue + value
 						end
 					else
@@ -156,7 +156,8 @@
 		function tile:updateRectPos() --called by map:refreshCamTiles() when camTiles are determined
 			if (self.rect) then
 				self.rect.xScale, self.rect.yScale = cam.zoom, cam.zoom
-				self.rect.x, self.rect.y = (self.x - cam.bounds.x1) * cam.zoom , (self.y - cam.bounds.y1) * cam.zoom
+				print(self.id, self.mapX, self.mapY)
+				self.rect.x, self.rect.y = (self.mapX - cam.bounds.x1) * cam.zoom , (self.mapY - cam.bounds.y1) * cam.zoom
 			end
 		end
 
