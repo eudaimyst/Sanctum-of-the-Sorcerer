@@ -96,7 +96,7 @@ end
 function game.init(_cam, _map, _key, _mouse, _hud)
 	print("setting cam and map for game library")
 	key, cam, map, hud, mouse = _key, _cam, _map, _hud, _mouse
-	enemy.init(game, cam)
+	enemy.init(cam)
 	lightEmitter.init(map, cam)
 end
 

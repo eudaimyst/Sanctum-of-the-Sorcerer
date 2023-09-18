@@ -156,7 +156,7 @@
 		function tile:updateRectPos() --called by map:refreshCamTiles() when camTiles are determined
 			if (self.rect) then
 				self.rect.xScale, self.rect.yScale = cam.zoom, cam.zoom
-				print(self.id, self.mapX, self.mapY)
+				--print(self.id, self.mapX, self.mapY)
 				self.rect.x, self.rect.y = (self.mapX - cam.bounds.x1) * cam.zoom , (self.mapY - cam.bounds.y1) * cam.zoom
 			end
 		end

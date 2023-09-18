@@ -28,11 +28,12 @@
 	local lib_decal = {	}
 	lib_decal.store = store
 
+	local _tile
 	local function decalOnFrame(self) --added to entity methods
         if self.rect then
-            local tile = map:getTileAtPoint(self.x, self.y)
+            _tile = map:getTileAtPoint(self.x, self.y)
             --print(self.id, tile.id, tile.lightValue)
-            self.lightValue = tile.lightValue
+            self.lightValue = _tile.lightValue
 			self.rect:setFillColor(self.lightValue)
         end
 	end

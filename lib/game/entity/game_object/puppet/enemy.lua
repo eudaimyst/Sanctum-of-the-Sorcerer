@@ -13,10 +13,9 @@
 	local json = require("json");
 	local states = require("lib.game.entity.game_object.puppet.enemy.enemy_states")
 
-	local game, cam --set by game module on init
+	local cam --set by game module on init
 
 	local gameChar = nil --set by game module
-	local actions = { "moveIdle", "moveToAttack", "leash"}
 
 	-- Define module
 	local lib_enemy = {}
@@ -27,10 +26,8 @@
 	local stateUpdateRate = 500 --(ms) how often to updatestate
 	local doStateUpdate = nil --set to true when enemy should update its state
 
-	local moveTargetFuzzy = 10
-
-	local function checkBounds(pos, bounds)
-		local px, py, cx1, cx2, cy1, cy2 = pos.x, pos.y, bounds.x1, bounds.x2, bounds.y1, bounds.y2
+	local function checkBounds(posX, posY, bounds)
+		local px, py, cx1, cx2, cy1, cy2 = posX, posY, bounds.x1, bounds.x2, bounds.y1, bounds.y2
 		if px > cx1 and px < cx2 and py > cy1 and py < cy2 then
 			return true
 		else
@@ -40,21 +37,19 @@
 
 	local function updateOnScreen(enemy) --called on frame if enemy is not asleep
 		if enemy.onScreen then -- check if enemy goes outside of camera bounds
-			if not checkBounds({x = enemy.x, y = enemy.y}, cam.bounds) then
+			if not checkBounds(enemy.x, enemy.y, cam.bounds) then
 				print("setting enemy "..enemy.id.." to not visible")
 				enemy.onScreen = false
 				enemy:destroyRect()
 			end
 		else --check if enemy enters cameraBounds
-			if checkBounds({x = enemy.x, y = enemy.y}, cam.bounds) then
+			if checkBounds(enemy.x, enemy.y, cam.bounds) then
 				print("setting enemy "..enemy.id.." to visible")
 				enemy.onScreen = true
 				enemy:makeRect()
 			end
 		end
 	end
-
-	local t_dist --recycled distance
 
 	local function enemyOnFrame(self)
 		--runs every stateUpdateRate
@@ -132,8 +127,8 @@
 		gameChar = char
 	end
 
-	function lib_enemy.init(_game, _cam)
-		game, cam = _game, _cam
+	function lib_enemy.init(_cam)
+		cam = _cam
 	end
 
 	return lib_enemy

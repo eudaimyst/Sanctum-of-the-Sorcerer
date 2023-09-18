@@ -18,10 +18,6 @@
 	local mapIO = require("lib.map.fileio")
 	local cam = require("lib.camera")
 	local hud = require("lib.game.hud")
-	--[[
-	local gameObj = require("lib.game.entity.game_object")
-	local entity = require("lib.entity")
-	]]
 	local entity = require("lib.game.entity")
 	local game = require("lib.game")
 
@@ -147,7 +143,7 @@
 			print("scene loaded")
 			firstFrame()
 
-			Runtime:addEventListener( "enterFrame", onFrame ) --listerer for every frame
+			Runtime:addEventListener( "enterFrame", onFrame ) --listener for every frame
 		end
 	end
 

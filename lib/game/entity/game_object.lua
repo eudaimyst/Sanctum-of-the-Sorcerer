@@ -39,6 +39,7 @@
         width = 96, height = 96, xOffset = 0, yOffset = 0, --display data
         image = "default.png", path = "content/game_objects/", fName = "",
         spawnPos = { x = 0, y = 0 },
+        moveTargetX = 0, moveTargetY = 0,
         directional = false, moveDirection = gc.move.down, facingDirection = gc.move.down,
         isMoving = false,
         lightValue = 0,
@@ -46,7 +47,6 @@
     }
 
     local _dir, _nTargetX, _nTargetY, _tile --recycled
-    --recycled move() vars
     local _moveTileX, _moveTileY, _moveFactor, _worldX, _worldY
     local _posDeltaX, _posDeltaY, _newPosX, _newPosY
     local _xCheckPosX, _xCheckPosY, _yCheckPosX, _yCheckPosY --for checking collision on each axis
@@ -61,8 +61,8 @@
     
         _xOff, _yOff = self.xOffset, self.yOffset --locals for performance
 
-        if self.moveTarget then
-            self:move(self.moveTargetdir)
+        if self.moveTargetDir then
+            self:move(self.moveTargetDir)
         end
 
         if self.col then --object has been registered for collisions
@@ -99,23 +99,23 @@
             end
         end
 
-        function gameObject:setMoveTarget(pos) --once move target is set, then onFrame will know to call the move function to the constructed moveTarget
+        function gameObject:setMoveTarget(posX, posY) --once move target is set, then onFrame will know to call the move function to the constructed moveTarget
             --print(json.prettify(self))
             --print("move target:",self.id, self.x, self.y)
-            if (util.compareFuzzy(self.x, self.y, pos.x, pos.y)) then
+            if (util.compareFuzzy(self.x, self.y, posX, posY)) then
                 print(self.id, " already at target position")
                 if self.reachedMoveTarget then
                     self:reachedMoveTarget()
                 end
                 return
             end
-            self.moveTarget = pos
+            self.moveTargetX, self.moveTargetY = posX, posY
             --directions were originally intended to be constants and not intended to have their values changed
             --TODO: come up with a proper direction framework that is not accessed as constants
-            _dir = util.deepcopy(util.angleToDirection(util.deltaPosToAngle(self.x, self.y, pos.x, pos.y))) 
-            _nTargetX, _nTargetY = util.normalizeXY(util.deltaPos(self.x, self.y, pos.x, pos.y))
+            _dir = util.deepcopy(util.angleToDirection(util.deltaPosToAngle(self.x, self.y, posX, posY))) 
+            _nTargetX, _nTargetY = util.normalizeXY(util.deltaPos(self.x, self.y, posX, posY))
             _dir.x, _dir.y = _nTargetX, _nTargetY
-            self.moveTargetdir = _dir
+            self.moveTargetDir = _dir
             --print(self.id, "target dir: ", dir.x, dir.y)
         end
 
@@ -174,9 +174,9 @@
             ------set the new position
             self.x, self.y = _newPosX, _newPosY
             --check if reached move target
-            if self.moveTarget then
-                if util.compareFuzzy(self.x, self.y, self.moveTarget.x, self.moveTarget.y) then
-                    self.moveTarget = nil --mark as nil to stop moving
+            if self.moveTargetDir then
+                if util.compareFuzzy(self.x, self.y, self.moveTargetX, self.moveTargetY) then
+                    self.moveTargetDir = nil --mark as nil to stop moving
                 end
             end
         end

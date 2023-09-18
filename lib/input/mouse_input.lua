@@ -170,6 +170,7 @@
 
 		----movement
 		M.x, M.y = event.x, event.y --set position based on event data
+		print("mouse event: time, x, y:", event.time, event.x, event.y)
 		--checkCollisionRay()
 
 		----scrolling
@@ -258,7 +259,6 @@
 
 		--[[ debug.updateText("mousePos", math.floor(M.x)..", "..math.floor(M.y))
 		debug.updateText("mouseDelta", math.round(M.delta.x)..", "..math.round(M.delta.y)) ]]
-
 
 	end
 

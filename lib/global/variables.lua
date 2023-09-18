@@ -17,6 +17,7 @@ local function onFrame(event)
     vars.frame.fps = fps
     vars.frame.current = current
     prevFrameTime = current --store current frame time to be accessed on next frame
+    print("frame time: "..dt.."ms, "..dts.."s, "..fps.."fps")
 end
 
 vars.screen = {width = display.contentWidth, height = display.contentHeight, halfWidth = display.contentWidth/2, halfHeight = display.contentHeight/2}
