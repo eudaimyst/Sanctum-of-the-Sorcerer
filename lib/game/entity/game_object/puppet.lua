@@ -120,7 +120,9 @@ function lib_puppet.factory(puppet)
 
 	function puppet:nextAttackAnimFrame(anim) --called from nextAnimFrame when in attack state
 		if (self.currentAttack.windupGlow) then --windup position logic
+			print("attack has windupglow")
 			if (self.animFrame == 1) then
+				print("calling start startWindupGlow")
 				self:startWindupGlow() --starts windup glow
 			end
 			if (self.animFrame == anim.windupStartFrame) then --reached windup start frame
@@ -144,7 +146,7 @@ function lib_puppet.factory(puppet)
 		end
 	end
 
-	function puppet:beginAttackAnim(attack) --called from entended objects to start attack animations
+	function puppet:beginAttackAnim(attack) --called from extended objects to start attack animations
 		self.currentAttack = attack --set to nil once attack is complete, used to determin whether puppet is in attacking state
 		print("start attack for " .. self.currentAttack.name)
 		self.animFrame = 1

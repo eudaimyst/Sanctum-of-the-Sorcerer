@@ -229,13 +229,9 @@
             if (self.rect) then
                 self.rect:removeSelf()
                 self.rect = nil
-                --collision.deregisterObject(self)
+                collision.deregisterObject(self)
             end
 		end
-
-        function gameObject:deregisterCollision() --called from entity when destroying self, should use a onDestroy call instead
-            collision.deregisterObject(self)
-        end
     end
     
     local defaultParams = {

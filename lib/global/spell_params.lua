@@ -99,7 +99,7 @@
         animation = "cast_proj",
         name = "fireBolt",
         displayType = "projectile", --"image", "emitter"
-        windupTime = 1,
+        windupTime = .3,
         duration = 100, --lifetime of the attack
         displayParams = { [1] = {speed = 600, spins = false, endScale = 1} }, --number of images/emitters to display and their properties
         windupGlow = true,

@@ -214,9 +214,6 @@
 		end
 	end
 
-
-
-
 	function map:loadMap(_fName, isResource)
 		print("loadMap called from map lib")
 		local filePath

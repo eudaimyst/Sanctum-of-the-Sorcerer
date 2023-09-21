@@ -44,7 +44,7 @@
         local hitObjects = collision.getObjectsByDistance(32, self.x, self.y)
         for i = 1, #hitObjects do
             local hitObject = hitObjects[i]
-            if hitObject ~= self.source.col then
+            if hitObject ~= self.source then
                 local alreadyHit = false
                 for ii = 1, #self.hitObjects do
                     if hitObject == self.hitObjects[ii] then

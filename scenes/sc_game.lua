@@ -9,6 +9,7 @@
 
 	--common modules
 	local gc = require("lib.global.constants")
+	local gv = require("lib.global.variables")
 	local util = require("lib.global.utilities")
 	local debug = require("lib.debug")
 	local mouse = require("lib.input.mouse_input")
@@ -79,6 +80,7 @@
 	end
 
 
+	local fpsText
 	local function firstFrame()
 
 		debug.init(sceneGroup)
@@ -105,11 +107,21 @@
 		game:beginPlay() --spawns character and sets camera to follow
 		generatingMap = false
 		 ]]-----------------------------------------
-		
+		local options = {
+			text = "Hello World",     
+			x = display.contentCenterX,
+			y = display.contentCenterY,
+			width = 128,
+			font = native.systemFont,   
+			fontSize = 18,
+			align = "center"  -- Alignment parameter
+		}
+		fpsText = display.newText(options);
+		sceneGroup:insert(fpsText)
 	end
 
 	local function onFrame()
-
+		fpsText.text = gv.frame.count
 		if (generatingMap) then
 			mapgen:onFrame()
 		else

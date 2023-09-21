@@ -15,6 +15,7 @@
 	
     local cam = require("lib.camera")
     local util = require("lib.global.utilities")
+    local collision = require("lib.game.entity.game_object.collision")
     local map --set by init
     local mround = math.round
 
@@ -55,7 +56,8 @@
                     self.light:destroySelf() --removes light from lightStore
                 end
                 if self.col then
-                    self:deregisterCollision()
+                    print("entity has col, deregistering")
+                    collision.deregisterObject(self)
                 end
                 self = nil
             end
