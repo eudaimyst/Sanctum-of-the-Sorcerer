@@ -16,8 +16,9 @@
 			colWidth = 30, colHeight = 30,
 			attackSpeed = 2,
 			animations = {
-			idle = { frames = 2, rate = .5 },
-			walk = { frames = 4, rate = 12 } }
+			idle = { frames = 2, rate = .5, loop = true },
+			walk = { frames = 4, rate = 12, loop = true },
+			death = { frames = 7, rate = 15, loop = false } }
 		}
 
 	return e

@@ -28,6 +28,7 @@
     local json = require("json")
     local lfs = require("lfs")
     local collision = require("lib.game.entity.game_object.collision")
+    local animSystem = require("lib.game.entity.game_object.animation")
 
 	-- Define module
 	local lib_gameObject = {}
@@ -46,6 +47,11 @@
 
     local function gameObjOnFrame(self)
         --todo: check if char not name for performance
+        
+        if self.state == "death" then
+            self:animUpdateLoop() --manually call anim update loop for death animation
+            return
+        end
         if self.name ~= "character" then --isMoving for char is set false earlier as needs gets set true by keyinput in game.lua
             self.isMoving = false --resets moving variable to be changed by gameObject:move() if called
         end
@@ -78,13 +84,27 @@
     function lib_gameObject.factory(gameObject)
 		--print("adding gameObject functions")
 
+        function gameObject:animUpdateLoop()
+            animSystem.animUpdateLoop(self)
+        end
+        function gameObject:beginAttackAnim(attack)
+            animSystem.beginAttackAnim(self, attack)
+        end
+
         function gameObject:takeDamage(source, val)
             self.currentHP = self.currentHP - val
             print("--------DAMAGE--------")
             print(self.name, self.id, "took", val, "damage from", source.name, source.id)
             if self.onTakeDamage then
-                self:onTakeDamage()
+                self:onTakeDamage() --used to add functionality to extended classes
             end
+			if self.currentHP <= 0 then
+                --print(json.prettify(self.animations))
+                self.state = "death"
+                self.currentAnim = self.animations[self.state]
+                collision.deregisterObject(self)
+                animSystem.beginDeathAnim(self)
+			end
         end
 
         function gameObject:dealDamage(target, val)
@@ -186,7 +206,7 @@
             self:updateRectImage()
         end
 
-        function gameObject:updateRectImage() --called to update image of rect, override by puppets
+        function gameObject:updateRectImage() --called to update image of rect
             --print(json.prettify(self.textures))
             if (self.rect) then
                 _dir = self.facingDirection.image
@@ -222,14 +242,18 @@
             _tex = textureStore[self.name][self.facingDirection.image][self.state][self.animFrame-1]
             self.rect = display.newImageRect(self.group, _tex.filename, _tex.baseDir, self.width, self.height)
             self.rect.x, self.rect.y = self.x + self.xOffset, self.y + self.yOffset
-            collision.registerObject(self)
+            if self.state ~= "death" then
+                collision.registerObject(self)
+            end
 		end
 
 		function gameObject:destroyRect() --destroys rect if exists
             if (self.rect) then
                 self.rect:removeSelf()
                 self.rect = nil
-                collision.deregisterObject(self)
+                if self.state ~= "death" then
+                    collision.deregisterObject(self)
+                end
             end
 		end
     end
@@ -243,11 +267,16 @@
         spawnPos = { x = 0, y = 0 },
         moveTargetX = 0, moveTargetY = 0,
         state = "idle", --current state of the puppet, used to determine which animation to play, set by updateState()
-	    animFrame = 1,
         directional = false, moveDirection = gc.move.down, facingDirection = gc.move.down,
         isMoving = false,
         lightValue = 0,
-        moveTarget = nil --target position relative to the game object
+        moveTarget = nil, --target position relative to the game object
+        animations = {},
+        animFrame = 1, frameTimer = 0,  --animation system logic
+        attackWindup = false, windupTimer = 0, attackWindingUp = false, --anim system windup logic
+        attackChannel = false, channelTimer = 0, attackChanneling = false, --anim system channel logic
+        isDead = false, --marks if the puppet is dead
+        windupGlow = nil --stores display data for windup
     }
 
     function lib_gameObject:create(_params) --creates gameObject

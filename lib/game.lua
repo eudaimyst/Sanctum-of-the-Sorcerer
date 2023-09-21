@@ -49,6 +49,7 @@ end
 local _obj
 function game.spawnObject(saveData)
 	local crateParams = util.deepcopy(gameObjParams.crate)
+	print(json.prettify(crateParams))
 	crateParams.spawnPos = { x = saveData.x, y = saveData.y }
 	local ranDir = math.random(1, 8)
 	local ranDirKey = gc.dirKeys[ranDir]
@@ -57,6 +58,7 @@ function game.spawnObject(saveData)
 		_obj = gameObject:create(crateParams)
 		_obj:makeRect()
 		print("created crate with id: ",_obj.id, "facing dir", _obj.facingDirection.image)
+		print(json.prettify(_obj))
 	end
 end
 

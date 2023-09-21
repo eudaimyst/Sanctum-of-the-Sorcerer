@@ -46,8 +46,12 @@ lib_puppet.textureStore = {}
 
 local function puppetOnFrame(self)
 	if self.rect then --dont run anim related functions if no rect
+		if self.state == "death" then
+			--do not update state if dead
+			return
+		end
 		self:updateState()
-		self:animUpdateLoop() --changes puppets current frame based on animation timer
+		self:animUpdateLoop() --game object function that interfaces with the animation library
 	end
 end
 
@@ -69,89 +73,6 @@ function lib_puppet.factory(puppet)
 			end
 			self.currentAnim = self.animations[self.state]
 		end
-	end
-
-	function puppet:animUpdateLoop() --called on each game render frame
-		local anim = self.currentAnim
-		--update rect image on first render frame of loop
-		if self.animFrame > anim.frames then --if animation is changed and frame is greater than the number of frames in the animation, reset frame
-			self.animFrame = 1
-		end
-		if (self.frameTimer == 0) then
-			self:updateRectImage()
-		end
-		self.frameTimer = self.frameTimer + gv.frame.dts --add frame delta to timer
-
-		if (self.attackWindingUp) then --windup frame has been reached
-			self.windupTimer = self.windupTimer + gv.frame.dts --add frame delta to timer
-			if (self.windupTimer >= self.currentAttack.windupTime) then --timer is greater than the animations rate
-				self.attackWindingUp = false
-				self.windupTimer = 0 --reset windup timer for next windup
-				self.animFrame = anim.windupEndFrame --jump to the final frame of the windup
-				self:nextAnimFrame(anim)
-				return --return out of function to prevent nextAnimFrame from being called twice
-			end
-		end
-		--print(self.state, self.frameTimer, self.currentAnim.rate)
-		if self.currentAttack then
-			if self.frameTimer >= (1 / self.attackSpeed) / anim.frames then --timer is greater than the animations rate
-				self:nextAnimFrame(anim)
-			end
-		else
-			if self.frameTimer >= 1 / anim.rate then --timer is greater than the animations rate
-				self:nextAnimFrame(anim)
-			end
-		end
-	end
-
-	function puppet:nextAnimFrame(anim) --called to set next frame of animation	
-		--print(self.name..".animFrame: " .. self.animFrame .. " / " .. anim.frames)
-
-		if (self.state == "attack") then --attack sub state has finished and looping anim
-			self:nextAttackAnimFrame(anim) --returns true if animation is complete
-		end
-		if (self.animFrame == anim.frames) then --animation is over
-			self.animFrame = 1 --resets the frame count for the next animation
-		else
-			self.animFrame = self.animFrame + 1 --animation not over, increment anim frame
-		end
-		self.frameTimer = 0 --reset the frame timer for the next animFrame
-	end
-
-	function puppet:nextAttackAnimFrame(anim) --called from nextAnimFrame when in attack state
-		if (self.currentAttack.windupGlow) then --windup position logic
-			print("attack has windupglow")
-			if (self.animFrame == 1) then
-				print("calling start startWindupGlow")
-				self:startWindupGlow() --starts windup glow
-			end
-			if (self.animFrame == anim.windupStartFrame) then --reached windup start frame
-				self.attackWindingUp = true --sets attack winding up to true
-			end
-			if (self.animFrame == anim.windupEndFrame) then --reached attack frame
-				if (self.attackWindingUp == true) then
-					self.animFrame = anim.windupStartFrame --sets anim frame to windup start to loop
-				end
-			end
-		end
-		if (self.animFrame == anim.attackFrame) then
-			print("firing attack")
-			self.currentAttack:fire(self) --fires the attack
-		end
-		if (self.animFrame == anim.frames) then --post has finished
-			self.currentAttack = nil --set current attack to nil, picked up by updateState on next loop
-			if (self.attackCompletelistener) then
-				self:attackCompletelistener() --calls complete listener for enemies
-			end
-		end
-	end
-
-	function puppet:beginAttackAnim(attack) --called from extended objects to start attack animations
-		self.currentAttack = attack --set to nil once attack is complete, used to determin whether puppet is in attacking state
-		print("start attack for " .. self.currentAttack.name)
-		self.animFrame = 1
-		self.frameTimer = 0
-		self.attackTimer = 0
 	end
 
 	function puppet:loadWindupGlow() --called after puppet is created, loads windup data if present

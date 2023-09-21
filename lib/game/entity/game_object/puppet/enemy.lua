@@ -105,12 +105,6 @@
 			self.enemyState = state --sets the state to the new state
 		end
 
-		function enemy:onTakeDamage()
-			if self.currentHP <= 0 then
-				self:destroySelf()
-			end
-		end
-
 		enemy:addOnFrameMethod(enemyOnFrame)
 	end
 

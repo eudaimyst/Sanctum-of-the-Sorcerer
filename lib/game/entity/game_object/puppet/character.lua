@@ -20,8 +20,8 @@
 	-- Define module
 	local lib_character = {
 		animations = { --used for loading textures in game module
-			idle = { frames = 4, rate = .8 },
-			walk = { frames = 4, rate = 4 }}}
+			idle = { frames = 4, rate = .8, loop = true },
+			walk = { frames = 4, rate = 4, loop = true }}}
 	
 	local defaultParams = {
 		name = "character",
@@ -95,7 +95,7 @@
 								spell.target = {x = tx, y = ty} --sets the target to the max distance of the spell
 							end
 						end
-						self:beginAttackAnim(spell) --defined in puppet, shared with enemies
+						self:beginAttackAnim(spell) --game object function, interfaces with animation lib
 					end
 				end
 			end

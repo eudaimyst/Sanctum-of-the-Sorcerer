@@ -47,7 +47,7 @@
 
         function entity:destroySelf() --called to remove the entity, its group and reference to it
             local function doDestruction()
-                print("destroying entity with id: "..self.id)
+                print("destroying entity", self.name, self.id)
                 self.group:removeSelf()
                 self.group = nil
                 self.onFrameMethods = nil
