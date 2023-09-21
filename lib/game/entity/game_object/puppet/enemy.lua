@@ -53,17 +53,19 @@
 
 	local function enemyOnFrame(self)
 		--runs every stateUpdateRate
-		if (doStateUpdate) then
-			if self.enemyState.onStateUpdate then
-				self.enemyState.onStateUpdate(self)
+		if self.state ~= "death" then
+			if (doStateUpdate) then
+				if self.enemyState.onStateUpdate then
+					self.enemyState.onStateUpdate(self)
+				end
 			end
-		end
-		--runs every frame
-		if self.enemyState ~= states.sleep then --enemy is not asleep
-			if self.enemyState.onFrame then
-				self.enemyState.onFrame(self)
+			--runs every frame
+			if self.enemyState ~= states.sleep then --enemy is not asleep
+				if self.enemyState.onFrame then
+					self.enemyState.onFrame(self)
+				end
+				updateOnScreen(self)
 			end
-			updateOnScreen(self)
 		end
 	end
 

@@ -29,10 +29,12 @@
         displayScale = 1, --size of attack display normalised to 64 pixels
         element = gc.elements.fire,
         targetType = "point", --"point", "entity", "self", "none"
+        passthroughCount = 0, --how many targets a projectile can pass through before completing
         radius = -1, --circular radius of an aoe attack
         boundAngle = 30, --limits the angle of attack with radius
 		shape = nil, --specified points of shape of an aoe attack
         maxDistance = 500, --max distance attack can travel
+        duration = 1, --how long the projectile lasts before being destroyed
         damage = 10, --shorthand for applying an effect (TODO: change to effect)
         cooldown = 3, --time before attack can be cast again
         range = -1, --maximum distance for attack target

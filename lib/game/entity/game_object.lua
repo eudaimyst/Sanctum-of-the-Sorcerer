@@ -49,7 +49,10 @@
         --todo: check if char not name for performance
         
         if self.state == "death" then
-            self:animUpdateLoop() --manually call anim update loop for death animation
+            if self.rect then
+                self:updateLighting()
+                self:animUpdateLoop() --manually call anim update loop for death animation
+            end
             return
         end
         if self.name ~= "character" then --isMoving for char is set false earlier as needs gets set true by keyinput in game.lua
@@ -71,9 +74,7 @@
             _selfRect = self.rect
             _selfRect.x = _selfRect.x + _xOff --doesnt need to be done on frame
             _selfRect.y = _selfRect.y + _yOff
-            _tile = map:getTileAtPoint(self.x, self.y)
-            --print(self.id, tile.id, tile.lightValue)
-            self.lightValue = _tile.lightValue
+            self:updateLighting()
         end
     end
 
@@ -83,6 +84,13 @@
 
     function lib_gameObject.factory(gameObject)
 		--print("adding gameObject functions")
+
+        function gameObject:updateLighting()
+            _tile = map:getTileAtPoint(self.x, self.y)
+            --print(self.id, tile.id, tile.lightValue)
+            self.lightValue = _tile.lightValue
+            self.rect:setFillColor(self.lightValue)
+        end
 
         function gameObject:animUpdateLoop()
             animSystem.animUpdateLoop(self)

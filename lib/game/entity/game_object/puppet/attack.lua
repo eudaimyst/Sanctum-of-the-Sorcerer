@@ -26,35 +26,64 @@
     local function projOnFrame(self)
         local function destroy()
             for i = 1, #self.emitters do
-                print("removing emitter"..i)
-                self.emitters[i]:stop()
-                self.emitters[i]:removeSelf()
+                --self.emitters[i].speed = 0
+                --self.emitters[i]:stop()
+                --self.emitters[i]:removeSelf()
             end
+            print("destroying projectile")
             self:destroySelf()
         end
-        --print("running projectile onFrame for entity: "..self.id)
+
+        local function completeProjectile( didHitObject)
+            if (didHitObject) and self.hitEmitter then
+                self.hitEmitter.x, self.hitEmitter.y = (self.x - cam.bounds.x1) * cam.zoom , (self.y - cam.bounds.y1) * cam.zoom
+                self.hitEmitter:start()
+            end
+            self.complete = true
+            if #self.emitters > 0 then
+                for i = 1, #self.emitters do
+                    print("stopping emitter"..i)
+                    self.emitters[i]:stop()
+                end
+                print("destroying projectile in", self.emitterLifespan)
+                timer.performWithDelay(self.emitterLifespan or 0, destroy)
+            else --destroy the projectile with no delay if there is no emitter
+                destroy()
+            end
+        end
+
         self.durationTimer = self.durationTimer + gv.frame.dts
+        print(self.id, "projectileOnFrame", self.durationTimer, "/", self.duration)
         self.x = self.x + self.normal.x * self.speed * gv.frame.dts
         self.y = self.y + self.normal.y * self.speed * gv.frame.dts
-        if (map:getTileAtPoint(self.x, self.y).col == 1)
-        or (self.durationTimer > self.duration) then
-            destroy()
-            return
-        end
-        local hitObjects = collision.getObjectsByDistance(32, self.x, self.y)
-        for i = 1, #hitObjects do
-            local hitObject = hitObjects[i]
-            if hitObject ~= self.source then
-                local alreadyHit = false
-                for ii = 1, #self.hitObjects do
-                    if hitObject == self.hitObjects[ii] then
-                        alreadyHit = true
-                    end
-                end
-                if alreadyHit == false then
-                    self.hitObjects[#self.hitObjects+1] = hitObject
+        if self.complete == false then --if spell has not already hit a wall or gone past its duration
+            if (map:getTileAtPoint(self.x, self.y).col == 1) then --check if the projectile has hit a wall or gone past its duration
+                completeProjectile(true)
+                return
+            elseif (self.durationTimer > self.duration) then
+                --stop the emitter but keep it alive for the duration to keep movement going
+                completeProjectile(false)
+                return
+            end
 
-                    self.source:dealDamage(hitObject, self.damage)
+            local hitObjects = collision.getObjectsByDistance(10, self.x, self.y) --check for collisions
+            for i = 1, #hitObjects do
+                local hitObject = hitObjects[i]
+                if hitObject ~= self.source then
+                    local alreadyHit = false
+                    for ii = 1, #self.hitObjects do
+                        if hitObject == self.hitObjects[ii] then
+                            alreadyHit = true
+                        end
+                    end
+                    if alreadyHit == false then
+                        self.hitObjects[#self.hitObjects+1] = hitObject
+                        self.source:dealDamage(hitObject, self.damage)
+                        if #hitObjects > self.passthroughCount then
+                            completeProjectile(true)
+                            return
+                        end
+                    end
                 end
             end
         end
@@ -84,6 +113,10 @@
             attack.emitterParams = {}
             for file in lfs.dir( path ) do
                 if (file ~= "." and file ~= "..") then
+                    if (file == "hitEmitter.json") then
+                        print("Found hit emitter")
+                        attack.hitEmitterParams = json.decodeFile(path.."/"..file)
+                    end
                     for i, _ in pairs(attack.displayParams) do
                         if (file == i..".png") then
                             print( "Found image file: " .. file )
@@ -127,10 +160,16 @@
             projectile.displayParams = attack.displayParams[index]
             projectile.speed = attack.displayParams[index].speed
             projectile.damage = attack.damage
+            projectile.passthroughCount = attack.passthroughCount
             projectile.durationTimer = 0
             projectile.normal = {x = attack.normal.x, y = attack.normal.y}
-            projectile.duration = projectile.speed * self.maxDistance / 100000
+            projectile.duration = self.duration
             projectile.hitObjects = {} --store the objects hit by the projectile so we don't register multiple hits
+            projectile.complete = false --gets set to true when the projectile hits a wall or goes past its duration
+            if self.hitEmitterParams then
+                projectile.hitEmitter = display.newEmitter( self.hitEmitterParams )
+                projectile.hitEmitter:stop()
+            end
             print("projectile duration: "..projectile.duration)
 
             function projectile:updateDisplayPos()
@@ -157,6 +196,13 @@
                 print("drawing "..#attack.emitterParams.." emitters")
                 for i = 1, #attack.emitterParams do
                     local emitterParams = attack.emitterParams[i]
+                    ------------------
+                    --- overriding emitter params for projectiles testing
+                    emitterParams.angle = util.deltaToAngle(self.normal.x, self.normal.y) + 180
+                    emitterParams.speed = self.speed
+                    self.emitterLifespan = emitterParams.particleLifespan * 1000 --used for destroying the projectile after the emitter has finished
+                    emitterParams.duration = self.duration
+                    ------------------
                     local emitter = display.newEmitter( emitterParams )
                     emitter.duration = attack.maxDistance / attack.displayParams[i].speed
                     emitter.x, emitter.y = x, y

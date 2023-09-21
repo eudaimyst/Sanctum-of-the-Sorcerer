@@ -100,7 +100,7 @@
         name = "fireBolt",
         displayType = "projectile", --"image", "emitter"
         windupTime = .3,
-        duration = 100, --lifetime of the attack
+        duration = .8, --lifetime of the attack
         displayParams = { [1] = {speed = 600, spins = false, endScale = 1} }, --number of images/emitters to display and their properties
         windupGlow = true,
         element = gc.elements.fire
