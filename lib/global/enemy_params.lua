@@ -23,7 +23,7 @@
 		
 
 		e.bat = {
-			name = "bat", moveSpeed = 200, width = 164, height = 164, yOffset = 0,
+			name = "bat", moveSpeed = 200, width = 128, height = 128, yOffset = 20,
 			sightRange = 500, --distance from char before moving to attack
 			leashTime = 3, --s how long before going back to spawnPos if out of sightRange of char
 			wanderDistance = { min = 100, max = 200 }, --max distance to move when idling
