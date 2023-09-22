@@ -35,9 +35,15 @@
         end
 
         local function completeProjectile( didHitObject)
-            if (didHitObject) and self.hitEmitter then
-                self.hitEmitter.x, self.hitEmitter.y = (self.x - cam.bounds.x1) * cam.zoom , (self.y - cam.bounds.y1) * cam.zoom
-                self.hitEmitter:start()
+            print("hitEmitterParams", self.hitEmitterParams)
+            if (didHitObject) and self.hitEmitterParams then
+                local hitEmitterEntity = entity:create(self.x, self.y, false, true)
+                hitEmitterEntity.rect = display.newEmitter( self.hitEmitterParams ) --we call the emitter rect so that it uses the entity on frame method for updating
+                local emitter = hitEmitterEntity.rect
+                --emitter.x, emitter.y = (self.x - cam.bounds.x1) * cam.zoom , (self.y - cam.bounds.y1) * cam.zoom
+                hitEmitterEntity.group:insert(emitter)
+                emitter:start()
+                timer.performWithDelay((emitter.duration + emitter.particleLifespan) * 1000, function() print("destroying hit emitter"); hitEmitterEntity.destroySelf(hitEmitterEntity) end)
             end
             self.complete = true
             if #self.emitters > 0 then
@@ -53,7 +59,7 @@
         end
 
         self.durationTimer = self.durationTimer + gv.frame.dts
-        print(self.id, "projectileOnFrame", self.durationTimer, "/", self.duration)
+        --print(self.id, "projectileOnFrame", self.durationTimer, "/", self.duration)
         self.x = self.x + self.normal.x * self.speed * gv.frame.dts
         self.y = self.y + self.normal.y * self.speed * gv.frame.dts
         if self.complete == false then --if spell has not already hit a wall or gone past its duration
@@ -167,8 +173,7 @@
             projectile.hitObjects = {} --store the objects hit by the projectile so we don't register multiple hits
             projectile.complete = false --gets set to true when the projectile hits a wall or goes past its duration
             if self.hitEmitterParams then
-                projectile.hitEmitter = display.newEmitter( self.hitEmitterParams )
-                projectile.hitEmitter:stop()
+                projectile.hitEmitterParams = self.hitEmitterParams
             end
             print("projectile duration: "..projectile.duration)
 

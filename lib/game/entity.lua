@@ -16,29 +16,22 @@
     local cam = require("lib.camera")
     local util = require("lib.global.utilities")
     local collision = require("lib.game.entity.game_object.collision")
-    local map --set by init
-    local mround = math.round
 
     -- Define module
 	local lib_entity = {}
     lib_entity.store = {}
     lib_entity.parentGroup = nil --set by setGroup function
+    lib_entity.zGroups = {}
     local entityGroup = display.newGroup()
     local entityCount = 0
-    local zGroups = {}
 
-    local rectY, selfRect, camBounds, camZoom --recycling
+    local _selfRect, _camBounds, _camZoom --recycling
     
     local function updateRect(self) --update the rects position on screen, needs to be called after cam bounds has been updated on frame or jitters
         if (self.rect) then --do not update rect values if entity has no rect (ie, is not on screen)
-            selfRect, camBounds, camZoom = self.rect, cam.bounds, cam.zoom
-            selfRect.xScale, selfRect.yScale = camZoom, camZoom
-            selfRect.x, selfRect.y = (self.x - camBounds.x1) * camZoom , (self.y - camBounds.y1) * camZoom
-            --insert into correct zGroup based on y position
-            rectY = mround(selfRect.y)
-            if rectY > 0 and rectY < 1080 then
-                zGroups[rectY]:insert(self.group)
-            end
+            _selfRect, _camBounds, _camZoom = self.rect, cam.bounds, cam.zoom
+            _selfRect.xScale, _selfRect.yScale = _camZoom, _camZoom
+            _selfRect.x, _selfRect.y = (self.x - _camBounds.x1) * _camZoom , (self.y - _camBounds.y1) * _camZoom
         end
     end
 
@@ -118,14 +111,13 @@
         return entity
     end
 
-    function lib_entity:init(sceneGroup, _map) --sets the group for the entity (all modules that extend the entity class will use this)
+    function lib_entity:init(sceneGroup) --sets the group for the entity (all modules that extend the entity class will use this)
         sceneGroup:insert(entityGroup)
         --create groups for Z-indexing
-        for i = 1, 1080 do
-            zGroups[i] = display.newGroup()
-            entityGroup:insert(zGroups[i])
+        for i = 1, math.floor(display.contentHeight) do
+            lib_entity.zGroups[i] = display.newGroup()
+            entityGroup:insert(lib_entity.zGroups[i])
         end
-        map = _map
     end
 
 	return lib_entity

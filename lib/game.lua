@@ -38,12 +38,19 @@ function game:spawnChar()
 end
 
 function game.spawnEnemy(enemySaveData)
-	local ratParams = util.deepcopy(enemyParams.rat)
-	ratParams.spawnPos = {
+	--copilot: choose a random enemy from the enemy params
+	local r = math.random()
+	local params = {}
+	if r > 0.5 then
+		params = util.deepcopy(enemyParams.rat)
+	else
+		params = util.deepcopy(enemyParams.bat)
+	end
+	params.spawnPos = {
 		x = enemySaveData.spawnPoint.x * map.tileSize / 10,
 		y = enemySaveData.spawnPoint.y * map.tileSize / 10
 	}
-	enemy:create(ratParams)
+	enemy:create(params)
 end
 
 local _obj

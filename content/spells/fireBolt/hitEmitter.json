@@ -13,7 +13,7 @@
   "startParticleSize":32,
   "angleVariance":180,
   "particleLifespan":0.4,
-  "absolutePosition":false,
+  "absolutePosition":true,
   "textureFileName":"content/particles/fire.png",
   "name":"explosion",
   "finishParticleSizeVariance":0,

@@ -54,4 +54,14 @@
         windupTime = 0, --how long animation loops windup frames
     }
 
+    params.dive = {
+        name = "bat_dive", --checks this folder name for images/emitter
+        animation = "attack_dive", --name of animation to play, images stored in puppets content folder
+        displayType = "animation",
+        range = 100,
+        animData = { frames = 11, attackFrame = 7 },
+        radius = 100,
+        windupTime = 0, --how long animation loops windup frames
+    }
+
 	return params

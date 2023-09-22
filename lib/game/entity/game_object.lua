@@ -35,6 +35,8 @@
 
     local textureStore = {} --stores all textures for objects and children, indexed by name, direction, state, frame
 
+    local mRound = math.round
+
     local _dir, _anim --recycled
     local _nTargetX, _nTargetY, _tile
     local _moveTileX, _moveTileY, _moveFactor, _worldX, _worldY
@@ -42,24 +44,27 @@
     local _xCheckPosX, _xCheckPosY, _yCheckPosX, _yCheckPosY --for checking collision on each axis
     local _xOff, _yOff, _selfRect, _hcw, _hch --recycled
     local _xColCheck, _yColCheck = {minX=0,maxX=0,minY=0,maxY=0}, {minX=0,maxX=0,minY=0,maxY=0}
+    local _selfY --used for zPos
 
     local _tex --recycled for makeRect
 
     local function gameObjOnFrame(self)
         --todo: check if char not name for performance
+    
+        _xOff, _yOff = self.xOffset, self.yOffset --locals for performance
         
         if self.state == "death" then
             if self.rect then
+                _selfRect = self.rect
                 self:updateLighting()
                 self:animUpdateLoop() --manually call anim update loop for death animation
+                self:updateZpos()
             end
             return
         end
         if self.name ~= "character" then --isMoving for char is set false earlier as needs gets set true by keyinput in game.lua
             self.isMoving = false --resets moving variable to be changed by gameObject:move() if called
         end
-    
-        _xOff, _yOff = self.xOffset, self.yOffset --locals for performance
 
         if self.moveTargetDir then
             self:move(self.moveTargetDir)
@@ -75,6 +80,7 @@
             _selfRect.x = _selfRect.x + _xOff --doesnt need to be done on frame
             _selfRect.y = _selfRect.y + _yOff
             self:updateLighting()
+            self:updateZpos()
         end
     end
 
@@ -84,7 +90,14 @@
 
     function lib_gameObject.factory(gameObject)
 		--print("adding gameObject functions")
-
+        
+        function gameObject:updateZpos() 
+            --insert into correct zGroup based on y position
+            _selfY = mRound(_selfRect.y - _yOff)
+            if _selfY > 0 and _selfY <= display.contentHeight then
+                entity.zGroups[_selfY]:insert(self.group)
+            end
+        end
         function gameObject:updateLighting()
             _tile = map:getTileAtPoint(self.x, self.y)
             --print(self.id, tile.id, tile.lightValue)
