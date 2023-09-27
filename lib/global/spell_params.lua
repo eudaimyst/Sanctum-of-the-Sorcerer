@@ -117,19 +117,22 @@
     }
     params.iceStorm = {
         animation = "cast_raise",
+        displayParams = { [1] = {aoe = {}} }, --number of images/emitters to display and their properties
         name = "iceStorm",
+        radius = 64,
         windupGlow = true,
         displayType = "aoe",
-        displayParams = {},
         isChanneled = true,
         element = gc.elements.ice
     }
     params.iceStormCast = {
         animation = "cast_raise",
-        name = "iceStorm",
+        displayParams = { [1] = {aoe = {}} }, --number of images/emitters to display and their properties
+        name = "iceStormCast",
+        radius = 300,
         windupGlow = true,
         displayType = "aoe",
-        isChanneled = true,
+        isChanneled = false,
         element = gc.elements.ice
     }
     params.airBolt = {

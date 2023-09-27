@@ -22,7 +22,11 @@
 	-- Define module
 	local lib_attack = { }
     
+    local function aoeOnFrame(self)
 
+        self.emitter.x, self.emitter.y = self.rect.x, self.rect.y - self.emitter.speed*self.emitter.particleLifespan - self.emitter.sourcePositionVariancey
+
+    end
     local function projOnFrame(self)
         local function destroy()
             for i = 1, #self.emitters do
@@ -104,7 +108,6 @@
             if _params[k] then
                 attack[k] = _params[k]
             else
-                
                 attack[k] = v
             end
         end
@@ -216,16 +219,28 @@
                 end
             end
             projectile:createDisplay(self.origin)
-            print("adding on frame method for "..projectile.id)
+            --print("adding on frame method for "..projectile.id)
             projectile:addOnFrameMethod(projOnFrame)
-            print(projOnFrame)
+            --print(projOnFrame)
+        end
+
+        function attack:createAoe(source)
+            print("creating aoe for", self.name)
+            local aoe = entity:create(self.target.x, self.target.y)
+            local texture = attack.textures[1]
+            aoe.rect = display.newImageRect( aoe.group, texture.filename, texture.baseDir, self.radius*2, self.radius*2 )
+            aoe.emitter = display.newEmitter(attack.emitterParams[1])
+            aoe:addOnFrameMethod(aoeOnFrame)
         end
 
         function attack:fire(puppet) --called from puppet when attack anim is complete
+            print ("display type for fired spell", self.displayType)
             if (self.displayType == "projectile") then
                 for i = 1, #self.displayParams do
                     self:createProjectile(i, puppet)
                 end
+            elseif (self.displayType == "aoe") then
+                self:createAoe(puppet)
             elseif (self.displayType == "animation") then
                 local dist = util.getDistance(puppet.x, puppet.y, puppet.attackTarget.x, puppet.attackTarget.y)
                 if dist <= self.range + 20 then
@@ -233,7 +248,7 @@
                 end
             end
             
-            print("---------------------attack "..self.name.." fired")
+            print("---------------------attack ", self.name, " fired")
         end
 
         attack:loadDisplay() --set display type table from string name for key

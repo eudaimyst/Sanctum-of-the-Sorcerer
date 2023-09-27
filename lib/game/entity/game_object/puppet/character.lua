@@ -88,6 +88,7 @@
 					if (not spell.onCooldown) then --on cooldown, can't cast
 						spell.origin = spellOrigin
 						if (target) then
+							spell.target = target
 							if (spell.displayType == "projectile") then
 								local nx, ny = util.normalizeXY(deltaX,deltaY)
 								spell.normal = {x = nx, y = ny} --sets the normal used for its movement
