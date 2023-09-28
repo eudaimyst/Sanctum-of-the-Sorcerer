@@ -14,7 +14,7 @@
 	local key = require("lib.input.key_input")
 
 	--other modules
-	local mouse = require("lib.input.mouse_input")
+	local mouse = require("lib.input.old_mouse_input")
 	local editor = require("lib.editor")
 
 	--create scene

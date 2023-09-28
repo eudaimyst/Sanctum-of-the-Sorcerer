@@ -29,6 +29,12 @@
 		rect.anchorY = 0
 		return rect
 	end
+	function util.getObjectBounds(_object) --returns xMin, xMax, yMin, yMax
+		return _object.x - _object.width * _object.anchorX, --xMin
+		_object.x + _object.width * (1 - _object.anchorX), --xMax
+		_object.y - _object.height * _object.anchorY, --yMin
+		_object.y + _object.height * (1 - _object.anchorY) --yMax
+	end
 
 	function util.printkv(table)
 		if (table) then

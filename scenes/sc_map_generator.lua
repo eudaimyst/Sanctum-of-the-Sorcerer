@@ -9,7 +9,7 @@
 
 	local editor = require("lib.editor")
 	local mapgen = require("lib.map.generator")
-	local mouse = require("lib.input.mouse_input")
+	local mouse = require("lib.input.old_mouse_input")
 	local key = require("lib.input.key_input")
 	local fileio = require("lib.map.fileio")
 

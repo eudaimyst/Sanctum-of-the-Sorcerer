@@ -12,7 +12,7 @@
 	local gv = require("lib.global.variables")
 	local util = require("lib.global.utilities")
 	local debug = require("lib.debug")
-	local mouse = require("lib.input.mouse_input")
+	local mouse = require("lib.input.old_mouse_input")
 	local key = require("lib.input.key_input")
 	local map = require("lib.map")
 	local mapgen = require("lib.map.generator")

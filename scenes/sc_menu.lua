@@ -9,6 +9,10 @@
 	local physics = require("physics")
 	local json = require("json")
 	local easing = require("lib.corona.easing")
+	local lang = require("lib.global.locale")
+
+	local mouse = require("lib.input.mouse_input")
+	local button_lib = require("lib.ui.buttons")
 
 	local util = require("lib.global.utilities")
 
@@ -27,6 +31,10 @@
 		composer.gotoScene( "scenes.sc_game" )
 	end
 
+	local function onQuit()
+		native.requestExit()
+	end
+
 	local function onLevelEditor()
 		composer.gotoScene( "scenes.sc_level_editor" )
 	end
@@ -40,7 +48,7 @@
 	end
 
 	local function onOptions()
-
+		composer.showOverlay( "scenes.sc_options_menu", { effect="fade", time=200 } )
 	end
 
 	local function onKeyEvent( event )
@@ -48,161 +56,39 @@
 	    if (event.keyName == "enter" and event.phase == "down") then
 			onMapGenerator()
 	    end
-	    return false --return false to indicate app is not overriding the received key for the os
+	    return false --return false to indicate app is not overriding the received key for the OS
 	end
 
-	local buttonData = {
+	--[[ local buttonData = {
 		{ label = "Play Game", width = 240, height = 56, listener = onPlay, position = 0 },
 		{ label = "Level Editor", width = 266, height = 56, listener = onLevelEditor, position = 2 },
 		{ label = "Map Generator", width = 300, height = 56, listener = onMapGenerator, position = 3 },
 		{ label = "Particle Designer", width = 340, height = 56, listener = onParticleDesigner, position = 4 },
 		{ label = "Options", width = 226, height = 56, listener = onOptions, position = 5 },
+	} ]]
+	local buttonData = {
+		{ label = lang.get("play"), borderSize = 14, width = 240, height = 56, theme = "fantasy", listener = onPlay, position = 1 },
+		{ label = lang.get("options"), borderSize = 14, width = 220, height = 56, theme = "fantasy", listener = onOptions, position = 2 },
+		{ label = lang.get("mapgen"), borderSize = 14, width = 300, height = 56, theme = "fantasy", listener = onMapGenerator, position = 3 },
+		{ label = lang.get("quit"), borderSize = 14, width = 200, height = 56, theme = "fantasy", listener = onQuit, position = 5}
 	}
 
 	local buttonStore = {} --any button created gets stored here
 
 	local buttonGroup
+
 	local function createButtons()
-
-		buttonGroup = display.newGroup()
-		sceneGroup:insert( buttonGroup )
-
-		local normalFramePath = "content/ui/button_frame_normal/" --set path for files
-		local pressedFramePath = "content/ui/button_frame_pressed/"
-		--set paths for button frame images
-		local imagePaths = {  normalFrame = {}, pressedFrame = {} } --initiate variable to hold full file strings
-		local fileStrings = { "top", "bot", "left", "right", "topleft", "topright", "botleft", "botright" } --for finding file paths
-		local frameImageSize = { size = 64, corner = 14, length = 36, offset = 25 } --dimensions for parts of frame image
-		local f = frameImageSize --for readability
-		local frameImageOffsets = { --for positioning frame
-			top = { x = 0, y = -f.offset, w = f.length, h = f.corner },
-			bot = { x = 0, y = f.offset, w = f.length, h = f.corner },
-			left = { x = -f.offset, y = 0, w = f.corner, h = f.length },
-			right = { x = f.offset, y = 0, w = f.corner, h = f.length }, 
-			topleft = { x = -f.offset, y = -f.offset, w = f.corner, h = f.corner },
-			topright = { x = f.offset, y = -f.offset, w = f.corner, h = f.corner },
-			botleft = { x = -f.offset, y = f.offset, w = f.corner, h = f.corner },
-			botright = { x = f.offset, y = f.offset, w = f.corner, h = f.corner } }
-
-		for _, file in ipairs( fileStrings ) do
-			imagePaths.normalFrame[file] = normalFramePath..file..".png" --concat table variables to paths
-			imagePaths.pressedFrame[file] = pressedFramePath..file..".png"
-			--print(imagePaths.normalFrame[file])
-			--print(imagePaths.pressedFrame[file])
+		for i = 1, #buttonData do
+			local data = buttonData[i]
+			local button = button_lib:create( data )
+			sceneGroup:insert(button)
+			button.x = halfScreenX
+			button.y = halfScreenY + (buttonSpacing * data.position) - buttonOffsetY
+			buttonStore[i] = button
 		end
+	end
 
-		--local maskTest = display.newRect( buttonGroup, halfScreenX, halfScreenY, display.contentWidth / 1.5, display.contentHeight / 1.5) --rect for testing mask on group
-		--maskTest:setFillColor( 1 )
-
-		local buttonGroupMask = graphics.newMask( "content/menu_button_mask.png" )
-		buttonGroup:setMask( buttonGroupMask )
-		buttonGroup.maskX, buttonGroup.maskY = halfScreenX, halfScreenY
-		buttonGroup.maskScaleX = display.contentWidth/128 / 3
-		buttonGroup.maskScaleY = display.contentHeight/128
-
-		local function createButton(data)
-
-			print(data)
-
-			local button = display.newGroup()
-			button.listener = data.listener
-			button.label = data.label
-			buttonGroup:insert(button)
-
-			button.normalFrame = {}
-			button.pressedFrame = {} --create button and define pressed and normal frames
-			button.offsets = {} --holds frameoffsets for created button 
-
-			for k, baseOffset in pairs(frameImageOffsets) do 
-				button.offsets[k] = {} --at the key of the base offset, make an empty table in the button
-				local offset = button.offsets[k] --for readability we store this empty table as a local variable
-
-				for k1, v1 in pairs (baseOffset) do
-					offset[k1] = v1 --copy values in offsets for each side in frameImageOffsets, to a new key in button offset
-				end
-
-				local frame = frameImageSize --readability
-
-				local width = data.width - frame.size
-				local height = data.height - frame.size
-
-				if k == "top" then offset.y = baseOffset.y - height / 2 ; offset.w = width - frame.corner 
-				elseif k == "bot" then offset.y = baseOffset.y + height / 2 ; offset.w = width - frame.corner 
-				elseif k == "left" then	offset.x = -width / 2 ; offset.h = height + frame.length
-				elseif k == "right" then offset.x = width / 2 ; offset.h = height + frame.length
-				elseif k == "topleft" then offset.x = -width / 2 ; offset.y = baseOffset.y - height / 2
-				elseif k == "topright" then	offset.x = width / 2 ; offset.y = baseOffset.y - height / 2
-				elseif k == "botleft" then offset.x = -width / 2 ; offset.y = baseOffset.y + height / 2
-				elseif k == "botright" then	offset.x = width / 2 ; offset.y = baseOffset.y + height / 2
-				end
-			end
-
-			----button background
-			button.bg = display.newImageRect( button, "content/ui/parchment.png" , 512 , 512 ) --make the button background
-			local buttonMask = graphics.newMask( "content/ui/button_mask_wide.png" ) --add a mask
-			button.bg:setMask(buttonMask)
-			button.bg.maskScaleX = 1 / 281 * (data.width - frameImageSize.length - frameImageSize.corner) --set scale to the data width divided by the button base size
-			button.bg.maskScaleY = 1 / 63 * (data.height)
-			----button overlays
-			local overlayX, overlayY = data.width - frameImageSize.corner * 4, data.height - frameImageSize.corner --image size of overlays normalised to the button size
-			button.overlayNormal = display.newImageRect( button, normalFramePath.."overlay_horizontal.png", overlayX, overlayY) --overlay button with image size
-			button.overlayPressed = display.newImageRect( button, pressedFramePath.."overlay_horizontal.png", overlayX, overlayY) --overlay button with image size
-			----button text
-			local options = { parent = button, text = data.label, x = 0, y = 1, font = "fonts/KlarissaContour.ttf", fontSize = 24 }
-			button.text = display.newEmbossedText( options )
-			button.text:setFillColor( .17 )
-			button.text:setEmbossColor( { shadow = { r=179/255, g=49/255, b=39/255 }, highlight = { r=1, g=190/255, b=76/255 } } )
-			----button frame
-			for k, path in pairs( imagePaths.normalFrame ) do
-				button.normalFrame[k] = display.newImageRect( button, path, button.offsets[k].w , button.offsets[k].h ) --add button using paths and offsets of k
-				button.normalFrame[k].x, button.normalFrame[k].y = button.offsets[k].x, button.offsets[k].y
-				button.normalFrame[k].scaleX =  1 / 281 * (data.width - frameImageSize.length - frameImageSize.corner)
-				button.normalFrame[k].scaleY = 1 / 63 * (data.height)
-			end
-
-			for k, path in pairs( imagePaths.pressedFrame ) do
-				button.pressedFrame[k] = display.newImageRect( button, path, button.offsets[k].w , button.offsets[k].h ) --add paths and offsets
-				button.pressedFrame[k].x, button.pressedFrame[k].y = button.offsets[k].x, button.offsets[k].y
-				button.pressedFrame[k].scaleX =  1 / 281 * (data.width - frameImageSize.length - frameImageSize.corner)
-				button.pressedFrame[k].scaleY = 1 / 63 * (data.height)
-				button.pressedFrame[k].isVisible = false
-			end
-
-			function button:press() --hide normal frame images
-				for _, image in pairs( button.pressedFrame ) do
-					--print("frame keys: "..image)
-					image.isVisible = true
-				end
-				button.overlayPressed.isVisible = true
-				button.overlayNormal.isVisible = false
-				button.bg:setFillColor( 0.9 )
-				button.text:setFillColor( .6 )
-				button.text:setEmbossColor( { shadow = { r=179/255, g=49/255, b=39/255 }, highlight = { r=.1, g=.1, b=.1 } } )
-			end
-
-			function button:release() --hide pressed frame images
-				for _, image in pairs( button.pressedFrame ) do
-					image.isVisible = false
-				end
-				button.overlayPressed.isVisible = false
-				button.overlayNormal.isVisible = true
-				button.bg:setFillColor( 1 )
-				button.text:setFillColor( .8 )
-				button.text:setEmbossColor( { shadow = { r=179/255, g=49/255, b=39/255 }, highlight = { r=.1, g=.1, b=.1 } } )
-			end
-
-			function button:mouseEnter()
-				transition.scaleTo( self.text, { time=100, xScale=1.01, yScale=1.01 } )
-				button.text:setFillColor( .8 )
-				button.text:setEmbossColor( { shadow = { r=179/255, g=49/255, b=39/255 }, highlight = { r=.1, g=.1, b=.1 } } )
-			end
-
-			function button:mouseExit()
-				transition.scaleTo( self.text, { time=100, xScale=1, yScale=1 } )
-				button.text:setFillColor( .17 )
-				button.text:setEmbossColor( { shadow = { r=179/255, g=49/255, b=39/255 }, highlight = { r=1, g=190/255, b=76/255 } } )
-			end
-
+	--[[
 			----button movement and position
 			local moveSpeed = 1000 --time for movement
 			local fadeSpeed = 200
@@ -248,56 +134,8 @@
 			slideTimer.params = { button = button }
 			i = i + 1
 		end
-	end
+	end ]]
 
-	local hoveredButton
-	local clickedButton
-	local mouse = { x = 0, y = 0, old = { x = 0, y = 0 } }
-	-- Called when a mouse event has been received.
-	local function onMouseEvent( event )
-		mouse.old.x, mouse.old.y = mouse.x, mouse.y
-		mouse.x, mouse.y = event.x, event.y
-
-		if event.isPrimaryButtonDown then
-			print("clicked")
-			print(hoveredButton)
-			if hoveredButton then
-				hoveredButton:press()
-				clickedButton = hoveredButton
-			end
-		else
-			if clickedButton then
-				if (clickedButton == hoveredButton) then
-					clickedButton:release()
-					clickedButton.listener()
-				end
-				clickedButton = nil
-			end
-		end
-
-		local ray = physics.rayCast( mouse.old.x, mouse.old.y, mouse.x, mouse.y, "any" )
-		if (not clickedButton) then
-			if ray then
-				if  ray[1].object.button then
-					local button = ray[1].object.button
-					print("mouse enter button "..button.label)
-					button:mouseEnter()
-					hoveredButton = button
-					print(hoveredButton)
-				end
-			end
-		end
-		local ray2 = physics.rayCast( mouse.x, mouse.y, mouse.old.x, mouse.old.y, "any" )
-		if ray2 then
-			if  ray2[1].object.button then
-				local button = ray2[1].object.button
-				print("mouse exit button "..button.label)
-				button:mouseExit()
-				hoveredButton = nil
-				print(hoveredButton)
-			end
-		end
-	end
 
 	local function createTitle() -- create title image, called by createBackground after fadein
 		local titleRect = display.newImageRect( sceneGroup, titleImage, 785, 226 )
@@ -451,8 +289,9 @@
 			-- INSERT code here to make the scene come alive
 			-- e.g. start timers, begin animation, play audio, etc.
 			--add listener for input
+			mouse:init()
+
 			Runtime:addEventListener( "key", onKeyEvent )
-			Runtime:addEventListener( "mouse", onMouseEvent )
 		end
 	end
 
@@ -467,8 +306,8 @@
 			timer.cancel( "menu" ) --cancels all running timers
 			transition.cancelAll() --cancels all transitions
 
+			mouse:deinit()
 			Runtime:removeEventListener( "key", onKeyEvent )
-			Runtime:removeEventListener( "mouse", onMouseEvent )
 
 		elseif phase == "did" then
 			-- Called when the scene is now off screen

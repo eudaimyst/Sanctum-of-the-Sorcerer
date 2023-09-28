@@ -16,7 +16,7 @@
 	local util = require("lib.global.utilities")
 	local editor = require("lib.editor")
 	local map = require("lib.map")
-	local mouse = require("lib.input.mouse_input")
+	local mouse = require("lib.input.old_mouse_input")
 	local key = require("lib.input.key_input")
 	local cam = require("lib.camera")
 	local debug = require("lib.debug")

@@ -31,7 +31,7 @@
 	--common modules
 	local util = require("lib.global.utilities")
 	local gv = require("lib.global.variables")
-	local mouse = require("lib.input.mouse_input")
+	local mouse = require("lib.input.old_mouse_input")
 
 	local mfloor = math.floor
 	local mceil = math.floor
