@@ -19,11 +19,13 @@ local spellParams = require("lib.global.spell_params")
 local lightEmitter = require("lib.game.entity.light_emitter")
 local json = require("json")
 
+local gamePaused = false --set to true when game is paused and prevents onFrame from running
 
 -- Define module
 local game = { char = {} }
 local cam, map, key, mouse, hud --set on init()
 
+local gameMenuListener, spellbookListener --listener functions passed from scene to load overlays when hud buttons pressed, set on init()
 
 function game:spawnChar()
 	print("char getting spawn point from map: ")
@@ -69,6 +71,43 @@ function game.spawnObject(saveData)
 	end
 end
 
+function game:pause() --called whenever the game needs to be paused
+	gamePaused = true
+	mouse:deinit() --de-init the mouse and expect it to be reinitialised for whyever the game is paused
+	
+	--call pause method on all entities if it exists
+	for _, e in pairs(entity.store) do
+		if not e.markedForDestruction then
+			if e.onPause then
+				e:onPause()
+			end
+		end
+	end
+end
+
+function game:unpause()
+	gamePaused = false
+	mouse:init()
+	mouse:registerObject(hud.gameOverlay, 0)
+	for i = 1, #hud.interactsWithMouse do
+		mouse:registerObject(hud.interactsWithMouse[i], 1)
+	end
+	
+	--call unpause method on all entities if it exists
+	for _, e in pairs(entity.store) do
+		if not e.markedForDestruction then
+			if e.onUnpause then
+				e:onUnpause()
+			end
+		end
+	end
+end
+
+local function charSetActiveSpell(slotNum)
+	if gamePaused == true then return end --do nothing if paused
+	game.char.setActiveSpell(slotNum)
+end
+
 function game:beginPlay()
 	local function moveInput(direction) --moveListener passed to key module
 		self.char:move(direction)
@@ -86,14 +125,20 @@ function game:beginPlay()
 		self.spawnObject(map.barrelSaveData[i])
 	end
 
-	hud:draw(self.char)
+	hud:draw(self.char, gameMenuListener, spellbookListener) --draws the hud and passes listener functions for buttons
+	function hud.gameOverlay:press()
+		print("game overlay pressed")
+		game.mouseClick()
+	end
+	mouse:registerObject(hud.gameOverlay, 0)
 	key.registerMoveListener(moveInput)
-	key.registerSpellSelectListener(self.char.setActiveSpell)
-	mouse.registerClickListener(self.mouseClick)
+	key.registerSpellSelectListener(charSetActiveSpell)
+	--mouse.registerClickListener(self.mouseClick)
 end
 
 function game:onFrame()
 	--gameObject:clearMovement()	--sets isMoving to false for all game objects, before being set by key input
+	if gamePaused == true then return end
 	game.char.isMoving = false
 	key:onFrame()               --processes key inputs
 	cam:onFrame()               --processes camera movement
@@ -111,7 +156,8 @@ function game:onFrame()
   
 end
 
-function game.init(_cam, _map, _key, _mouse, _hud)
+function game.init(_cam, _map, _key, _mouse, _hud, _gameMenuListener, _spellbookListener)
+	gameMenuListener, spellbookListener = _gameMenuListener, _spellbookListener
 	print("setting cam and map for game library")
 	key, cam, map, hud, mouse = _key, _cam, _map, _hud, _mouse
 	enemy.init(cam)
@@ -232,10 +278,12 @@ function game.preloadTextures() --called from scene after map loaded but before 
 	gameObject.setTextureStore(textureStore)
 end
 
-function game.mouseClick(x, y) --mouseClick called from mouse input listener, can't pass self
+local _mouseX, _mouseY
+function game.mouseClick() --called by mouse module when mouse is clicked on game overlay
+	_mouseX, _mouseY = mouse:getPosition()
 	if (game.char.activeSpell) then
 		if (game.char.activeSpell.targetType == "point") then
-			local target = { x = cam.bounds.x1 + x, y = cam.bounds.y1 + y }
+			local target = { x = cam.bounds.x1 + _mouseX, y = cam.bounds.y1 + _mouseY }
 			game.char:beginCast(target)
 		end
 	end

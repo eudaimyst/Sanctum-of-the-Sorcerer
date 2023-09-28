@@ -38,7 +38,7 @@
 	-- Define module
 	local button_lib = { }
 
-	function button_lib:create( params )
+	function button_lib:create( params, zIndex )
 		local button = display.newGroup()
 		button.frameGroup = frame:create(params.theme, params.borderSize, params.width, params.height) --creates a group with the frame images
 		button.framePressedGroup = frame:create(params.theme.."_pressed", params.borderSize, params.width, params.height)
@@ -100,11 +100,11 @@
 			self.framePressedGroup.isVisible = false
 			if self.label then
 				self.label:setFillColor( buttonType.fontParams.normal.fillColor )
-				self.label:setEmbossColor( { shadow = buttonType.fontParams.pressed.shadow, highlight = buttonType.fontParams.pressed.highlight } )
+				self.label:setEmbossColor( { shadow = buttonType.fontParams.normal.shadow, highlight = buttonType.fontParams.normal.highlight } )
 			end
 		end
 
-		mouse:registerObject(button)
+		mouse:registerObject(button, zIndex or 0)
 		return button
 	
 	end

@@ -5,14 +5,14 @@
 
 	--common modules - solar2d
 	local composer = require("composer")
-	local physics = require("physics")
 
 	--common modules
 	local gc = require("lib.global.constants")
 	local gv = require("lib.global.variables")
 	local util = require("lib.global.utilities")
+
 	local debug = require("lib.debug")
-	local mouse = require("lib.input.old_mouse_input")
+	local mouse = require("lib.input.mouse_input")
 	local key = require("lib.input.key_input")
 	local map = require("lib.map")
 	local mapgen = require("lib.map.generator")
@@ -79,19 +79,40 @@
 		mapgen:startTileGen(tilesComplete)
 	end
 
+	local function leaveGame()
+		--todo: load the "town" scene
+		mouse.deinit()
+		composer.gotoScene("scenes.sc_menu", {effect = "fade", time = 500})
+		composer.removeScene("scenes.sc_game")
+	end
+
+	local function gameMenuListener() --called when hud button is pressed in game
+		mouse:deinit()
+		local function returnToGame()
+			mouse:deinit()
+			game:unpause()
+			composer.hideOverlay( "fade", 100 )
+			composer.removeScene("scenes.sc_game_menu_overlay")
+		end
+		game:pause()
+		composer.showOverlay( "scenes.sc_game_menu_overlay", { params = {leaveGameListener = leaveGame, returnToGameListener = returnToGame} } )
+	end
+	local function spellbookListener() --called when hud button is pressed in game
+
+	end
 
 	local fpsText
 	local function firstFrame()
 
 		debug.init(sceneGroup)
 		mouse.init()
-		mouse.registerMouseScrollListener(zoomMap)
+		--mouse.registerMouseScrollListener(zoomMap)
 		key.init()
 		map:init(sceneGroup, cam, game)
 		mapgen:init(sceneGroup)
 		cam.init()
 		hud.init(sceneGroup, map, game)
-		game.init(cam, map, key, mouse, hud)
+		game.init(cam, map, key, mouse, hud, gameMenuListener, spellbookListener)
 		print("calling game object create from scene")
 
 		entity:init(sceneGroup) --passes group to entity which gets stored for all created entities
@@ -140,8 +161,6 @@
 		sceneGroup = self.view
 		display.setDefault( "background", .09, .09, .09 )
 		-- We need physics started to add bodies
-		physics.start()
-		physics.setGravity( 0, 0 )
 	end
 
 	function scene:show( event )
@@ -175,8 +194,6 @@
 		-- Called prior to removal of scene's "view" (sceneGroup)
 
 		sceneGroup = self.view
-
-		package.loaded[physics] = nil; physics = nil
 	end
 
 	---------------------------------------------------------------------------------

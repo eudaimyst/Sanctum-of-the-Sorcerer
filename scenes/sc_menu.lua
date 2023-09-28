@@ -27,6 +27,8 @@
 	local sceneGroup
 	local halfScreenX, halfScreenY = display.contentWidth / 2, display.contentHeight / 2
 
+	local buttonStore = {} --any button created gets stored here
+
 	local function onPlay()
 		composer.gotoScene( "scenes.sc_game" )
 	end
@@ -48,7 +50,14 @@
 	end
 
 	local function onOptions()
-		composer.showOverlay( "scenes.sc_options_menu", { effect="fade", time=200 } )
+		mouse:deinit()
+		local function optionsClosedListener()
+			mouse:init()
+			for i =1, #buttonStore do
+				mouse:registerObject(buttonStore[i])
+			end
+		end
+		composer.showOverlay( "scenes.sc_options_overlay", { effect="fade", time=200, params = {closedListener = optionsClosedListener} } )
 	end
 
 	local function onKeyEvent( event )
@@ -72,8 +81,6 @@
 		{ label = lang.get("mapgen"), borderSize = 14, width = 300, height = 56, theme = "fantasy", listener = onMapGenerator, position = 3 },
 		{ label = lang.get("quit"), borderSize = 14, width = 200, height = 56, theme = "fantasy", listener = onQuit, position = 5}
 	}
-
-	local buttonStore = {} --any button created gets stored here
 
 	local buttonGroup
 

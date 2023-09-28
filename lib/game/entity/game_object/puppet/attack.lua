@@ -180,6 +180,18 @@
             end
             print("projectile duration: "..projectile.duration)
 
+            function projectile:onPause()
+                for i = 1, #self.emitters do
+                    self.emitters[i]:pause()
+                end
+            end
+
+            function projectile:onUnpause()
+                for i = 1, #self.emitters do
+                    self.emitters[i]:start()
+                end
+            end
+
             function projectile:updateDisplayPos()
                 for i = 1, #self.rects do
                     self.rects[i].x, self.rects[i].y = (self.x - cam.bounds.x1) * cam.zoom , (self.y - cam.bounds.y1) * cam.zoom

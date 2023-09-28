@@ -163,7 +163,9 @@
 
 		function tile:destroyRect()
 			if (self.rect) then
-				self.rect:removeSelf()
+				if self.rect.removeSelf then
+					self.rect:removeSelf()
+				end
 				self.rect = nil
 			end
 		end

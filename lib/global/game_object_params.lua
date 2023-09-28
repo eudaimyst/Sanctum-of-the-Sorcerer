@@ -7,7 +7,7 @@
 	local p = {}
 
 		p.crate = {
-			name = "crate", moveSpeed = nil, width = 120, height = 120, xOffset = 0, yOffset = -18,
+			name = "crate", moveSpeed = nil, width = 140, height = 140, xOffset = 0, yOffset = -0,
 			colWidth = 24, colHeight = 12,
 			animations = {
 			idle = { frames = 1, rate = .5, loop = true },

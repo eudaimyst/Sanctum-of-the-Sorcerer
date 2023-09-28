@@ -1,33 +1,24 @@
 	-----------------------------------------------------------------------------------------
 	--
-	-- sc_options_menu.lua
+	-- sc_spellbook_overlay.lua
 	--
+	-- overlay for the spell book interface, shown in game
 	-----------------------------------------------------------------------------------------
 
 	--common modules - solar2d
 	local composer = require("composer")
+	local physics = require("physics")
 
 	--common modules
 	local gc = require("lib.global.constants")
-	local gv = require("lib.global.variables")
 	local util = require("lib.global.utilities")
-
-	local lang = require("lib.global.locale")
-
-	local windows = require("lib.ui.windows")
 
 	--create scene
 	local scene = composer.newScene()
 	local sceneGroup
 
 	local function firstFrame()
-		--[[ local background = display.newRect( sceneGroup, gv.screen.halfWidth, gv.screen.halfHeight, 800, 600 )
-		background:setFillColor( .09, .09, .09 )
-		local optionsFrame = frame:create("fantasy", 8, 800, 600)
-		optionsFrame.x, optionsFrame.y = gv.screen.halfWidth, gv.screen.halfHeight ]]
-		local optionsWindow = windows:create({ title = lang.get("options"), width = 800, height = 600 })
-		sceneGroup:insert(optionsWindow)
-		--mouse:registerObject(optionsFrame, mouse.getHighestZ()+1)
+
 	end
 
 	local function onFrame()
@@ -37,17 +28,18 @@
 	function scene:create( event ) -- Called when scene's view does not exist.
 		sceneGroup = self.view
 		display.setDefault( "background", .09, .09, .09 )
-		print("options menu scene created")
+		-- We need physics started to add bodies
+		physics.start()
+		physics.setGravity( 0, 0 )
 	end
 
 	function scene:show( event )
 		sceneGroup = self.view
 		local phase = event.phase
 		if phase == "will" then -- Called when scene is still off screen and is about to move on screen
-			print("options menu scene off screen")
-			firstFrame()
 		elseif phase == "did" then -- Called when scene is now on screen
-			print("options menu scene on screen")
+			print("scene loaded")
+			firstFrame()
 			Runtime:addEventListener( "enterFrame", onFrame ) --listerer for every frame
 		end
 	end
@@ -63,6 +55,7 @@
 	function scene:destroy( event )
 		-- Called prior to removal of scene's "view" (sceneGroup)
 		sceneGroup = self.view
+		package.loaded[physics] = nil; physics = nil
 	end
 
 	---------------------------------------------------------------------------------

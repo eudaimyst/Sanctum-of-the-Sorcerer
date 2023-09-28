@@ -22,7 +22,7 @@
     lib_entity.store = {}
     lib_entity.parentGroup = nil --set by setGroup function
     lib_entity.zGroups = {}
-    local entityGroup = display.newGroup()
+    local entitiesGroup = {} --group that contains all entities
     local entityCount = 0
 
     local _selfRect, _camBounds, _camZoom --recycling
@@ -112,11 +112,12 @@
     end
 
     function lib_entity:init(sceneGroup) --sets the group for the entity (all modules that extend the entity class will use this)
-        sceneGroup:insert(entityGroup)
+        entitiesGroup = display.newGroup()
+        sceneGroup:insert(entitiesGroup)
         --create groups for Z-indexing
         for i = 1, math.floor(display.contentHeight) do
             lib_entity.zGroups[i] = display.newGroup()
-            entityGroup:insert(lib_entity.zGroups[i])
+            entitiesGroup:insert(lib_entity.zGroups[i])
         end
     end
 

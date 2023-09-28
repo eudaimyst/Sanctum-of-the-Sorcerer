@@ -27,11 +27,7 @@
 	-- Define module
 	local map = {}
 
-	map.group = display.newGroup()
-	map.tileGroup = display.newGroup()
-	map.decalGroup = display.newGroup()
-	map.group:insert(map.tileGroup)
-	map.group:insert(map.decalGroup)
+	map.group, map.tileGroup, map.decalGroup = {}, {}, {} --set on init()
 
 	map.tileStore = { tileRows = {}, tileCols = {}, indexedTiles = {}} --set by loadMap
 	map.startTileID = 0 --tile for character to start on, accessed by game loadMap
@@ -304,7 +300,10 @@
 	end
 
 	function map:init(sceneGroup, _cam, _game)
+		self.group, self.tileGroup, self.decalGroup = display.newGroup(), display.newGroup(), display.newGroup() --set on init()
 		sceneGroup:insert(self.group)
+		self.group:insert(self.tileGroup)
+		self.group:insert(self.decalGroup)
 		cam, game = _cam, _game
 		decal:init(self)
 	end

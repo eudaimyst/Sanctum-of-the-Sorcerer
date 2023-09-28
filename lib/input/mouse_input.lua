@@ -25,6 +25,10 @@
 
 	local _highestZ = 0
 	
+	function mouse_input.getPosition()
+		return mouseX, mouseY
+	end
+
 	function mouse_input.getHighestZ() --returns the highest Zindex of all objects registered to mouse_input
 		for i = 1, #objectStore do
 			if objectStore[i] then
@@ -46,7 +50,7 @@
 		objectStore[objectCount] = object
 		object.mouseZindex = _zIndex
 		object.mouseIndex = objectCount
-		print("added object to mouse_input store with id", objectCount)
+		print("added object to mouse_input store with id", objectCount, object.x, object.y, object.width, object.height)
 	end
 
 	function mouse_input:deregisterObject(object)
@@ -65,6 +69,7 @@
 			end
 			if _object then
 				_bxMin, _bxMax, _byMin, _byMax = util.getObjectBounds(_object)
+				--print("comparing mouse pos", mouseX, mouseY, "with object", _object.mouseIndex, "bounds", _bxMin, _bxMax, _byMin, _byMax)
 				if util.withinBounds(mouseX, mouseY, _bxMin, _bxMax, _byMin, _byMax) then
 					if mouseOverObject ~= _object then --if not already hovering over this object
 						if mouseOverObject then --mouseOverObject is not nil
@@ -101,7 +106,7 @@
 			end
 		end
 		if event.isPrimaryButtonDown then
-			print("click")
+			--print("click")
 			if mouseOverObject then
 				print("clicked object", mouseOverObject.mouseIndex)
 				clickedObject = mouseOverObject
@@ -119,6 +124,7 @@
 					if clickedObject.listener then
 						clickedObject.listener()
 					end
+
 				end
 				clickedObject = nil
 			end
@@ -126,13 +132,18 @@
 	end
 
 	function mouse_input.init() --called from scene when shown
+		print("mouse input initialising")
 		Runtime:addEventListener( "mouse", onMouseEvent )
 	end
 
 	function mouse_input.deinit() --called from scene when hidden
-		for i = 1, #objectStore do
+		print("mouse input de-initialising")
+		for i = 1, #objectStore do --deregisters all objects in the current scene
 			objectStore[i] = nil
 		end
+	
+		mouseOverObject = nil
+		clickedObject = nil
 		objectStore = {}
 		objectCount = 0
 		Runtime:removeEventListener( "mouse", onMouseEvent )

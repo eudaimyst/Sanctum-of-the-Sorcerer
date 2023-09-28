@@ -5,15 +5,18 @@
 	-----------------------------------------------------------------------------------------
 
 	--common modules
-	local g = require("lib.global.constants")
+	local gc = require("lib.global.constants")
 	local util = require("lib.global.utilities")
+
+	local buttons = require("lib.ui.buttons")
 
 	local game, map, sceneGroup, char
 
 	-- Define module
 	local hud = {}
-		hud.group = display.newGroup()
+		hud.group = {}
 		hud.spellButtons = {}
+		hud.interactsWithMouse = {} --stores objects that need to be registered with mouse_input
 
 		function hud.makeButton(x, y, w, _h)
 			local h = _h or w --if height not specified, make it a square
@@ -66,7 +69,7 @@
 			hud.spellButtons[slot]:setActive(b)
 		end
 
-		function hud:draw(_char)
+		function hud:draw(_char, gameMenuListener, spellbookListener) --takes a reference to the player character and a listener to open the game options menu, and the spell book, and returns the game overlay
 			local scaleOffsetW = (display.contentWidth - display.viewableContentWidth) / 2
 			local scaleOffsetH = (display.contentHeight - display.viewableContentHeight) / 2
 			char = _char
@@ -166,12 +169,22 @@
 				hud.group:insert(hud.orbText)
 			end
 
+			local function drawOptionsButton()
+				local optionsButton = buttons:create({theme = "fantasy", borderSize = 8, width = 32, height = 32, label = "O", listener = gameMenuListener}, 1)
+				hud.interactsWithMouse[#hud.interactsWithMouse + 1] = optionsButton
+				optionsButton.x = hud.gameOverlay.width - optionsButton.width
+				optionsButton.y = hud.gameOverlay.y + optionsButton.height/2
+				hud.group:insert(optionsButton)
+			end
+
 			print("drawing hud")
 			drawGameOverlay()
 			drawCurrencyFrame()
 			drawSpellButtonFrame(#char.spells, 48, 10)
+			drawOptionsButton()
 			drawHealthFrame()
 			self.assignSpells()
+			return hud.gameOverlay
 		end
 
 		function hud:updateHealth(currentHealth, maxHealth)
@@ -191,6 +204,9 @@
 			sceneGroup = _sceneGroup
 			map = _map
 			game = _game
+			
+			hud.group = display.newGroup()
+			sceneGroup:insert(hud.group)
 		end
 
 	return hud
