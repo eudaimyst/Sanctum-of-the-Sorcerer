@@ -82,24 +82,24 @@
 
 			local function drawSpellButtonFrame(numButtons, buttonSize, buttonPadding)
 				local function drawSpellButton(frameRect, pos)
-					local x = frameRect.x + buttonPadding + (pos - 1) * (buttonSize + buttonPadding*2)
-					local y = frameRect.y + buttonPadding
-					local spellButton = hud.makeButton( x, y, buttonSize)
-					function spellButton:setActive(b) --b = bool; true = active, false = inactive 
-						if (b) then
-							self.rect:setStrokeColor(1, 1, 0, 1)
-						else
-							self.rect:setStrokeColor(0)
-						end
+					local x = frameRect.x + buttonPadding + (pos - 1) * (buttonSize + buttonPadding*2) + buttonSize/2
+					local y = frameRect.y + buttonPadding + buttonSize/2
+					--local spellButton = hud.makeButton( x, y, buttonSize)
+					local spellButton = buttons:create({theme = "fantasy", borderSize = 8, width = buttonSize, height = buttonSize, hasActiveState = true}, 1)
+					spellButton.slot = pos
+					spellButton.x, spellButton.y = x, y
+					function spellButton:onPress() --called from the button itself when clicked by mouse
+						char.setActiveSpell(self.slot)
 					end
 					function spellButton:assignSpell(spell)
 						print(spell.name, spell.icon)
 						self.icon = display.newImageRect(hud.group, spell.icon, buttonSize, buttonSize)
+						self:insert(self.icon)
 						local c = spell.element.c
 						self.icon:setFillColor(c.r, c.g, c.b)
-						util.zeroAnchors(self.icon)
-						self.icon.x = self.rect.x
-						self.icon.y = self.rect.y
+						--util.zeroAnchors(self.icon)
+						--self.icon.x = self.x
+						--self.icon.y = self.y
 					end
 					return spellButton
 				end

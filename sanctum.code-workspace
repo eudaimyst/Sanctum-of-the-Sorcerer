@@ -2,6 +2,9 @@
 	"folders": [
 		{
 			"path": "."
+		},
+		{
+			"path": "../../Users/user/Documents/Corona Projects/advent_of_code"
 		}
 	],
 	"settings": {

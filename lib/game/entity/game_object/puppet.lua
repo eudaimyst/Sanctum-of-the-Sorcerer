@@ -26,18 +26,78 @@ local defaultAnimations = {
 	--sprint = { frames = 1, rate = 10, loop = true },
 }
 
+local bloodParticleParams = {
+	minRadius = 200,
+	maxRadius = 0,
+	duration = 0.2,
+	tangentialAcceleration = 0,
+	emitterType = 0,
+	radialAcceleration = 0,
+	rotatePerSecondVariance = 0,
+	speed = 100,
+	maxParticles = 5,
+	finishColorRed = 1,
+	minRadiusVariance = 0,
+	startParticleSize = 5,
+	angleVariance = 180,
+	particleLifespan = 0.4,
+	absolutePosition = false,
+	textureFileName = "content/particles/splat_2.png",
+	finishParticleSizeVariance = 10,
+	finishColorVarianceRed = 0,
+	startColorVarianceBlue = 0,
+	radialAccelVariance = 0,
+	startParticleSizeVariance = 5,
+	startColorRed = 1,
+	startColorAlpha = 1,
+	finishColorVarianceAlpha = 0,
+	finishColorVarianceGreen = 0,
+	startColorVarianceGreen = 0,
+	rotationStartVariance = 0,
+	maxRadiusVariance = 0,
+	startColorVarianceAlpha = 0,
+	startColorVarianceRed = 0.5,
+	startColorBlue = 0,
+	tangentialAccelVariance = 0,
+	rotatePerSecond = 0,
+	finishColorVarianceBlue = 0,
+	rotationStart = 0,
+	angle = -90,
+	finishColorGreen = 0,
+	particleLifespanVariance = 0,
+	blendFuncSource = 770,
+	sourcePositionVariancey = 0,
+	speedVariance = 0,
+	blendFuncDestination = 772,
+	rotationEndVariance = 30,
+	finishColorBlue = 0.2,
+	finishParticleSize = 120,
+	gravityy = 0,
+	gravityx = 0,
+	rotationEnd = 0,
+	sourcePositionVariancex = 0,
+	startColorGreen = 0,
+	finishColorAlpha = 0.8,
+}
+
 local defaultParams = {
 	name = "puppet", --should be overriden by whatever creates this puppet
 	isPuppet = true,
-	attackList = {}, animations = defaultAnimations,
+	attackList = {},
+	animations = defaultAnimations,
 	currentAttack = nil, --set when an attack is fired
-	attackSpeed = 1, --1 / this number is how long the attack anim takes to play
-	state = "idle", --current state of the puppet, used to determine which animation to play, set by updateState()
-	animFrame = 1, frameTimer = 0,  --animation system logic
-	attackWindup = false, windupTimer = 0, attackWindingUp = false, --anim system windup logic
-	attackChannel = false, channelTimer = 0, attackChanneling = false, --anim system channel logic
-	isDead = false, --marks if the puppet is dead
-	windupGlow = nil --stores display data for windup
+	attackSpeed = 1,  --1 / this number is how long the attack anim takes to play
+	state = "idle",   --current state of the puppet, used to determine which animation to play, set by updateState()
+	animFrame = 1,
+	frameTimer = 0,   --animation system logic
+	attackWindup = false,
+	windupTimer = 0,
+	attackWindingUp = false, --anim system windup logic
+	attackChannel = false,
+	channelTimer = 0,
+	attackChanneling = false, --anim system channel logic
+	isDead = false,        --marks if the puppet is dead
+	windupGlow = nil       --stores display data for windup
 }
 
 -- Define module
@@ -50,6 +110,7 @@ local function puppetOnFrame(self)
 			--do not update state if dead
 			return
 		end
+
 		self:updateState()
 		self:animUpdateLoop() --game object function that interfaces with the animation library
 	end
@@ -57,16 +118,16 @@ end
 
 function lib_puppet.factory(puppet)
 	--print("adding puppet functions")
-	
+
 	function puppet:updateState() --called onFrame sets state of puppet logically
 		--[[ if self.name == "character" then
 			print("character isMoving", self.isMoving, gv.frame.current)
 		end ]]
-		if (self.currentAttack) then --begin attack has been called
+		if (self.currentAttack) then              --begin attack has been called
 			self.state = "attack"
 			self.currentAnim = self.currentAttack.animData --sets the appropriate animation data
 		else
-			if (self.isMoving) then --set the state to walk if moving (set in game object)
+			if (self.isMoving) then               --set the state to walk if moving (set in game object)
 				self.state = "walk"
 			else
 				self.state = "idle"
@@ -77,38 +138,52 @@ function lib_puppet.factory(puppet)
 
 	function puppet:loadWindupGlow() --called after puppet is created, loads windup data if present
 		-- Set emitter file path
-		local filePath = system.pathForFile( "content/game_objects/puppets/"..self.name.."/windup/emitter.json")
+		local filePath = system.pathForFile("content/game_objects/puppets/" .. self.name .. "/windup/emitter.json")
 		-- Decode the file
-		local emitterParams, pos, msg = json.decodeFile( filePath )
+		local emitterParams, pos, msg = json.decodeFile(filePath)
 		if emitterParams then
-			print( "windup emitter loaded" )
+			print("windup emitter loaded")
 		else
-			print( "windup emitter load failed at "..tostring(pos)..": "..tostring(msg) )
+			print("windup emitter load failed at " .. tostring(pos) .. ": " .. tostring(msg))
 		end
 		-- Create the emitter with the decoded parameters
-		local emitter = display.newEmitter( emitterParams )
+		local emitter = display.newEmitter(emitterParams)
 		self.group:insert(emitter)
 		emitter:stop()
 		--create image
-		local image = display.newImageRect(self.group, "content/game_objects/puppets/"..self.name.."/windup/glow.png", 64, 64)
+		local image = display.newImageRect(self.group, "content/game_objects/puppets/" .. self.name .. "/windup/glow.png",
+			64, 64)
 		image.isVisible = false
-		--store the 
+		--store the
 		self.windupGlow = { emitter = emitter, image = image }
 	end
 
+	function puppet:bloodSplatterEmitter()
+		print("bloodSplatterTriggered")
+		local emitter = display.newEmitter(bloodParticleParams)
+		self.group:insert(emitter)
+		local pos = { x = self.rect.x, y = self.rect.y }
+		emitter.x, emitter.y = pos.x, pos.y
+		emitter:start()
+		local function onTimer(event)
+			-- Access "params" table by pointing to "event.source" (the timer handle)
+			emitter:stop()
+		end
+		timer.performWithDelay(emitter.duration * 1000, onTimer)
+	end
+
 	function puppet:startWindupGlow() -- a = attack anims to get pre/main/post time, wt = windup time
-		
 		local attack = self.currentAttack
 		local anim = attack.animData
 		local windupOffset = anim.windupPos[self.facingDirection.image]
 		local attackOffset = anim.attackPos[self.facingDirection.image]
-		
+
 		print("adding windup glow")
 		local windupTime = attack.windupTime
 		local windupToAttackTime = (anim.attackFrame) * (1 / anim.frames / self.attackSpeed)
 
-		local pos = { x = self.rect.x - windupOffset.x, y = self.rect.y - windupOffset.y } 
-		local castPos = { x = self.rect.x - attackOffset.x, y = self.rect.y - attackOffset.y } 
+		local pos = { x = self.rect.x - windupOffset.x, y = self.rect.y - windupOffset.y }
+		local castPos = { x = self.rect.x - attackOffset.x, y = self.rect.y - attackOffset.y }
 
 
 		-----------------------------------------------------------------------------------------
@@ -124,7 +199,7 @@ function lib_puppet.factory(puppet)
 		emitter:stop()
 		emitter.x, emitter.y = pos.x, pos.y
 		emitter:start()
-		 
+
 		-----------------------------------------------------------------------------------------
 		--
 		-- image
@@ -141,35 +216,34 @@ function lib_puppet.factory(puppet)
 		end
 		local function glowOver()
 			--transition.fadeOut(glow, { time = mainTime * 1000, })
-			transition.moveTo( image, { x = castPos.x, y = castPos.y, time = windupToAttackTime *.75 * 1000, onComplete = destroyGlow } )
-			transition.moveTo( emitter, { x = castPos.x, y = castPos.y, time = windupToAttackTime *.75 * 1000 } )
-			transition.scaleTo( image, { xScale=.5, yScale=.5, time = windupToAttackTime * 1000 } )
+			transition.moveTo(image,
+				{ x = castPos.x, y = castPos.y, time = windupToAttackTime * .75 * 1000, onComplete = destroyGlow })
+			transition.moveTo(emitter, { x = castPos.x, y = castPos.y, time = windupToAttackTime * .75 * 1000 })
+			transition.scaleTo(image, { xScale = .5, yScale = .5, time = windupToAttackTime * 1000 })
 		end
 		print(image.x, image.y)
 		image.alpha = 0
 		image.xScale = .2
 		image.yScale = .2
 		--glow.blendMode = "add"
-		print("time for attack glow = "..windupTime)
+		print("time for attack glow = " .. windupTime)
 		transition.to(image, { time = windupTime * 1000, alpha = .8, onComplete = glowOver })
-		transition.scaleTo( image, { xScale=1, yScale=1, time= windupTime * 1000 } )
-		
+		transition.scaleTo(image, { xScale = 1, yScale = 1, time = windupTime * 1000 })
 	end
-
 end
 
 function lib_puppet:create(_params) --creates the game object
 	--print("creating puppet")
 
-	local puppet = gameObject:create(_params)  --creates game object for puppet
+	local puppet = gameObject:create(_params) --creates game object for puppet
 	puppet:addOnFrameMethod(puppetOnFrame)
 
-	puppet.directional = true --all puppets are directional
+	puppet.directional = true                  --all puppets are directional
 	puppet.path = "content/game_objects/puppets/" --path for puppets
 	puppet.attackTarget = nil
 
 	puppet:setParams(defaultParams, _params) --adds puppet params
-	lib_puppet.factory(puppet) --adds functions to puppet
+	lib_puppet.factory(puppet)            --adds functions to puppet
 
 	print("puppet created with entity id: ", puppet.id)
 	return puppet

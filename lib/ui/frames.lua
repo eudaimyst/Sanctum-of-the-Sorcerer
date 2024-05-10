@@ -13,7 +13,8 @@
 
 	local themes = { --sheet is created from this data, image filename is based off the key
 		fantasy = {textureSize = 64, textureCorner = 14},
-		fantasy_pressed = {textureSize = 64, textureCorner = 14}
+		fantasy_pressed = {textureSize = 64, textureCorner = 14},
+		fantasy_active = {textureSize = 64, textureCorner = 14}
 	}
 
 	local function makeSheetOptions(cornerSize, edgeSize)
